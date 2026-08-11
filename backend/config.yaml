@@ -1,0 +1,12 @@
+# AIOS default configuration
+# See backend/src/aios_core/config.py for the full field schema.
+
+app:
+  name: "aios"
+  env: "dev"
+
+logging:
+  level: "INFO"
+  console: true
+  file: true
+  file_path: "aios/logs/aios.jsonl"
