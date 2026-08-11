@@ -7,8 +7,8 @@
 git log --oneline          # phải có commit M0
 git status                 # working tree sạch sau commit
 ```
-- [ ] Pass — có commit chứa PLAN.md/AGENTS.md/.gitignore
-- [ ] Pass — working tree sạch
+- [x] Pass — 2 commit: e50b715 (Bước 0) + 08f1efa (M0 đầy đủ)
+- [x] Pass — working tree sạch
 
 ## B4.2 — Agent picker (thủ công, cần người dùng)
 - Mở VS Code → chat → agent picker → kiểm tra **"AIOS Orchestrator"** xuất hiện và chọn được
@@ -24,7 +24,7 @@ git status                 # working tree sạch sau commit
 - [ ] Pass — bypass ghi log đúng
 
 ## B4.4 — Frontmatter (tự động kiểm tra nội dung)
-- [ ] Pass — 4 file `.github/agents/` có YAML frontmatter giữa `---`, description có quote, `user-invocable` đúng (orchestrator=true, subagent=false)
+- [x] Pass — 4 file `.github/agents/` có YAML frontmatter giữa `---`, description có quote, `user-invocable` đúng (orchestrator=true, subagent=false), tools hợp lệ (read/edit/search/execute/todo/agent/web), agents restriction [spec-writer, critic, reviewer]
 
 ## B4.5 — Progress khớp thực tế
 - [ ] Pass — PROGRESS.md: B0–B2 done, B3/B4 theo trạng thái hiện tại

@@ -22,11 +22,11 @@
 - [x] B2.4 `tasks/TASK-001/` — 8 file hoàn chỉnh (spec, critique-1/2, tasks, review, implementation, test, evaluation)
 
 ## B3 — Commit M0
-- [ ] B3.1 Commit toàn bộ thay đổi M0 (agent files + progress + fixes từ critique)
+- [x] B3.1 Commit toàn bộ thay đổi M0 (agent files + progress + fixes từ critique) — commit 08f1efa
 
 ## B4 — Verify M0
-- [ ] B4.1 Git: `git log` có đủ commit, working tree sạch
-- [ ] B4.2 Agent picker: chọn được "AIOS Orchestrator" + 3 subagent hiển thị
-- [ ] B4.3 Hard gate: yêu cầu implement không có spec/critique → từ chối + nêu lý do
-- [ ] B4.4 Frontmatter: đủ 4 file, description quoted, không lỗi YAML
-- [ ] B4.5 PROGRESS.md/LOG.md khớp trạng thái thực tế
+- [x] B4.1 Git: `git log` có đủ commit, working tree sạch
+- [ ] B4.2 Agent picker: chọn được "AIOS Orchestrator" + 3 subagent hiển thị — **cần người dùng xác nhận thủ công**
+- [ ] B4.3 Hard gate: yêu cầu implement không có spec/critique → từ chối + nêu lý do — **cần người dùng xác nhận thủ công**
+- [x] B4.4 Frontmatter: đủ 4 file, description quoted, không lỗi YAML
+- [x] B4.5 PROGRESS.md/LOG.md khớp trạng thái thực tế
