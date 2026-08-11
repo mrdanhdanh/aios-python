@@ -6,7 +6,16 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-11 | TASK-002 | C3.6-C3.7 | pytest: 32 tests pass từ backend/ VÀ root, coverage 96.14% (ngưỡng 80%) | done | `backend/tests/`, `test.md` |
+| 2026-08-11 | TASK-002 | C2.8 | venv + `pip install -e ".[dev]"` — aios-core 0.1.0 (fix readme path ngoài project dir; fix pydantic default factory) | done — AC1 pass | `backend/.venv` |
+| 2026-08-11 | TASK-002 | C2 | Implement aios_core: config (search order + env validate + whitelist), logging (contextvars + JSON + idempotent), metadata (semver + make_component_metadata), healthcheck (worst-wins + edge cases) | done | `backend/src/aios_core/` |
+| 2026-08-11 | TASK-002 | C1 | Scaffold cây monorepo 25 thư mục + .gitkeep + sdk stubs | done | `backend/*`, `dashboard/`, `extension/`, `skills/`, `docker/`, `sdk/` |
+| 2026-08-11 | TASK-002 | review | Reviewer (subagent): CHANGES REQUESTED — 1 R1 (thiếu venv step) + 3 R2 (whitelist AIOS_CONFIG_PATH, timestamp default_factory, test.md/evaluation.md steps) + 4 R3 — resolve toàn bộ | done | `tasks/TASK-002/review.md` |
+| 2026-08-11 | TASK-002 | critique-2 | Critic (subagent) vòng 2: bắt claim SAI cơ chế (extra=forbid không bắt typo env) + 6 P2 + 3 P3 — resolve toàn bộ | done | `tasks/TASK-002/critique-2.md` |
+| 2026-08-11 | TASK-002 | critique-1 | Critic (subagent) vòng 1: 3 P1 + 6 P2 + 5 P3 (gitignore mâu thuẫn, HealthReport thiếu định nghĩa, config path mơ hồ...) — resolve toàn bộ | done | `tasks/TASK-002/critique-1.md` |
+| 2026-08-11 | TASK-002 | spec | Viết spec.md TASK-002 (M1-P0: scaffold + aios_core) | done | `tasks/TASK-002/spec.md` |
 | 2026-08-11 | TASK-001 | B4 | Người dùng xác nhận: agent picker hiển thị AIOS Orchestrator + 3 subagent; hard gate từ chối đúng | done — M0 ĐÓNG, TASK-001 done | `tasks/TASK-001/test.md` |
+| 2026-08-11 | TASK-002 | spec | Viết spec.md TASK-002 (M1-P0: scaffold + aios_core) | done | `tasks/TASK-002/spec.md` |
 | 2026-08-11 | TASK-001 | evaluate | Điền evaluation.md: 7/7 AC pass, kết luận ĐẠT spec | done | `tasks/TASK-001/evaluation.md` |
 | 2026-08-11 | TASK-001 | stats | Cập nhật STATS.md: M0 done, 5 bài học | done | `aios/progress/STATS.md` |
 | 2026-08-11 | TASK-001 | B4 | Verify tự động: B4.1 (git sạch), B4.4 (frontmatter 4 file hợp lệ), B4.5 (progress khớp) | done — 3/3 pass | `tasks/TASK-001/test.md` |
