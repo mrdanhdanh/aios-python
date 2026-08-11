@@ -6,6 +6,11 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-11 | TASK-001 | B4 | Người dùng xác nhận: agent picker hiển thị AIOS Orchestrator + 3 subagent; hard gate từ chối đúng | done — M0 ĐÓNG, TASK-001 done | `tasks/TASK-001/test.md` |
+| 2026-08-11 | TASK-001 | evaluate | Điền evaluation.md: 7/7 AC pass, kết luận ĐẠT spec | done | `tasks/TASK-001/evaluation.md` |
+| 2026-08-11 | TASK-001 | stats | Cập nhật STATS.md: M0 done, 5 bài học | done | `aios/progress/STATS.md` |
+| 2026-08-11 | TASK-001 | B4 | Verify tự động: B4.1 (git sạch), B4.4 (frontmatter 4 file hợp lệ), B4.5 (progress khớp) | done — 3/3 pass | `tasks/TASK-001/test.md` |
+| 2026-08-11 | TASK-001 | B3 | Commit toàn bộ M0 (agent files + progress + fixes critique) | done — 08f1efa, c2d1032 | `git log` |
 | 2026-08-11 | TASK-001 | B2 | Tạo progress system: PROGRESS.md, LOG.md, STATS.md (+ mục Bài học) | done | `aios/progress/` |
 | 2026-08-11 | TASK-001 | spec | Viết spec.md cho TASK-001 (mục tiêu, phạm vi, AC, rủi ro) | done | `tasks/TASK-001/spec.md` |
 | 2026-08-11 | TASK-001 | critique-1 | Critic phản biện vòng 1: tìm 1 P1 (gitignore ignore cả .vscode/), 1 P2 (thiếu rule phân loại task), 1 P3 (template verify) | done — 3/3 đã resolve: sửa .gitignore, thêm rule vào agent orchestrator, thêm ghi chú template | `tasks/TASK-001/critique-1.md` |

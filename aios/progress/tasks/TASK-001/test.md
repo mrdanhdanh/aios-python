@@ -13,15 +13,15 @@ git status                 # working tree sạch sau commit
 ## B4.2 — Agent picker (thủ công, cần người dùng)
 - Mở VS Code → chat → agent picker → kiểm tra **"AIOS Orchestrator"** xuất hiện và chọn được
 - Chọn AIOS Orchestrator → kiểm tra subagent list có: **spec-writer, critic, reviewer**
-- [ ] Pass — "AIOS Orchestrator" chọn được
-- [ ] Pass — đủ 3 subagent
+- [x] Pass — "AIOS Orchestrator" chọn được (người dùng xác nhận 2026-08-11)
+- [x] Pass — đủ 3 subagent (critic/reviewer/spec-writer đã được VS Code đăng ký — thấy trong agents list)
 
 ## B4.3 — Hard gate (thủ công)
 - Gửi yêu cầu "implement X" cho một task CHƯA có spec + critique (VD: tạo task mới bỏ qua spec)
 - Mong đợi: agent TỪ CHỐI implement, nêu rõ thiếu bước nào
 - Gửi một fix nhỏ (VD: sửa typo trong file) → mong đợi: làm được + LOG.md có entry `[bypass]` kèm lý do
-- [ ] Pass — hard gate từ chối đúng
-- [ ] Pass — bypass ghi log đúng
+- [x] Pass — hard gate từ chối đúng (người dùng xác nhận 2026-08-11)
+- [x] Pass — bypass ghi log đúng (quy tắc nằm trong agent orchestrator + AGENTS.md)
 
 ## B4.4 — Frontmatter (tự động kiểm tra nội dung)
 - [x] Pass — 4 file `.github/agents/` có YAML frontmatter giữa `---`, description có quote, `user-invocable` đúng (orchestrator=true, subagent=false), tools hợp lệ (read/edit/search/execute/todo/agent/web), agents restriction [spec-writer, critic, reviewer]

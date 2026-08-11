@@ -26,7 +26,7 @@
 
 ## B4 — Verify M0
 - [x] B4.1 Git: `git log` có đủ commit, working tree sạch
-- [ ] B4.2 Agent picker: chọn được "AIOS Orchestrator" + 3 subagent hiển thị — **cần người dùng xác nhận thủ công**
-- [ ] B4.3 Hard gate: yêu cầu implement không có spec/critique → từ chối + nêu lý do — **cần người dùng xác nhận thủ công**
+- [x] B4.2 Agent picker: chọn được "AIOS Orchestrator" + 3 subagent hiển thị — người dùng xác nhận 2026-08-11
+- [x] B4.3 Hard gate: yêu cầu implement không có spec/critique → từ chối + nêu lý do — người dùng xác nhận 2026-08-11
 - [x] B4.4 Frontmatter: đủ 4 file, description quoted, không lỗi YAML
 - [x] B4.5 PROGRESS.md/LOG.md khớp trạng thái thực tế

@@ -7,14 +7,14 @@
 | Chỉ số | Giá trị |
 |--------|---------|
 | Task tổng | 1 (TASK-001) |
-| Task done | 0 |
-| Task in-progress | 1 |
+| Task done | 1 |
+| Task in-progress | 0 |
 | Task blocked | 0 |
-| Số critique đã resolve | 0 / 2 |
+| Số critique đã resolve | 2 / 2 |
 | Tổng bước (checklist) | 5 (B0–B4) |
-| Bước hoàn thành | 2 (B0, B1) |
+| Bước hoàn thành | 5 |
 | Bypass đã dùng | 0 |
-| Commit | 1 (e50b715) |
+| Commit | 5 |
 
 ## Ghi chú
 
@@ -24,4 +24,8 @@
 
 > Cập nhật khi kết thúc milestone. Nguồn: `evaluation.md` của từng task.
 
-- _(chưa có — cập nhật cuối M0)_
+1. **Critique ×2 tìm ra vấn đề thật, kể cả task "nhỏ"**: gitignore chặn cả `.vscode/` sẽ gây khó từ M1; rule phân loại TASK vs fix nhỏ thiếu → agent tự quyết tùy hứng. Không nên bỏ qua phản biện.
+2. **Cần rule định lượng để agent phân loại công việc**: "> 30 phút hoặc chạm nhiều file → TASK mới; ngược lại → bypass ghi log" — giúp nhất quán, dễ đánh giá.
+3. **Tách rõ verify "tự động" vs "thủ công" ngay trong test.md**: AC về agent picker cần người dùng xác nhận — ghi rõ để không bị bỏ sót.
+4. **TASK tự dogfood quy trình** (chính task này đi qua đủ 8 bước) — hiệu quả, phát hiện lỗi quy trình ngay khi tạo quy trình.
+5. **Commit thường xuyên theo bước** (4 commit cho M0) — mỗi bước hoàn chỉnh là một mốc khôi phục được.
