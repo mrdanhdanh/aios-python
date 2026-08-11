@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# VS Code / OS
+.vscode/
+.vs/
+Thumbs.db
+.DS_Store
+
+# AIOS runtime data (tạo khi chạy hệ thống)
+aios/data/
+aios/db/
+aios/logs/
+*.sqlite3
+*.db
