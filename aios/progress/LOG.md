@@ -6,7 +6,11 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
-| 2026-08-12 | TASK-003 | D5.1 | pytest: 107 tests pass (backend/ + root), coverage 94.82% (ngưỡng 80%), smoke import OK | done — 20/20 AC | `backend/tests/` |
+| 2026-08-12 | TASK-004 | E3 | pytest 162 pass, coverage 94.77%; fix 2 lỗi (import path, publish signature) | done — 13/13 AC | `backend/tests/` |
+| 2026-08-12 | TASK-004 | E1-E2 | Implement 5 services (context, event+audit, artifact sidecar, permission, policy) + Settings mở rộng | done — commit eb64795 | `kernel/services/` |
+| 2026-08-12 | TASK-004 | review | Reviewer: 0 R1, 5 R2 vá nhẹ (pending mâu thuẫn, fake clock trap, sandbox defer, default policy, on_ask flow) — resolve hết | done | `tasks/TASK-004/review.md` |
+| 2026-08-12 | TASK-004 | critique-2 | Critic v2: 1 P1 (timebase mâu thuẫn) + 6 P2 + 8 P3 — resolve hết | done | `tasks/TASK-004/critique-2.md` |
+| 2026-08-12 | TASK-004 | critique-1 | Critic v1: 2 P1 (path guard startswith bypass, list thiếu cơ chế) + 6 P2 + 3 P3 — resolve hết | done | `tasks/TASK-004/critique-1.md` |
 | 2026-08-12 | TASK-003 | D2-D4 | Implement: fix 5 lỗi thật (pydantic validator shadowing, object.__init__, event bus sync wrap, test deepcopy, abstractmethods) | done | `container.py`, `kernel/events.py`, `kernel/execution_plan.py`, `contracts/` |
 | 2026-08-12 | TASK-003 | D1 | Implement: semver helper + contracts (ContractVersion, ContractMetadata, ArtifactContract, CompatibilityChecker) | done | `semver.py`, `contracts/` |
 | 2026-08-12 | TASK-003 | review | Reviewer: CHANGES REQUESTED — R1 (thiếu bước update aios_core/__init__.py), R2×2 (flush re-raise, pytest root), R3×4 — resolve hết | done | `tasks/TASK-003/review.md` |

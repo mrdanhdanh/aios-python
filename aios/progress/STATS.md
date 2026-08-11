@@ -16,13 +16,13 @@
 
 | Chỉ số | Giá trị |
 |--------|---------|
-| Task tổng | 4 (TASK-002, 003, 004 — 002/003 done, 004 todo) |
-| Task done | 2 (TASK-002, TASK-003) |
-| Tests (cumulative) | 107 pass — coverage 94.82% (ngưỡng 80%) |
-| Critique resolve (TASK-003) | vòng 1: 18 (2 P1 + 8 P2 + 8 P3); vòng 2: 20 (2 P1 + 8 P2 + 10 P3) |
-| Review (TASK-003) | 1 R1 + 2 R2 + 4 R3 — resolved trước implement |
+| Task tổng | 9 (TASK-002 → 009) |
+| Task done | 4 (TASK-002, 003, 004 — 005+ todo) |
+| Tests (cumulative) | 162 pass — coverage 94.77% |
+| Critique resolve (TASK-004) | v1: 11 (2 P1 + 6 P2 + 3 P3); v2: 15 (1 P1 + 6 P2 + 8 P3) |
+| Review (TASK-004) | 0 R1 + 5 R2 + 6 R3 — resolved trước implement |
 | Bypass đã dùng | 0 |
-| Commit | TASK-002: 3, TASK-003: 1 (e3bfc54) |
+| Commit | TASK-004: 1 (eb64795) |
 
 ## Ghi chú
 
@@ -47,3 +47,8 @@
 13. **Shallow copy dict trong test**: `dict(VALID_DATA)` share nested list → mutation test đầu hỏng test sau; luôn deepcopy.
 14. **2 vòng critique có giá trị cộng dồn**: vòng 2 bắt mâu thuẫn do chính resolution vòng 1 tạo ra — không gộp được.
 15. **Model validator raise ValueError → pydantic wrap thành ValidationError** ("Value error, ...") — match regex theo nội dung thật.
+16. **Path guard phải dùng `is_relative_to` sau resolve** — `startswith` prefix string bị bypass bằng thư mục sibling (`artifacts2`).
+17. **Persistence phải có cơ chế tường minh từ spec** — `list()` cần sidecar, không thể tự bịa lúc code.
+18. **Một khái niệm một định nghĩa** — "pending" xuất hiện 3 chỗ với 2 nghĩa; spec phải nhất quán.
+19. **Timebase không trộn**: metadata `created: datetime` + TTL `_created_mono` (monotonic) tách bạch.
+20. **EventBus.publish nhận Event object** — wrapper service phải tạo Event trước.

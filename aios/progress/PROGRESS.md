@@ -34,13 +34,26 @@
 | 3 | Test + Evaluate | `done` | 32 tests pass, coverage 96.14%, 16/16 AC |
 | 4 | Commit | `done` | working tree sạch |
 
-### P0.5 — Runtime Kernel (TASK-003 + TASK-004)
+### P0.5 — Runtime Kernel (TASK-003 + TASK-004 + TASK-005)
 
 **TASK-003 — Kernel Foundations** ✅ (2026-08-12)
-- semver helper + contracts version hóa (ContractVersion, ContractMetadata, ArtifactContract, CompatibilityChecker 5-rule) + DI Container + EventBus + ExecutionPlan
-- 107 tests pass (75 mới), coverage 94.82%, 20/20 AC — commit e3bfc54
+- semver + contracts + DI container + event bus + execution plan — 107 tests, coverage 94.82%, 20/20 AC
 
-**TASK-004 — Runtime Services** (9 services + RuntimeKernel wiring) — todo
+**TASK-004 — Kernel Services I** ✅ (2026-08-12)
+- Context + EventService (audit SQLite) + ArtifactService (sidecar) + PermissionService + PolicyService
+- 162 tests pass, coverage 94.77%, 13/13 AC — commit eb64795
+
+**TASK-005 — Kernel Services II** (Scheduler, State, Resource, Execution) + RuntimeKernel — in-progress
+
+### P1 — Model + Memory + Knowledge
+
+**TASK-006 — Model Contract + Providers** (Mock/OpenAI/Ollama) — todo
+**TASK-007 — Memory 4 loại + Knowledge pipeline** (conversation SQLite, session cache, vector store, indexer→retriever) — todo
+
+### P2 — Workflow + Capability + Catalog
+
+**TASK-008 — Workflow Definition + Compilers** (declarative, mock + langgraph optional, workflow library) — todo
+**TASK-009 — Capability + Prompt Registry + System Catalog + Knowledge Graph** — todo
 
 ## Tasks
 
@@ -48,8 +61,13 @@
 |---------|-------|-----------|------------|-------|
 | TASK-001 | M0 — Development Foundation | M0 | `done` ✅ | AIOS Orchestrator |
 | TASK-002 | M1-P0 — Scaffold monorepo + backend core | M1 | `done` ✅ | AIOS Orchestrator |
-| TASK-003 | M1-P0.5a — Kernel Foundations: contracts + DI + event bus + execution plan | M1 | `done` ✅ | AIOS Orchestrator |
-| TASK-004 | M1-P0.5b — Runtime Services: 9 services + RuntimeKernel | M1 | `todo` | AIOS Orchestrator |
+| TASK-003 | M1-P0.5a — Kernel Foundations | M1 | `done` ✅ | AIOS Orchestrator |
+| TASK-004 | M1-P0.5b — Kernel Services I (context, event+audit, artifact, permission, policy) | M1 | `done` ✅ | AIOS Orchestrator |
+| TASK-005 | M1-P0.5c — Kernel Services II (scheduler, state, resource, execution) + RuntimeKernel | M1 | `in-progress` | AIOS Orchestrator |
+| TASK-006 | M1-P1a — Model Contract + providers (Mock/OpenAI/Ollama) | M1 | `todo` | AIOS Orchestrator |
+| TASK-007 | M1-P1b — Memory 4 loại + Knowledge pipeline | M1 | `todo` | AIOS Orchestrator |
+| TASK-008 | M1-P2a — Workflow Definition + compilers + library | M1 | `todo` | AIOS Orchestrator |
+| TASK-009 | M1-P2b — Capability + Prompt Registry + Catalog + Knowledge Graph | M1 | `todo` | AIOS Orchestrator |
 
 ## Log gần nhất
 
