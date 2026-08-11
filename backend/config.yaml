@@ -10,3 +10,9 @@ logging:
   console: true
   file: true
   file_path: "aios/logs/aios.jsonl"
+
+audit:
+  db_path: "aios/data/audit.db"
+
+artifacts:
+  dir: "aios/data/artifacts"

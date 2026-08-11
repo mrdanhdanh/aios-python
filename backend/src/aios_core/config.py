@@ -38,6 +38,14 @@ class LoggingSettings(BaseModel):
     file_path: str = "aios/logs/aios.jsonl"
 
 
+class AuditSettings(BaseModel):
+    db_path: str = "aios/data/audit.db"
+
+
+class ArtifactsSettings(BaseModel):
+    dir: str = "aios/data/artifacts"
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -50,6 +58,8 @@ class Settings(BaseSettings):
 
     app: AppSettings = AppSettings()
     logging: LoggingSettings = LoggingSettings()
+    audit: AuditSettings = AuditSettings()
+    artifacts: ArtifactsSettings = ArtifactsSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

@@ -54,6 +54,18 @@ def test_kernel_submodule_exports():
     assert Event and EventType and Subscription
 
 
+def test_services_imports():
+    from aios_core.kernel.services import (
+        ArtifactService,
+        ContextService,
+        EventService,
+        PermissionService,
+        PolicyService,
+    )
+
+    assert ArtifactService and ContextService and EventService and PermissionService and PolicyService
+
+
 def test_contracts_imports():
     assert ArtifactContract and CompatibilityChecker and ContractMetadata and ContractVersion
     assert Container and ContainerError

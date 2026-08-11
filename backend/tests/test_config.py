@@ -104,3 +104,23 @@ def test_config_path_arg_overrides_env(tmp_path, monkeypatch):
     monkeypatch.setenv(CONFIG_PATH_ENV, str(a))
     settings = load_settings(config_path=b)
     assert settings.app.name == "from_b"
+
+
+def test_audit_artifacts_defaults(tmp_path, monkeypatch):
+    monkeypatch.delenv(CONFIG_PATH_ENV, raising=False)
+    monkeypatch.chdir(tmp_path)
+    settings = load_settings()
+    assert settings.audit.db_path == "aios/data/audit.db"
+    assert settings.artifacts.dir == "aios/data/artifacts"
+
+
+def test_audit_artifacts_from_yaml(tmp_path, monkeypatch):
+    monkeypatch.delenv(CONFIG_PATH_ENV, raising=False)
+    monkeypatch.chdir(tmp_path)
+    _write_yaml(
+        tmp_path / "config.yaml",
+        "audit:\n  db_path: custom/audit.db\nartifacts:\n  dir: custom/arts\n",
+    )
+    settings = load_settings()
+    assert settings.audit.db_path == "custom/audit.db"
+    assert settings.artifacts.dir == "custom/arts"
