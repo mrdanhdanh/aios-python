@@ -59,11 +59,34 @@ def test_services_imports():
         ArtifactService,
         ContextService,
         EventService,
+        ExecutionService,
         PermissionService,
         PolicyService,
+        ResourceService,
+        SchedulerService,
+        StateService,
     )
 
-    assert ArtifactService and ContextService and EventService and PermissionService and PolicyService
+    assert all(
+        x is not None
+        for x in (
+            ArtifactService,
+            ContextService,
+            EventService,
+            ExecutionService,
+            PermissionService,
+            PolicyService,
+            ResourceService,
+            SchedulerService,
+            StateService,
+        )
+    )
+
+
+def test_runtime_kernel_import():
+    from aios_core.kernel import RuntimeKernel
+
+    assert RuntimeKernel is not None
 
 
 def test_contracts_imports():

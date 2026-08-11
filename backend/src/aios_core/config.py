@@ -46,6 +46,11 @@ class ArtifactsSettings(BaseModel):
     dir: str = "aios/data/artifacts"
 
 
+class ResourcesSettings(BaseModel):
+    max_tokens: int | None = None
+    max_concurrent: int | None = None
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -60,6 +65,7 @@ class Settings(BaseSettings):
     logging: LoggingSettings = LoggingSettings()
     audit: AuditSettings = AuditSettings()
     artifacts: ArtifactsSettings = ArtifactsSettings()
+    resources: ResourcesSettings = ResourcesSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

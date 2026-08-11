@@ -7,7 +7,7 @@ import logging
 import threading
 import types
 from enum import Enum
-from typing import Any, get_args, get_origin
+from typing import Any, get_args, get_origin, get_type_hints
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +112,11 @@ class Container:
             # Classes inheriting object.__init__ accept no injectable params.
             if init is object.__init__:
                 return impl(*args)
+            try:
+                # Resolve string annotations (from __future__ import annotations).
+                hints = get_type_hints(init)
+            except Exception:  # noqa: BLE001 — unresolvable hints fall back to raw
+                hints = {}
             params = inspect.signature(init).parameters
             kwargs: dict[str, Any] = {}
             for name, param in list(params.items())[1:]:  # skip self
@@ -119,7 +124,7 @@ class Container:
                     raise ContainerError(
                         f"Unsupported parameter {name!r} in {impl.__name__} (varargs not supported in v1)"
                     )
-                hint = param.annotation
+                hint = hints.get(name, inspect.Parameter.empty)
                 if hint is inspect.Parameter.empty:
                     raise ContainerError(
                         f"Parameter {name!r} of {impl.__name__} has no type hint (v1 requires hints)"

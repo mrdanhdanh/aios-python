@@ -33,7 +33,7 @@ class PlanNode(BaseModel):
     agent: str = ""
     capabilities: list[str] = Field(default_factory=list)
     depends_on: list[str] = Field(default_factory=list)
-    timeout_s: int = 300
+    timeout_s: float = 300.0
     retries: int = 0
 
     @model_validator(mode="after")

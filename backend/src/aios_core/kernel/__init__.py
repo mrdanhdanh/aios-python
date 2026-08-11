@@ -8,6 +8,7 @@ from .execution_plan import (
     PlanNode,
     PlanNodeType,
 )
+from .runtime_kernel import RuntimeKernel
 from .services import (
     ArtifactCorruptedError,
     ArtifactService,
@@ -15,6 +16,9 @@ from .services import (
     ContextScope,
     ContextService,
     EventService,
+    ExecutionResult,
+    ExecutionService,
+    ExecutionStatus,
     PermissionDecision,
     PermissionRequest,
     PermissionScope,
@@ -23,6 +27,9 @@ from .services import (
     PolicyDecision,
     PolicyRequest,
     PolicyService,
+    ResourceService,
+    SchedulerService,
+    StateService,
 )
 
 __all__ = [
@@ -35,12 +42,16 @@ __all__ = [
     "ExecutionPlanStatus",
     "PlanNode",
     "PlanNodeType",
+    "RuntimeKernel",
     "ArtifactCorruptedError",
     "ArtifactService",
     "Context",
     "ContextScope",
     "ContextService",
     "EventService",
+    "ExecutionResult",
+    "ExecutionService",
+    "ExecutionStatus",
     "PermissionDecision",
     "PermissionRequest",
     "PermissionScope",
@@ -49,4 +60,7 @@ __all__ = [
     "PolicyDecision",
     "PolicyRequest",
     "PolicyService",
+    "ResourceService",
+    "SchedulerService",
+    "StateService",
 ]

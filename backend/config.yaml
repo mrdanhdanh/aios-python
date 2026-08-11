@@ -16,3 +16,7 @@ audit:
 
 artifacts:
   dir: "aios/data/artifacts"
+
+resources:
+  max_tokens: null
+  max_concurrent: null
