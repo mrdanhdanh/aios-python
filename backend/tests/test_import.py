@@ -2,7 +2,23 @@
 
 import re
 
+import pytest
+
 import aios_core
+from aios_core import (
+    Container,
+    ContainerError,
+    EventBus,
+    ExecutionPlan,
+    ExecutionPlanBuilder,
+    contracts,
+)
+from aios_core.contracts import (
+    ArtifactContract,
+    CompatibilityChecker,
+    ContractMetadata,
+    ContractVersion,
+)
 
 
 def test_version_is_semver():
@@ -21,6 +37,26 @@ def test_exports_present():
         "HealthRegistry",
         "Settings",
         "load_settings",
+        "Container",
+        "ContainerError",
+        "EventBus",
+        "ExecutionPlan",
+        "ExecutionPlanBuilder",
+        "contracts",
         "__version__",
     ):
         assert hasattr(aios_core, name), f"missing export: {name}"
+
+
+def test_kernel_submodule_exports():
+    from aios_core.kernel import Event, EventType, Subscription
+
+    assert Event and EventType and Subscription
+
+
+def test_contracts_imports():
+    assert ArtifactContract and CompatibilityChecker and ContractMetadata and ContractVersion
+    assert Container and ContainerError
+    assert ExecutionPlan and ExecutionPlanBuilder
+    assert EventBus
+
