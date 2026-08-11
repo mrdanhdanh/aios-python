@@ -6,7 +6,13 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
-| 2026-08-11 | TASK-002 | C3.6-C3.7 | pytest: 32 tests pass từ backend/ VÀ root, coverage 96.14% (ngưỡng 80%) | done | `backend/tests/`, `test.md` |
+| 2026-08-12 | TASK-003 | D5.1 | pytest: 107 tests pass (backend/ + root), coverage 94.82% (ngưỡng 80%), smoke import OK | done — 20/20 AC | `backend/tests/` |
+| 2026-08-12 | TASK-003 | D2-D4 | Implement: fix 5 lỗi thật (pydantic validator shadowing, object.__init__, event bus sync wrap, test deepcopy, abstractmethods) | done | `container.py`, `kernel/events.py`, `kernel/execution_plan.py`, `contracts/` |
+| 2026-08-12 | TASK-003 | D1 | Implement: semver helper + contracts (ContractVersion, ContractMetadata, ArtifactContract, CompatibilityChecker) | done | `semver.py`, `contracts/` |
+| 2026-08-12 | TASK-003 | review | Reviewer: CHANGES REQUESTED — R1 (thiếu bước update aios_core/__init__.py), R2×2 (flush re-raise, pytest root), R3×4 — resolve hết | done | `tasks/TASK-003/review.md` |
+| 2026-08-12 | TASK-003 | critique-2 | Critic vòng 2: bắt 2 P1 mới do resolution v1 tạo ra (AC2 case 6 mâu thuẫn rule; check_upgrade đảo tham số) + 8 P2 + P3 — resolve hết | done | `tasks/TASK-003/critique-2.md` |
+| 2026-08-12 | TASK-003 | critique-1 | Critic vòng 1: 2 P1 (compatibility sai chiều, async fire-and-forget) + 8 P2 + 8 P3 — resolve hết | done | `tasks/TASK-003/critique-1.md` |
+| 2026-08-12 | TASK-003 | plan/spec | Tách TASK-003 (foundations) khỏi TASK-004 (services), viết spec kernel foundations | done | `tasks/TASK-003/spec.md` |
 | 2026-08-11 | TASK-002 | C2.8 | venv + `pip install -e ".[dev]"` — aios-core 0.1.0 (fix readme path ngoài project dir; fix pydantic default factory) | done — AC1 pass | `backend/.venv` |
 | 2026-08-11 | TASK-002 | C2 | Implement aios_core: config (search order + env validate + whitelist), logging (contextvars + JSON + idempotent), metadata (semver + make_component_metadata), healthcheck (worst-wins + edge cases) | done | `backend/src/aios_core/` |
 | 2026-08-11 | TASK-002 | C1 | Scaffold cây monorepo 25 thư mục + .gitkeep + sdk stubs | done | `backend/*`, `dashboard/`, `extension/`, `skills/`, `docker/`, `sdk/` |

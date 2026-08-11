@@ -16,13 +16,13 @@
 
 | Chỉ số | Giá trị |
 |--------|---------|
-| Task tổng | 3 (TASK-002, 003, 004 — 002 done, 003/004 todo) |
-| Task done | 1 (TASK-002) |
-| Tests (TASK-002) | 32 pass — coverage 96.14% (ngưỡng 80%) |
-| Critique resolve (TASK-002) | vòng 1: 14 (3 P1 + 6 P2 + 5 P3); vòng 2: 10 (1 P1 + 6 P2 + 3 P3) |
-| Review (TASK-002) | 1 R1 + 3 R2 + 4 R3 — resolved trước implement |
+| Task tổng | 4 (TASK-002, 003, 004 — 002/003 done, 004 todo) |
+| Task done | 2 (TASK-002, TASK-003) |
+| Tests (cumulative) | 107 pass — coverage 94.82% (ngưỡng 80%) |
+| Critique resolve (TASK-003) | vòng 1: 18 (2 P1 + 8 P2 + 8 P3); vòng 2: 20 (2 P1 + 8 P2 + 10 P3) |
+| Review (TASK-003) | 1 R1 + 2 R2 + 4 R3 — resolved trước implement |
 | Bypass đã dùng | 0 |
-| Commit (TASK-002) | 2 (7a270ff, 486fb9f) |
+| Commit | TASK-002: 3, TASK-003: 1 (e3bfc54) |
 
 ## Ghi chú
 
@@ -41,3 +41,9 @@
 7. **pydantic v2**: default callable phải dùng `Field(default_factory=...)`; truyền `None` override default — helper phải filter.
 8. **hatchling không cho readme ngoài project dir** — README package đặt trong `backend/`.
 9. **Bảng AC ↔ checklist trong review** giúp phát hiện bước thiếu (VD thiếu venv step) trước khi code.
+10. **pydantic v2: validator method trùng tên trong subclass REPLACE validator kế thừa** (key theo tên method) — đổi tên hoặc khai báo lại.
+11. **pydantic v2 clears `__abstractmethods__`** khi complete model — ABC không enforce trên BaseModel; dùng `validate()` runtime làm enforcement point.
+12. **Class không định nghĩa `__init__` (kế thừa object) có `*args/**kwargs`** — container phải skip, không ném lỗi varargs.
+13. **Shallow copy dict trong test**: `dict(VALID_DATA)` share nested list → mutation test đầu hỏng test sau; luôn deepcopy.
+14. **2 vòng critique có giá trị cộng dồn**: vòng 2 bắt mâu thuẫn do chính resolution vòng 1 tạo ra — không gộp được.
+15. **Model validator raise ValueError → pydantic wrap thành ValidationError** ("Value error, ...") — match regex theo nội dung thật.

@@ -34,21 +34,27 @@
 | 3 | Test + Evaluate | `done` | 32 tests pass, coverage 96.14%, 16/16 AC |
 | 4 | Commit | `done` | working tree sạch |
 
-### P0.5 — Runtime Kernel (TASK-003) — todo
-DI container + contracts version hóa + event bus + artifact + permission + policy + context + state/snapshot + resource manager + execution plan
+### P0.5 — Runtime Kernel (TASK-003 + TASK-004)
+
+**TASK-003 — Kernel Foundations** ✅ (2026-08-12)
+- semver helper + contracts version hóa (ContractVersion, ContractMetadata, ArtifactContract, CompatibilityChecker 5-rule) + DI Container + EventBus + ExecutionPlan
+- 107 tests pass (75 mới), coverage 94.82%, 20/20 AC — commit e3bfc54
+
+**TASK-004 — Runtime Services** (9 services + RuntimeKernel wiring) — todo
 
 ## Tasks
 
 | Task ID | Mô tả | Milestone | Trạng thái | Owner |
 |---------|-------|-----------|------------|-------|
 | TASK-001 | M0 — Development Foundation | M0 | `done` ✅ | AIOS Orchestrator |
-| TASK-002 | M1-P0 — Scaffold monorepo + backend core (config, logging, AIOS metadata, healthcheck) | M1 | `done` ✅ | AIOS Orchestrator |
-| TASK-003 | M1-P0.5 — Runtime Kernel: DI container + contracts + event bus + 9 services | M1 | `todo` | AIOS Orchestrator |
+| TASK-002 | M1-P0 — Scaffold monorepo + backend core | M1 | `done` ✅ | AIOS Orchestrator |
+| TASK-003 | M1-P0.5a — Kernel Foundations: contracts + DI + event bus + execution plan | M1 | `done` ✅ | AIOS Orchestrator |
+| TASK-004 | M1-P0.5b — Runtime Services: 9 services + RuntimeKernel | M1 | `todo` | AIOS Orchestrator |
 
 ## Log gần nhất
 
 Xem chi tiết: `LOG.md`. 3 entry cuối:
 
-1. `2026-08-11 | TASK-002 | C3.6-C3.7 | pytest 32 pass ×2 nơi, coverage 96.14%` → done
-2. `2026-08-11 | TASK-002 | C2.8 | pip install -e .[dev] — AC1 pass` → done
-3. `2026-08-11 | TASK-002 | C2 | Implement aios_core 4 modules` → done
+1. `2026-08-12 | TASK-003 | D5.1 | 107 tests pass ×2 nơi, coverage 94.82%, 20/20 AC` → done
+2. `2026-08-12 | TASK-003 | D2-D4 | Implement + fix 5 lỗi thật (pydantic, container, event bus)` → done
+3. `2026-08-12 | TASK-003 | critique ×2 + review | resolve toàn bộ trước implement` → done
