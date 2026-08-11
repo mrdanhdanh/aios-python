@@ -21,8 +21,8 @@
 | B0 | git init + docs/PLAN.md + AGENTS.md + .gitignore + commit | `done` | commit e50b715 |
 | B1 | Tạo 4 VS Code custom agent (.github/agents/) | `done` | orchestrator + spec-writer + critic + reviewer |
 | B2 | Tạo aios/progress/ (PROGRESS, LOG, STATS, TASK-001) | `done` | TASK-001 đủ 8 file, critique ×2 đã resolve |
-| B3 | Commit lần cuối M0 | `in-progress` | đang thực hiện |
-| B4 | Verify M0 (agent picker, hard gate) | `todo` | cần người dùng xác nhận thủ công |
+| B3 | Commit lần cuối M0 | `done` | commit 08f1efa + c2d1032 |
+| B4 | Verify M0 (agent picker, hard gate) | `in-progress` | B4.1/4.4/4.5 pass tự động; B4.2/4.3 chờ người dùng xác nhận thủ công |
 
 ## Tasks
 
