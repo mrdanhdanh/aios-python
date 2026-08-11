@@ -12,7 +12,7 @@ build/
 *.egg-info/
 
 # VS Code / OS
-.vscode/
+.vscode/settings.json
 .vs/
 Thumbs.db
 .DS_Store
