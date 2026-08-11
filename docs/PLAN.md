@@ -231,6 +231,12 @@ Pool tái sử dụng container theo ngôn ngữ (python/node/go...), warm-start
 - SDK dùng chung contract schemas (generate từ backend contracts)
 
 ## Cấu trúc monorepo
+> **Quy ước layout M1 (TASK-002, đã qua critique/review)**: toàn bộ code Python gom vào
+> `backend/src/<package>/` (src layout). `backend/core/` theo bảng dưới chính là package
+> `aios_core` (code tại `backend/src/aios_core/`); các thư mục `backend/<module>/` khác là
+> placeholder `.gitkeep` làm định hướng, code thật của chúng đặt tại `backend/src/<package>/`
+> tương ứng (VD DI container TASK-003 → `backend/src/aios_core/container.py`).
+
 ```
 aiagent/
 ├── .github/
