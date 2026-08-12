@@ -8,8 +8,8 @@
 | Milestone | Mô tả | Trạng thái |
 |-----------|-------|------------|
 | M0 | Development Foundation (VS Code agent + progress system) | `done` ✅ |
-| M1 | Core Runtime (P0–P2: infra, kernel, model/memory/knowledge, workflow/capability/catalog) | `in-progress` |
-| M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `todo` |
+| M1 | Core Runtime (P0–P2: infra, kernel, model/memory/knowledge, workflow/capability/catalog) | `done` ✅ |
+| M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `todo` ← next |
 | M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `todo` |
 | M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `todo` |
 | M5 | Enterprise Edition (tương lai — không làm v1) | `todo` |
@@ -64,7 +64,12 @@
 - **Deliverable M1 đạt: `aiagent run workflow.yaml --simulate` chạy được**
 - 300 tests pass, coverage 94.92%, 10/10 AC
 
-**TASK-009 — Capability + Prompt Registry + System Catalog + Knowledge Graph** — in-progress
+**TASK-009 — Capability + Prompt Registry + Catalog + Knowledge Graph** ✅ (2026-08-12)
+- CapabilityRegistry + PromptRegistry (str.format v1) + SystemCatalog + KnowledgeGraph + PLAN amend
+- **346 tests pass, coverage 95.30% — M1 HOÀN TẤT (9/9 tasks)**
+
+## M1 — Core Runtime ✅ (2026-08-12)
+**Toàn bộ P0–P2 xong**: 9 services + contracts + DI + event bus + models (Mock/OpenAI/Ollama) + memory 4 loại + knowledge pipeline + workflow (CLI simulate) + capability + prompt + catalog + knowledge graph. Deliverable `aiagent run workflow.yaml --simulate` ✓
 
 ## Tasks
 
@@ -78,7 +83,8 @@
 | TASK-006 | M1-P1a — Model Contract + providers (Mock/OpenAI/Ollama) | M1 | `done` ✅ | AIOS Orchestrator |
 | TASK-007 | M1-P1b — Memory 4 loại + Knowledge pipeline | M1 | `done` ✅ | AIOS Orchestrator |
 | TASK-008 | M1-P2a — Workflow Definition + compilers + library + CLI | M1 | `done` ✅ | AIOS Orchestrator |
-| TASK-009 | M1-P2b — Capability + Prompt Registry + Catalog + Knowledge Graph | M1 | `in-progress` | AIOS Orchestrator |
+| TASK-009 | M1-P2b — Capability + Prompt Registry + Catalog + Knowledge Graph | M1 | `done` ✅ | AIOS Orchestrator |
+| TASK-010 | M2-P3a — AIOS Orchestrator v1 (Decision Pipeline 4 tầng + Workflow Matcher) | M2 | `todo` | AIOS Orchestrator |
 
 ## Log gần nhất
 

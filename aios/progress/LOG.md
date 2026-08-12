@@ -6,7 +6,11 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
-| 2026-08-12 | TASK-008 | I3 | pytest 300 pass, coverage 94.92% (270 baseline không regression); CLI thật chạy completed; fix bug rò connection SQLite 16 chỗ | done — 10/10 AC | `backend/tests/` |
+| 2026-08-12 | TASK-009 | J3 | pytest 346 pass, coverage 95.30%; fix 5 (fixture conflict, self-loop, in-index unpack, integration relation, thread id) | done — 9/9 AC, **M1 HOÀN TẤT** | `backend/tests/` |
+| 2026-08-12 | TASK-009 | J1-J2 | Implement capabilities/prompts/catalog/knowledge_graph + PLAN amend (3 chỗ) | done | 4 module mới |
+| 2026-08-12 | TASK-009 | review | Reviewer: APPROVED — spec đã pin đầy đủ (unknown/idempotent/ordering) | done | `tasks/TASK-009/review.md` |
+| 2026-08-12 | TASK-009 | critique-2 | Critic v2: 5 P2 (Yêu cầu #2 stale, construct-vs-register, evaluations, PLAN 2 chỗ, validation algorithm) + 10 P3 | done | `tasks/TASK-009/critique-2.md` |
+| 2026-08-12 | TASK-009 | critique-1 | Critic v1: 4 P1 (prompt regex, duplicate phá versioning, evaluate write-only, PLAN mâu thuẫn) + 7 P2 + 7 P3 — resolve hết | done | `tasks/TASK-009/critique-1.md` |
 | 2026-08-12 | TASK-008 | I1-I2 | Implement workflow package (dag helper, definition, compiler, library, cli) + refactor ExecutionPlan | done | `workflow/`, `kernel/dag.py` |
 | 2026-08-12 | TASK-008 | review | Reviewer: APPROVED — verify 270 baseline, policy, merge khớp engine, refactor an toàn (2 R2 + 3 R3) | done | `tasks/TASK-008/review.md` |
 | 2026-08-12 | TASK-008 | critique-2 | Critic v2: 0 P1 — 5 P2 (retries=0 sai, type pin, extra forbid, CLI test, simulate bắt buộc) + 5 P3 | done | `tasks/TASK-008/critique-2.md` |

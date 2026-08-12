@@ -12,13 +12,18 @@
 | Bypass đã dùng | 0 |
 | Commit | 5 |
 
-## M1 — Core Runtime
+## M1 — Core Runtime ✅
 
 | Chỉ số | Giá trị |
 |--------|---------|
-| Task tổng | 9 (TASK-002 → 009) |
-| Task done | 4 (TASK-002, 003, 004 — 005+ todo) |
-| Tests (cumulative) | 162 pass — coverage 94.77% |
+| Task tổng | 9 (TASK-002 → 009) — **TẤT CẢ done** |
+| Task done | 9/9 |
+| Tests (cuối M1) | **346 pass — coverage 95.30%** |
+| Critique resolve | 9 task × 2 vòng (trung bình 20+ vấn đề/task) |
+| Review | 9 task (0-1 R1 mỗi task) |
+| Bypass | 0 |
+| Deliverable M1 | `aiagent run workflow.yaml --simulate` ✓ |
+| Commit | ~30 commits |
 | Critique resolve (TASK-004) | v1: 11 (2 P1 + 6 P2 + 3 P3); v2: 15 (1 P1 + 6 P2 + 8 P3) |
 | Review (TASK-004) | 0 R1 + 5 R2 + 6 R3 — resolved trước implement |
 | Bypass đã dùng | 0 |
@@ -52,3 +57,7 @@
 18. **Một khái niệm một định nghĩa** — "pending" xuất hiện 3 chỗ với 2 nghĩa; spec phải nhất quán.
 19. **Timebase không trộn**: metadata `created: datetime` + TTL `_created_mono` (monotonic) tách bạch.
 20. **EventBus.publish nhận Event object** — wrapper service phải tạo Event trước.
+21. **Tên biến unpack phải khớp ngữ nghĩa index** — in-index lưu (rel, source_kind, source_id): dùng `_sk, source_id`, không dùng tk/ti chung.
+22. **Fixture tên ngắn dễ conflict** — g/cat thiếu tham số → FixtureFunctionDefinition; tên rõ + tham số tường minh.
+23. **Thread-safe test: id phải unique theo thread** — agent-{i} × 2 thread = 50 unique không phải 100.
+24. **Regex lookaround + scan escape-first** — validate template lúc construct (object hỏng không tồn tại).
