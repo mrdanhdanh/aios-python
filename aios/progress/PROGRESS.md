@@ -59,8 +59,12 @@
 
 ### P2 — Workflow + Capability + Catalog
 
-**TASK-008 — Workflow Definition + Compilers** (declarative, mock engine, workflow library) — in-progress
-**TASK-009 — Capability + Prompt Registry + System Catalog + Knowledge Graph** — todo
+**TASK-008 — Workflow Definition + Compilers + Library** ✅ (2026-08-12)
+- Declarative definition + DAG helper + MockCompiler + LangGraph stub + Library + CLI simulate
+- **Deliverable M1 đạt: `aiagent run workflow.yaml --simulate` chạy được**
+- 300 tests pass, coverage 94.92%, 10/10 AC
+
+**TASK-009 — Capability + Prompt Registry + System Catalog + Knowledge Graph** — in-progress
 
 ## Tasks
 
@@ -73,8 +77,8 @@
 | TASK-005 | M1-P0.5c — Kernel Services II (scheduler, state, resource, execution) + RuntimeKernel | M1 | `done` ✅ | AIOS Orchestrator |
 | TASK-006 | M1-P1a — Model Contract + providers (Mock/OpenAI/Ollama) | M1 | `done` ✅ | AIOS Orchestrator |
 | TASK-007 | M1-P1b — Memory 4 loại + Knowledge pipeline | M1 | `done` ✅ | AIOS Orchestrator |
-| TASK-008 | M1-P2a — Workflow Definition + compilers + library | M1 | `in-progress` | AIOS Orchestrator |
-| TASK-009 | M1-P2b — Capability + Prompt Registry + Catalog + Knowledge Graph | M1 | `todo` | AIOS Orchestrator |
+| TASK-008 | M1-P2a — Workflow Definition + compilers + library + CLI | M1 | `done` ✅ | AIOS Orchestrator |
+| TASK-009 | M1-P2b — Capability + Prompt Registry + Catalog + Knowledge Graph | M1 | `in-progress` | AIOS Orchestrator |
 
 ## Log gần nhất
 
