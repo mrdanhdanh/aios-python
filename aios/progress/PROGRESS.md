@@ -53,11 +53,13 @@
 - ModelContract template-method + Mock/OpenAI/Ollama + ModelRegistry + RuntimeKernel wiring
 - 233 tests pass, coverage 94.73%, 13/13 AC
 
-**TASK-007 — Memory 4 loại + Knowledge pipeline** (conversation SQLite, session cache, vector store, indexer→retriever) — in-progress
+**TASK-007 — Memory 4 loại + Knowledge pipeline** ✅ (2026-08-12)
+- Conversation (SQLite) + Session (cache) + Knowledge (chunks+vectors cùng file) + Artifact (TASK-004)
+- 270 tests pass, coverage 94.90%, 12/12 AC
 
 ### P2 — Workflow + Capability + Catalog
 
-**TASK-008 — Workflow Definition + Compilers** (declarative, mock + langgraph optional, workflow library) — todo
+**TASK-008 — Workflow Definition + Compilers** (declarative, mock engine, workflow library) — in-progress
 **TASK-009 — Capability + Prompt Registry + System Catalog + Knowledge Graph** — todo
 
 ## Tasks
@@ -70,8 +72,8 @@
 | TASK-004 | M1-P0.5b — Kernel Services I (context, event+audit, artifact, permission, policy) | M1 | `done` ✅ | AIOS Orchestrator |
 | TASK-005 | M1-P0.5c — Kernel Services II (scheduler, state, resource, execution) + RuntimeKernel | M1 | `done` ✅ | AIOS Orchestrator |
 | TASK-006 | M1-P1a — Model Contract + providers (Mock/OpenAI/Ollama) | M1 | `done` ✅ | AIOS Orchestrator |
-| TASK-007 | M1-P1b — Memory 4 loại + Knowledge pipeline | M1 | `in-progress` | AIOS Orchestrator |
-| TASK-008 | M1-P2a — Workflow Definition + compilers + library | M1 | `todo` | AIOS Orchestrator |
+| TASK-007 | M1-P1b — Memory 4 loại + Knowledge pipeline | M1 | `done` ✅ | AIOS Orchestrator |
+| TASK-008 | M1-P2a — Workflow Definition + compilers + library | M1 | `in-progress` | AIOS Orchestrator |
 | TASK-009 | M1-P2b — Capability + Prompt Registry + Catalog + Knowledge Graph | M1 | `todo` | AIOS Orchestrator |
 
 ## Log gần nhất

@@ -6,7 +6,11 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
-| 2026-08-12 | TASK-006 | G3 | pytest 233 pass, coverage 94.73%; fix 4 lỗi (monkeypatch pattern, patch target, fake client shape, fixed/sequence) | done — 13/13 AC | `backend/tests/` |
+| 2026-08-12 | TASK-007 | H3 | pytest 270 pass, coverage 94.9%; fix 4 (rowid, chunk order, score threshold, cancel flaky) | done — 12/12 AC | `backend/tests/` |
+| 2026-08-12 | TASK-007 | H1-H2 | Implement memory (conversation/session/vector) + knowledge (chunks/embedder/knowledge) + Settings | done | `memory/`, `knowledge/` |
+| 2026-08-12 | TASK-007 | review | Reviewer: 1 R1 (AC5 toán học — 500/500/100) + 2 R2 + 6 R3 — resolve hết | done | `tasks/TASK-007/review.md` |
+| 2026-08-12 | TASK-007 | critique-2 | Critic v2: 1 P1 (storage topology) + 4 P2 + 5 P3 — resolve hết | done | `tasks/TASK-007/critique-2.md` |
+| 2026-08-12 | TASK-007 | critique-1 | Critic v1: 4 P1 (chunk text, limit mâu thuẫn, hash() cross-process, zero-vector) + 8 P2 + 17 P3 — resolve hết | done | `tasks/TASK-007/critique-1.md` |
 | 2026-08-12 | TASK-006 | G1-G2 | Implement models package (contract/mock/openai/ollama/registry) + RuntimeKernel wire + ModelsSettings | done | `models/` |
 | 2026-08-12 | TASK-006 | review | Reviewer: APPROVED có điều kiện (2 R2: delenv determinism, responses=None) + 4 R3 | done | `tasks/TASK-006/review.md` |
 | 2026-08-12 | TASK-006 | critique-2 | Critic v2: 2 P1 (chat thứ tự check, Yêu cầu #6 stale) + 3 P2 + 10 P3 — resolve hết | done | `tasks/TASK-006/critique-2.md` |
