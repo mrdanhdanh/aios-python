@@ -6,6 +6,10 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-12 | M0-review | [bypass] F-004 | Commit M0-review-brief.md (đã sửa nhưng chưa commit — vi phạm AGENTS.md §4) | done — commit 92f1321 | `reviews/M0-review-brief.md` |
+| 2026-08-12 | M0-review | [bypass] F-001 | Thêm quy tắc explicit "không bypass hard gate bằng cách tự tuyên bố hoàn thành" vào orchestrator agent | done — commit 3b7d8b6 | `.github/agents/aios-orchestrator.agent.md` |
+| 2026-08-12 | M0-review | [bypass] F-002 | Cập nhật STATS.md M0: bypass 0 → 1 (khớp LOG.md có 1 entry bypass) | done — commit 3b7d8b6 | `aios/progress/STATS.md` |
+| 2026-08-12 | M0-review | [bypass] F-003 | Thêm heading "Constraints" + "Expected Artifacts" rõ ràng vào TASK-001/spec.md | done — commit 3b7d8b6 | `tasks/TASK-001/spec.md` |
 | 2026-08-12 | M0-review | review-brief | Tạo review brief (template dùng chung + bản M0 điền sẵn) để đem cho model khác review độc lập — tự chứa: bối cảnh, deliverable, tiêu chí AC, phương pháp, format báo cáo | done | `reviews/REVIEW-BRIEF-TEMPLATE.md`, `reviews/M0-review-brief.md` |
 | 2026-08-12 | M0-review | review | Tạo bản review M0 (hồi tố, bằng chứng repo: git history 5 commits, 4 agent files, TASK-001 8 file, PROGRESS/LOG/STATS) — 5/5 mục tiêu + 4/5 verification pass, 5 findings (F1 test.md checkbox, F2 bypass chưa thực hành, F3/F4/F5 quan sát) | done — M0 ĐẠT | `aios/progress/reviews/M0-review.md` |
 | 2026-08-12 | M0-review | [bypass] | Fix hồ sơ TASK-001/test.md: tick checkbox B4.5 + Kết luận (đã pass 2026-08-11 nhưng chưa tick) — lý do: fix nhỏ 2 dòng, không đổi hành vi | done — F1 resolved; **bypass thật đầu tiên (kiểm chứng F2)** | `tasks/TASK-001/test.md` |
