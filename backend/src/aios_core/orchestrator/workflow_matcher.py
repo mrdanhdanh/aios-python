@@ -1,0 +1,75 @@
+"""Workflow matcher: reuse WorkflowLibrary (macro → full → token search)."""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+
+from ..workflow.errors import WorkflowError
+from ..workflow.library import WorkflowLibrary
+
+STOPWORDS = {"the", "a", "an", "please", "vui", "lòng", "làm", "for", "and", "to", "of", "with", "me"}
+
+
+@dataclass
+class WorkflowMatch:
+    workflow_name: str
+    matched_by: str  # macro | full | token
+    confidence: float
+
+
+class WorkflowMatcher:
+    """Match request text to a registered workflow.
+
+    ``library`` comes from the constructor (same instance shared with the
+    normalizer — caller responsibility).
+    """
+
+    def __init__(self, library: WorkflowLibrary) -> None:
+        self._library = library
+
+    def _templates(self) -> dict[str, str]:
+        # v1: derive template keywords from workflow names (id-like).
+        templates: dict[str, str] = {}
+        for name in self._library.list():
+            key = name.replace("_", " ").replace("-", " ")
+            templates[key] = name
+        return templates
+
+    def match(self, text: str) -> WorkflowMatch | None:
+        lowered = text.lower()
+
+        # 1) Template macro (the ONLY place that validates macros → workflow_name).
+        for keyword, name in self._templates().items():
+            if keyword and keyword in lowered:
+                try:
+                    self._library.get(name)  # validate existence
+                except WorkflowError:
+                    continue
+                return WorkflowMatch(name, "macro", 0.9)
+
+        # 2) Full-sentence search.
+        full = self._library.search(lowered)
+        if full:
+            return self._pick(full[0], lowered, "full")
+
+        # 3) Token search: first token with a match wins.
+        tokens = [
+            t for t in re.findall(r"\w+", lowered) if len(t) >= 3 and t not in STOPWORDS
+        ]
+        for token in tokens:
+            found = self._library.search(token)
+            if found:
+                return self._pick(found[0], token, "token")
+        return None
+
+    def _pick(self, name: str, query: str, matched_by: str) -> WorkflowMatch:
+        try:
+            definition = self._library.get(name)
+        except WorkflowError:
+            return WorkflowMatch(name, matched_by, 0.6)
+        if query in name.lower():
+            confidence = 0.8
+        else:
+            confidence = 0.6
+        return WorkflowMatch(name, matched_by, confidence)

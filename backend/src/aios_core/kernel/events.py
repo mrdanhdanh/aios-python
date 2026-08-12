@@ -26,6 +26,7 @@ class EventType(str, Enum):
     WORKFLOW_COMPLETED = "workflow.completed"
     WORKFLOW_FAILED = "workflow.failed"
     WORKFLOW_CANCELLED = "workflow.cancelled"
+    SNAPSHOT_SAVED = "state.snapshot_saved"
     SKILL_INSTALLED = "skill.installed"
     SKILL_UPDATED = "skill.updated"
     SKILL_REMOVED = "skill.removed"

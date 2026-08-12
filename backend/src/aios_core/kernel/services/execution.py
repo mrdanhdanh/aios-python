@@ -198,7 +198,18 @@ class ExecutionService:
                     node_results[node_id] = self._state.get_state(execution_id)["results"].get(node_id)
                     continue
                 nodes_state[node_id] = NODE_RUNNING
+                # M1-only surrogate tool events (real tool events land in M2).
+                self._events.emit(
+                    EventType.TOOL_STARTED,
+                    payload={"execution_id": execution_id, "node_id": node_id, "node_name": node.name},
+                    source="execution_service",
+                )
                 result, ok = self._run_node(node, runner, node_results, flag)
+                self._events.emit(
+                    EventType.TOOL_FINISHED,
+                    payload={"execution_id": execution_id, "node_id": node_id, "node_name": node.name, "ok": ok},
+                    source="execution_service",
+                )
                 if not ok:
                     return ExecutionResult(
                         ExecutionStatus.FAILED, execution_id, node_results, reason=result
@@ -207,6 +218,11 @@ class ExecutionService:
                 nodes_state[node_id] = NODE_COMPLETED
                 self._state.update_state(execution_id, nodes=nodes_state, results=node_results)
                 self._state.snapshot(execution_id)
+                self._events.emit(
+                    EventType.SNAPSHOT_SAVED,
+                    payload={"execution_id": execution_id},
+                    source="execution_service",
+                )
 
             self._events.emit(
                 EventType.WORKFLOW_COMPLETED,

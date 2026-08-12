@@ -180,6 +180,31 @@ def test_m1_final_imports():
     )
 
 
+def test_orchestrator_imports():
+    from aios_core.orchestrator import (
+        AgentSelector,
+        Normalizer,
+        Orchestrator,
+        Planner,
+        RuleEngine,
+        SystemKnowledge,
+        WorkflowMatcher,
+    )
+
+    assert all(
+        x is not None
+        for x in (
+            AgentSelector,
+            Normalizer,
+            Orchestrator,
+            Planner,
+            RuleEngine,
+            SystemKnowledge,
+            WorkflowMatcher,
+        )
+    )
+
+
 def test_contracts_imports():
     assert ArtifactContract and CompatibilityChecker and ContractMetadata and ContractVersion
     assert Container and ContainerError
