@@ -103,13 +103,21 @@
 | TASK-008 | M1-P2a — Workflow Definition + compilers + library + CLI | M1 | `done` ✅ | AIOS Orchestrator |
 | TASK-009 | M1-P2b — Capability + Prompt Registry + Catalog + Knowledge Graph | M1 | `done` ✅ | AIOS Orchestrator |
 | TASK-010 | M2-P3a — AIOS Orchestrator v1: Decision Pipeline 4 tầng (Normalizer, Rule Engine, Workflow Matcher, Planner LLM) | M2 | `done` ✅ | AIOS Orchestrator |
-| TASK-012 | M2-P3b — Goal Manager + Task Queue + Permission Broker + Failure Recovery | M2 | `todo` | AIOS Orchestrator |
+| TASK-012 | M2-P3b — Goal Manager + Task Queue + Permission Broker + Failure Recovery | M2 | `done` ✅ | AIOS Orchestrator |
 | TASK-011 | M1/P3 — Remediation 9 P3 findings từ M1 v2 review (CLI subcommands, contract field-evolution test, resource queue, context inheritance, tool/snapshot events, catalog rebuild, CLI DI, ADR, benchmark) | M1 (follow-up) | `done` ✅ | AIOS Orchestrator |
+
+## M2 — Developer Edition (in-progress)
+
+**TASK-012 — M2-P3b: Goal Manager + Task Queue + Permission Broker + Failure Recovery** ✅ (2026-08-13)
+- `orchestrator/goals/` package mới: goal.py (GoalManager, state machine, cascade cancel), task_queue.py (dequeue atomic RETURNING, reorder 2 pha, recover stale), permission_broker.py (ask_scopes, default-deny no-approver), failure_recovery.py (retry→fallback→report), errors.py, schema.py (shared DDL), `__init__.py` (build_goal_modules factory)
+- Kernel additive: EventType +6 (`goal.*`, `queue.updated`, `recovery.*`), `PolicyDecision.ask_scopes` (5 nhánh), `GoalsSettings` + config.yaml
+- Critique ×2: 31 vấn đề resolved (C1-01..C1-16, C2-01..C2-15) — gồm 3 Critical, 6 Major
+- **490 tests pass (baseline 428 + 62), coverage 95.96%, 12/12 AC**
 
 ## Log gần nhất
 
 Xem chi tiết: `LOG.md`. 3 entry cuối:
 
-1. `2026-08-12 | TASK-011 | T9 | pytest 428 pass, coverage 95.76%, 9/9 AC; fix 5 lỗi thật (cli yaml/nodes/path, context inherit default, resource cond-lock, benchmark get O(1), dup SNAPSHOT emit)` → done
-2. `2026-08-12 | TASK-011 | T1-T8 | Implement 9 findings F-001..F-009 (cli subcommands+DI, contract evolution test, resource queue, context inherit, tool/snapshot events, catalog rebuild, ADR ×3, benchmark)` → done
-3. `2026-08-12 | TASK-011 | critique ×2 + review + tasks | resolve 3 critical defect (F-003 API mâu thuẫn, F-007 DI gap, F-002 sai tooling) + N1-N7` → done
+1. `2026-08-13 | TASK-012 | T8 | 490 pass, coverage 95.96%, 12/12 AC; evaluation.md; commit` → done
+2. `2026-08-13 | TASK-012 | T7 | 62 test mới: goal 14, queue 14, broker 10, recovery 11, import+policy 3; fix 6 bài học (subscribe 2 tham số, query_audit trả Event, COALESCE -1, reorder 2 pha, state machine chuỗi, history spec)` → done
+3. `2026-08-13 | TASK-012 | T1-T6 | Implement goals/ package + kernel additive (EventType+6, ask_scopes 5 nhánh, GoalsSettings); schema.py chống circular import` → done
