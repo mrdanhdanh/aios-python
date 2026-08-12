@@ -201,7 +201,7 @@ Enable/Disable/Unload cho phép tắt tạm plugin không cần gỡ. Trạng th
 Execution checkpoint mỗi node boundary (state + context + artifacts refs) → snapshot (artifact) → resume sau crash/restart. Đi kèm retry policy.
 
 ## Prompt Registry
-Template (jinja2) → Variables (schema) → Version (semver) → Evaluation (điểm) → hỗ trợ A/B testing sau này. Prompt là first-class component (có id, version, metadata), skill có thể đóng góp prompt.
+Template (v1: **str.format subset** — `{identifier}` thuần; **jinja2 → M4**) → Variables (schema) → Version (semver) → Evaluation (điểm) → hỗ trợ A/B testing sau này. Prompt là first-class component (có id, version, metadata), skill có thể đóng góp prompt.
 
 ## Evaluation Framework
 Sau mỗi workflow: Output → Evaluator → Score → Knowledge (lưu vào memory để cải thiện). Metrics: success, cost, tokens, time, quality, user feedback. API chuẩn để plug evaluator mới.
@@ -210,7 +210,8 @@ Sau mỗi workflow: Output → Evaluator → Score → Knowledge (lưu vào memo
 Raw Docs → Indexer (parser theo loại file) → Chunks → Embeddings → Knowledge Store (ChromaDB + metadata) → Retriever (semantic + keyword + hybrid). Hỗ trợ nhiều nguồn: docs local, web, PDF, codebase.
 
 ## Knowledge Graph
-Đồ thị liên kết: Agent–Skill–Workflow–Capability–Tool–Artifact–Model–Prompt (nodes + edges có thuộc tính, có version). Xây từ metadata các registry, cập nhật theo sự kiện (event bus). Mục đích: trả lời quan hệ nhanh ("capability execute_code được dùng bởi agent nào", "skill nào phụ thuộc MCP") mà không cần quét; nền tảng cho System Knowledge + Improvement Advisor. Lưu SQLite (json edges) hoặc graph DB nhẹ (networkx serialized) — chọn SQLite + index cho v1.
+Đồ thị liên kết: Agent–Skill–Workflow–Capability–Tool–Artifact–Model–Prompt (nodes + edges có thuộc tính, có version). Xây từ metadata các registry, cập nhật theo sự kiện (event bus). Mục đích: trả lời quan hệ nhanh ("capability execute_code được dùng bởi agent nào", "skill nào phụ thuộc MCP") mà không cần quét; nền tảng cho System Knowledge + Improvement Advisor.
+> **Amend TASK-009 (2026-08-12)**: v1 graph **in-memory** + populate THỦ CÔNG (index/add qua API); SQLite persist + auto-build từ registry/event bus → M2/M4 (quyết định đã qua critique — ghi PROGRESS).
 
 ## Workflow Library
 Kho workflow/template/macro có thể tái sử dụng (kèm metadata: input/output, capabilities cần, đánh giá hiệu suất). Orchestrator ưu tiên **tái sử dụng trước khi sinh mới**: Search → Reuse → Planner. Workflow chạy thành công nhiều lần được "thăng hạng" (promote) trong library.
@@ -294,7 +295,7 @@ aiagent/
 P0 Infrastructure: scaffold monorepo, config, logging, AIOS metadata, healthcheck
 P0.5 Runtime Kernel: DI container + 9 services + contracts version hóa + event bus + artifact + permission + **policy service** + context + state/snapshot + resource manager + execution plan
 P1 Model + Memory + Knowledge: ModelContract (OpenAI/Ollama/Mock), memory 4 loại, knowledge pipeline (indexer→store→retriever)
-P2 Workflow + Capability + Catalog: workflow definition declarative + compilers (langgraph + mock) + workflow library (v1), capability discovery, prompt registry (v1), **System Catalog** (index/search registry), **Knowledge Graph** (đồ thị metadata từ registry + event bus)
+P2 Workflow + Capability + Catalog: workflow definition declarative + compilers (langgraph + mock) + workflow library (v1), capability discovery, prompt registry (v1), **System Catalog** (index/search registry), **Knowledge Graph (v1 in-memory, populate thủ công — xem amend section Knowledge Graph)**
 → Kết quả: `aiagent run workflow.yaml --simulate` chạy được, test unit phủ contract, policy pre-check chặn request không được phép
 
 ### M2 – Developer Edition (P3–P4)

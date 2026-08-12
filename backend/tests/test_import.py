@@ -155,6 +155,31 @@ def test_workflow_imports():
     )
 
 
+def test_m1_final_imports():
+    from aios_core.capabilities import Capability, CapabilityError, CapabilityRegistry
+    from aios_core.catalog import CatalogError, CatalogEntry, SystemCatalog
+    from aios_core.knowledge_graph import GraphError, KnowledgeGraph
+    from aios_core.prompts import PromptError, PromptEvaluation, PromptRegistry, PromptTemplate
+
+    assert all(
+        x is not None
+        for x in (
+            Capability,
+            CapabilityError,
+            CapabilityRegistry,
+            CatalogError,
+            CatalogEntry,
+            SystemCatalog,
+            GraphError,
+            KnowledgeGraph,
+            PromptError,
+            PromptEvaluation,
+            PromptRegistry,
+            PromptTemplate,
+        )
+    )
+
+
 def test_contracts_imports():
     assert ArtifactContract and CompatibilityChecker and ContractMetadata and ContractVersion
     assert Container and ContainerError
