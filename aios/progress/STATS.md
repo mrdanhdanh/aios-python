@@ -9,7 +9,7 @@
 | Task tổng | 1 (TASK-001) |
 | Task done | 1 |
 | Số critique đã resolve | 2 / 2 |
-| Bypass đã dùng | 0 |
+| Bypass đã dùng | 1 |
 | Commit | 5 |
 
 ## M1 — Core Runtime ✅

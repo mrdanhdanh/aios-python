@@ -39,3 +39,22 @@ Thiết lập nền tảng phát triển dự án AIOS: repo git có master plan
 - R1: AGENTS.md không được agent đọc tự động ở một số phiên bản → giảm thiểu: kiểm tra lúc verify (B4), fallback thêm `.github/copilot-instructions.md` trỏ sang AGENTS.md
 - R2: Git identity chưa có global → đã set local (AIAGENT Dev); user có thể đổi sau
 - R3: Bảng LOG.md khó đọc khi entry dài → chấp nhận cho M0 (ít entry), chuyển list format khi cần
+
+## Constraints
+- Phải tuân thủ AGENTS.md: đọc repo trước, ghi repo sau, hard gate 8 bước, bypass chỉ cho fix nhỏ
+- TASK-001 tự đi qua đủ 8 bước hard gate (dogfooding)
+- Mọi artifact phải git-tracked, không chỉ nằm trong chat session
+- Code/commit: tiếng Anh; Tài liệu progress/log: tiếng Việt
+
+## Expected Artifacts
+- `docs/PLAN.md` — master plan v6
+- `AGENTS.md` — quy tắc bắt buộc mọi agent
+- `.gitignore` — bỏ qua file build/temp, KHÔNG ignore `.vscode/`, `.github/agents/`, `aios/progress/`, `docs/`
+- `.github/agents/aios-orchestrator.agent.md` — VS Code custom agent (user-invocable)
+- `.github/agents/spec-writer.agent.md` — subagent viết spec
+- `.github/agents/critic.agent.md` — subagent phản biện 2 vòng
+- `.github/agents/reviewer.agent.md` — subagent review code
+- `aios/progress/PROGRESS.md` — chỉ mục tiến độ
+- `aios/progress/LOG.md` — nhật ký hành động
+- `aios/progress/STATS.md` — thống kê milestone
+- `aios/progress/tasks/TASK-001/` — 8 file: spec, critique-1, critique-2, tasks, review, implementation, test, evaluation

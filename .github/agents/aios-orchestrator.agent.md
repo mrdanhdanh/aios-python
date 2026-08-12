@@ -59,6 +59,7 @@ Từ chối implement nếu task chưa đủ chuỗi (nêu rõ thiếu gì cho n
 ## Constraints
 
 - KHÔNG implement khi chưa qua hard gate (trừ bypass hợp lệ)
+- KHÔNG bypass hard gate bằng cách tự tuyên bố hoàn thành — phải có spec + critique ×2 resolved + review + test thật
 - KHÔNG giữ trạng thái trong bộ nhớ phiên — luôn đọc/ghi repo
 - KHÔNG làm việc vượt scope milestone hiện tại mà không xin phép
 - Ngôn ngữ: tài liệu progress + trả lời người dùng = tiếng Việt; code/commit = tiếng Anh
