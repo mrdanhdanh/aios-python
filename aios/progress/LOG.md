@@ -6,6 +6,7 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-13 | docs | [bypass] | Tạo `docs/architecture.md`: sơ đồ 7 tầng + Orchestrator modules + luồng request + tiến độ milestone theo trạng thái hiện tại (M1 done, M2 in-progress) — lý do: tài liệu tham chiếu, không đổi hành vi hệ thống | done | `docs/architecture.md` |
 | 2026-08-12 | TASK-011 | T10 | [bypass] fix test `test_scope_isolation`: đúng thiết kế default `inherit=False`, đổi assertion sang `inherit=True` cho nhánh fallback | done — 428 pass, coverage 95.76% | `tests/test_context.py` |
 | 2026-08-12 | TASK-011 | T9 | pytest 428 pass, coverage 95.76%; fix 5 lỗi thật (cli `from_yaml`/`nodes`/`str(_db_path)`; context default `inherit=False`; resource `acquire_slot_wait` chờ ngoài cond-lock; benchmark `get` O(1) thay `tools_for` O(n); dedup `SNAPSHOT_SAVED` emit) | done — 9/9 AC, coverage ≥95% giữ | `backend/tests/`, `backend/src/` |
 | 2026-08-12 | TASK-011 | T1-T8 | Implement 9 findings F-001..F-009: cli subcommands (doctor/catalog/workflow validate/contract validate) + DI `RuntimeKernel.create()`; contract field-evolution test; resource FIFO queue + `pending()`; context PARENT inheritance; `SNAPSHOT_SAVED` + `TOOL_STARTED`/`TOOL_FINISHED` events; catalog `rebuild()`/`_revision`/`is_stale()`; 3 ADR + link PLAN.md; benchmark harness | done | `workflow/cli.py`, `kernel/services/`, `catalog/catalog.py`, `docs/adr/`, `tests/test_benchmark.py` |

@@ -87,6 +87,34 @@ def test_emits_permission_requested_for_policy():
     assert "request_id" in received[0].payload
 
 
+def test_policy_decision_ask_scopes_field_all_branches():
+    # C2-06 (TASK-012): ask_scopes must be set in ALL 5 return branches.
+    # 1) deny branch -> []
+    svc = _svc(Policy(deny_scopes=["network"]))
+    r = svc.evaluate(PolicyRequest(scopes=[PermissionScope.NETWORK]))
+    assert r.ask_scopes == []
+    # 2) token branch -> []
+    svc = _svc(Policy(max_tokens=100))
+    r = svc.evaluate(PolicyRequest(scopes=[PermissionScope.FILESYSTEM], tokens=200))
+    assert r.ask_scopes == []
+    # 3) internet branch -> []
+    svc = _svc(Policy(allow_internet=False))
+    r = svc.evaluate(PolicyRequest(scopes=[PermissionScope.FILESYSTEM], internet=True))
+    assert r.ask_scopes == []
+    # 4) approval branch -> scopes outside allow_scopes
+    svc = _svc()
+    r = svc.evaluate(PolicyRequest(scopes=[PermissionScope.DOCKER, PermissionScope.FILESYSTEM]))
+    assert r.requires_approval is True
+    assert r.ask_scopes == ["docker"]  # filesystem is allowed
+    # 5) allow branch -> []
+    r = svc.evaluate(PolicyRequest(scopes=[PermissionScope.FILESYSTEM]))
+    assert r.ask_scopes == []
+    # dataclass default
+    from aios_core.kernel.services.policy import PolicyDecision
+
+    assert PolicyDecision(approved=True).ask_scopes == []
+
+
 def test_default_policy_contents():
     svc = _svc()
     p = svc.policy

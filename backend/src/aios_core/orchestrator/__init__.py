@@ -2,6 +2,7 @@
 
 from .agent_selector import AgentSelector
 from .errors import OrchestratorError
+from .goals import GoalError, GoalManager, QueueError, TaskQueue
 from .normalizer import NormalizedRequest, Normalizer
 from .orchestrator import Orchestrator, OrchestratorResponse
 from .planner import PlanResult, Planner, PlannerStub
@@ -11,7 +12,11 @@ from .workflow_matcher import WorkflowMatch, WorkflowMatcher
 
 __all__ = [
     "AgentSelector",
+    "GoalError",
+    "GoalManager",
     "OrchestratorError",
+    "QueueError",
+    "TaskQueue",
     "NormalizedRequest",
     "Normalizer",
     "Orchestrator",

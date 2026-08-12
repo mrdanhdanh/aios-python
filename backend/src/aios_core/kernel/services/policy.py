@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -54,6 +54,9 @@ class PolicyDecision:
     allow_internet: bool = False
     policy_version: str = DEFAULT_POLICY_VERSION
     reason: str = ""
+    # TASK-012: scopes that need approval (outside allow_scopes), computed by
+    # evaluate(). Empty in deny/token/internet/allow branches.
+    ask_scopes: list[str] = field(default_factory=list)
 
 
 class PolicyService:
@@ -81,6 +84,7 @@ class PolicyService:
                 approved=False,
                 policy_version=p.version,
                 reason=f"denied scopes: {denied}",
+                ask_scopes=[],
             )
 
         # Token budget.
@@ -89,6 +93,7 @@ class PolicyService:
                 approved=False,
                 policy_version=p.version,
                 reason=f"token budget exceeded: {request.tokens} > {p.max_tokens}",
+                ask_scopes=[],
             )
 
         # Internet gate.
@@ -97,6 +102,7 @@ class PolicyService:
                 approved=False,
                 policy_version=p.version,
                 reason="internet access not allowed by policy",
+                ask_scopes=[],
             )
 
         # Approval: require_approval or any scope not in allow (default-deny → ASK).
@@ -123,6 +129,7 @@ class PolicyService:
                 allow_internet=p.allow_internet,
                 policy_version=p.version,
                 reason=f"approval required for scopes: {ask_scopes or 'policy rule'}",
+                ask_scopes=ask_scopes,
             )
 
         return PolicyDecision(
@@ -131,4 +138,5 @@ class PolicyService:
             allow_internet=p.allow_internet,
             policy_version=p.version,
             reason="policy allows",
+            ask_scopes=[],
         )

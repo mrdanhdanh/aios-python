@@ -205,6 +205,51 @@ def test_orchestrator_imports():
     )
 
 
+def test_goals_imports():
+    # TASK-012: goal plane exports (AC12).
+    from aios_core.orchestrator.goals import (
+        FailureRecovery,
+        GoalError,
+        GoalManager,
+        PermissionBroker,
+        QueueError,
+        TaskQueue,
+        build_goal_modules,
+    )
+
+    assert all(
+        x is not None
+        for x in (
+            FailureRecovery,
+            GoalError,
+            GoalManager,
+            PermissionBroker,
+            QueueError,
+            TaskQueue,
+            build_goal_modules,
+        )
+    )
+
+
+def test_build_goal_modules_factory(tmp_path):
+    # AC12 + C2-03/C2-14: factory wires all 4 modules on Settings().goals.db_path.
+    from aios_core.config import Settings
+    from aios_core.kernel import EventBus
+    from aios_core.kernel.services import EventService, PolicyService
+    from aios_core.orchestrator.goals import build_goal_modules
+
+    settings = Settings()
+    settings.goals.db_path = str(tmp_path / "goals.db")  # avoid polluting the repo
+    bus = EventBus()
+    event_service = EventService(bus, tmp_path / "audit.db")
+    gm, tq, broker, recovery = build_goal_modules(
+        settings, event_service, PolicyService(bus)
+    )
+    assert gm._db_path == tq._db_path  # noqa: SLF001 — shared db (C2-14)
+    assert str(tq._db_path) == settings.goals.db_path  # noqa: SLF001 — config alive (C1-13)
+    assert broker is not None and recovery is not None
+
+
 def test_contracts_imports():
     assert ArtifactContract and CompatibilityChecker and ContractMetadata and ContractVersion
     assert Container and ContainerError

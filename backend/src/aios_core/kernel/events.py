@@ -38,6 +38,13 @@ class EventType(str, Enum):
     MODEL_CALL_STARTED = "model.call.started"
     MODEL_CALL_FINISHED = "model.call.finished"
     ERROR_OCCURRED = "error.occurred"
+    # M2-P3b (TASK-012): goals / task queue / recovery events.
+    GOAL_CREATED = "goal.created"
+    GOAL_STATUS_CHANGED = "goal.status_changed"
+    GOAL_TASK_UPDATED = "goal.task_updated"
+    QUEUE_UPDATED = "queue.updated"
+    RECOVERY_RETRY = "recovery.retry"
+    RECOVERY_FALLBACK = "recovery.fallback"
 
 
 @dataclass

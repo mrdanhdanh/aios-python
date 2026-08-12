@@ -60,6 +60,12 @@ class MemorySettings(BaseModel):
     knowledge_db_path: str = "aios/data/knowledge.db"
 
 
+class GoalsSettings(BaseModel):
+    """TASK-012: Goal Manager + Task Queue persistence (shared goals.db)."""
+
+    db_path: str = "aios/data/goals.db"
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -77,6 +83,7 @@ class Settings(BaseSettings):
     resources: ResourcesSettings = ResourcesSettings()
     models: ModelsSettings = ModelsSettings()
     memory: MemorySettings = MemorySettings()
+    goals: GoalsSettings = GoalsSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:
