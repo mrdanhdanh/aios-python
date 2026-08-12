@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from ..events import Event, EventBus, EventType
@@ -32,7 +33,7 @@ class EventService:
 
     def _init_db(self) -> None:
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS audit_events (
@@ -59,7 +60,7 @@ class EventService:
 
     def _audit(self, event: Event) -> None:
         try:
-            with self._connect() as conn:
+            with closing(self._connect()) as conn, conn:
                 conn.execute(
                     "INSERT INTO audit_events (id, type, timestamp, source, payload_json) VALUES (?, ?, ?, ?, ?)",
                     (
@@ -76,7 +77,7 @@ class EventService:
     def query_audit(self, limit: int = 100, event_type: EventType | None = None) -> list[Event]:
         """Return audit events, newest first."""
         try:
-            with self._connect() as conn:
+            with closing(self._connect()) as conn, conn:
                 if event_type is not None:
                     rows = conn.execute(
                         "SELECT id, type, timestamp, source, payload_json FROM audit_events "

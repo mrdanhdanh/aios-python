@@ -2,7 +2,7 @@
 
 __version__ = "0.1.0"
 
-from . import contracts, knowledge, memory, models
+from . import contracts, knowledge, memory, models, workflow
 from .config import Settings, load_settings
 from .container import Container, ContainerError, Scope
 from .healthcheck import (
@@ -28,6 +28,7 @@ __all__ = [
     "models",
     "memory",
     "knowledge",
+    "workflow",
     "Settings",
     "load_settings",
     "Container",

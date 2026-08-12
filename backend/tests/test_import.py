@@ -130,6 +130,31 @@ def test_memory_knowledge_imports():
     )
 
 
+def test_workflow_imports():
+    from aios_core.workflow import (
+        LangGraphCompiler,
+        MockCompiler,
+        WorkflowCompiler,
+        WorkflowDefinition,
+        WorkflowError,
+        WorkflowLibrary,
+        WorkflowNode,
+    )
+
+    assert all(
+        x is not None
+        for x in (
+            LangGraphCompiler,
+            MockCompiler,
+            WorkflowCompiler,
+            WorkflowDefinition,
+            WorkflowError,
+            WorkflowLibrary,
+            WorkflowNode,
+        )
+    )
+
+
 def test_contracts_imports():
     assert ArtifactContract and CompatibilityChecker and ContractMetadata and ContractVersion
     assert Container and ContainerError

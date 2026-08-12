@@ -1,8 +1,9 @@
-"""Knowledge memory: index text → chunks → vectors; semantic search."""
+﻿"""Knowledge memory: index text → chunks → vectors; semantic search."""
 
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any

@@ -1,8 +1,9 @@
-"""Chunk store: keeps chunk text for retrieval (same DB file as vectors)."""
+﻿"""Chunk store: keeps chunk text for retrieval (same DB file as vectors)."""
 
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 
@@ -23,7 +24,7 @@ class ChunksStore:
 
     def _init_db(self) -> None:
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute(
                 "CREATE TABLE IF NOT EXISTS chunks ("
                 " id TEXT PRIMARY KEY, source_id TEXT NOT NULL, chunk_index INTEGER NOT NULL,"
@@ -32,14 +33,14 @@ class ChunksStore:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_chunks_source ON chunks(source_id)")
 
     def add(self, chunk_id: str, source_id: str, chunk_index: int, text: str) -> None:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute(
                 "INSERT INTO chunks (id, source_id, chunk_index, text) VALUES (?, ?, ?, ?)",
                 (chunk_id, source_id, chunk_index, text),
             )
 
     def get(self, chunk_id: str) -> dict | None:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             row = conn.execute(
                 "SELECT id, source_id, chunk_index, text FROM chunks WHERE id = ?", (chunk_id,)
             ).fetchone()
@@ -48,7 +49,7 @@ class ChunksStore:
         return {"id": row[0], "source_id": row[1], "chunk_index": row[2], "text": row[3]}
 
     def get_ids_by_source(self, source_id: str) -> list[str]:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             rows = conn.execute(
                 "SELECT id FROM chunks WHERE source_id = ?", (source_id,)
             ).fetchall()
@@ -60,7 +61,7 @@ class ChunksStore:
         Caller is responsible for deleting old vectors (via get_ids_by_source
         BEFORE calling this) and adding new vectors afterwards.
         """
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute("DELETE FROM chunks WHERE source_id = ?", (source_id,))
             new_ids: list[str] = []
             for index, text in chunks:
@@ -73,5 +74,5 @@ class ChunksStore:
         return new_ids
 
     def delete_by_source(self, source_id: str) -> None:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute("DELETE FROM chunks WHERE source_id = ?", (source_id,))

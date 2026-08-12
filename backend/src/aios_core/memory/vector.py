@@ -1,4 +1,4 @@
-"""Vector store: SQLite-backed cosine similarity search (pure Python)."""
+﻿"""Vector store: SQLite-backed cosine similarity search (pure Python)."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import json
 import math
 import sqlite3
 from abc import ABC, abstractmethod
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -48,7 +49,7 @@ class SQLiteVectorStore(VectorStore):
 
     def _init_db(self) -> None:
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute(
                 "CREATE TABLE IF NOT EXISTS vectors ("
                 " id TEXT PRIMARY KEY, vector TEXT NOT NULL, metadata TEXT NOT NULL DEFAULT '{}')"
@@ -57,7 +58,7 @@ class SQLiteVectorStore(VectorStore):
     def add(self, id: str, vector: list[float], metadata: dict[str, Any] | None = None) -> None:
         if not vector or all(v == 0 for v in vector):
             raise ValueError("vector must be non-empty with non-zero norm")
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             row = conn.execute("SELECT id FROM vectors WHERE id = ?", (id,)).fetchone()
             if row is not None:
                 raise ValueError(f"vector id already exists: {id!r}")
@@ -78,7 +79,7 @@ class SQLiteVectorStore(VectorStore):
         if not vector or all(v == 0 for v in vector):
             raise ValueError("vector must be non-empty with non-zero norm")
 
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             rows = conn.execute("SELECT id, vector, metadata FROM vectors").fetchall()
         if not rows:
             return []
@@ -96,10 +97,10 @@ class SQLiteVectorStore(VectorStore):
         return scored[:top_k]
 
     def delete(self, id: str) -> None:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute("DELETE FROM vectors WHERE id = ?", (id,))
 
     def count(self) -> int:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             row = conn.execute("SELECT COUNT(*) FROM vectors").fetchone()
         return row[0]

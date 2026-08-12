@@ -1,9 +1,10 @@
-"""Conversation memory: SQLite-backed chat history."""
+﻿"""Conversation memory: SQLite-backed chat history."""
 
 from __future__ import annotations
 
 import sqlite3
 import uuid
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -25,7 +26,7 @@ class ConversationMemory:
 
     def _init_db(self) -> None:
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute(
                 "CREATE TABLE IF NOT EXISTS conversations ("
                 " id TEXT PRIMARY KEY, session_id TEXT NOT NULL, created_at TEXT NOT NULL)"
@@ -43,7 +44,7 @@ class ConversationMemory:
     def create_conversation(self, session_id: str) -> str:
         conversation_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute(
                 "INSERT INTO conversations (id, session_id, created_at) VALUES (?, ?, ?)",
                 (conversation_id, session_id, now),
@@ -53,7 +54,7 @@ class ConversationMemory:
     def add_message(self, conversation_id: str, role: str, content: str) -> str:
         if role not in VALID_ROLES:
             raise ValueError(f"role must be one of {VALID_ROLES}, got {role!r}")
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             row = conn.execute(
                 "SELECT 1 FROM conversations WHERE id = ?", (conversation_id,)
             ).fetchone()
@@ -69,7 +70,7 @@ class ConversationMemory:
 
     def get_messages(self, conversation_id: str, limit: int | None = None) -> list[dict]:
         """Always ascending (created_at, id); limit = N newest, ascending."""
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             if limit is not None:
                 rows = conn.execute(
                     "SELECT * FROM (SELECT id, role, content, created_at FROM messages "
@@ -89,7 +90,7 @@ class ConversationMemory:
         ]
 
     def list_conversations(self, session_id: str) -> list[str]:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             rows = conn.execute(
                 "SELECT id FROM conversations WHERE session_id = ? ORDER BY created_at ASC",
                 (session_id,),
