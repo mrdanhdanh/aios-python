@@ -27,9 +27,11 @@ git status                 # working tree sạch sau commit
 - [x] Pass — 4 file `.github/agents/` có YAML frontmatter giữa `---`, description có quote, `user-invocable` đúng (orchestrator=true, subagent=false), tools hợp lệ (read/edit/search/execute/todo/agent/web), agents restriction [spec-writer, critic, reviewer]
 
 ## B4.5 — Progress khớp thực tế
-- [ ] Pass — PROGRESS.md: B0–B2 done, B3/B4 theo trạng thái hiện tại
-- [ ] Pass — LOG.md có entry tương ứng từng bước
+- [x] Pass — PROGRESS.md: B0–B2 done, B3/B4 theo trạng thái hiện tại
+- [x] Pass — LOG.md có entry tương ứng từng bước
 
 ## Kết luận
-- [ ] TẤT CẢ PASS → task được đánh dấu done
+- [x] TẤT CẢ PASS → task được đánh dấu done
 - [ ] CÓ FAIL → ghi rõ bước fail + xử lý trước khi done
+
+> Ghi chú (2026-08-12, M0 review hồi tố): tick lại B4.5 + Kết luận — đã pass từ 2026-08-11 (LOG.md B4 "3/3 pass") nhưng checkbox chưa được đánh dấu. Fix hồ sơ, không đổi kết quả.
