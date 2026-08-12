@@ -12,7 +12,9 @@ class ResourceService:
     """Track token and concurrency usage.
 
     ``max_tokens``/``max_concurrent`` of ``None`` mean unlimited.
-    Releases clamp at zero (never negative).
+    Releases clamp at zero (never negative). Slot acquisition offers both a
+    non-blocking ``acquire_slot`` (reject when full) and a blocking
+    ``acquire_slot_wait`` (FIFO queue) for callers that may block.
     """
 
     def __init__(self, limits: ResourcesSettings | None = None) -> None:
@@ -20,6 +22,8 @@ class ResourceService:
         self._used_tokens = 0
         self._running = 0
         self._lock = threading.RLock()
+        self._slot_cond = threading.Condition(self._lock)
+        self._queue: list[threading.Event] = []
 
     @property
     def limits(self) -> ResourcesSettings:
@@ -54,6 +58,39 @@ class ResourceService:
     def release_slot(self) -> None:
         with self._lock:
             self._running = max(0, self._running - 1)
+            # Wake the next queued acquirer (FIFO).
+            if self._queue:
+                waiter = self._queue.pop(0)
+                waiter.set()
+
+    def acquire_slot_wait(self, timeout: float | None = None) -> bool:
+        """Blocking slot acquisition with FIFO queue.
+
+        Returns ``True`` once a slot is granted (may block). Returns ``False``
+        on timeout. Unbounded ``max_concurrent`` grants immediately.
+        """
+        with self._slot_cond:
+            if self._limits.max_concurrent is None:
+                self._running += 1
+                return True
+            if self._running < self._limits.max_concurrent:
+                self._running += 1
+                return True
+            waiter = threading.Event()
+            self._queue.append(waiter)
+            if not waiter.wait(timeout):
+                # Timed out before being woken; remove self from queue if still there.
+                if waiter in self._queue:
+                    self._queue.remove(waiter)
+                return False
+            # Woken by release_slot: it already decremented _running, so claim it.
+            self._running += 1
+            return True
+
+    def pending(self) -> int:
+        """Number of callers currently blocked waiting for a slot."""
+        with self._lock:
+            return len(self._queue)
 
     def stats(self) -> dict[str, Any]:
         with self._lock:

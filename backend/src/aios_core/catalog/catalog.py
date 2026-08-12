@@ -38,14 +38,39 @@ class SystemCatalog:
     def __init__(self) -> None:
         self._entries: dict[tuple[str, str], CatalogEntry] = {}
         self._lock = threading.RLock()
+        self._revision = 0
 
     def index_entry(self, kind: str, id: str, metadata: dict[str, Any]) -> None:
         with self._lock:
             self._entries[(kind, id)] = CatalogEntry(kind=kind, id=id, metadata=dict(metadata))
+            self._revision += 1
 
     def remove_entry(self, kind: str, id: str) -> None:
         with self._lock:
-            self._entries.pop((kind, id), None)  # idempotent
+            if self._entries.pop((kind, id), None) is not None:  # idempotent
+                self._revision += 1
+
+    def rebuild(self, entries: list[tuple[str, str, dict[str, Any]]]) -> None:
+        """Replace the entire index with ``entries`` and bump the revision.
+
+        ``entries`` is a list of ``(kind, id, metadata)`` tuples.
+        """
+        with self._lock:
+            self._entries = {
+                (kind, id): CatalogEntry(kind=kind, id=id, metadata=dict(metadata))
+                for (kind, id, metadata) in entries
+            }
+            self._revision += 1
+
+    @property
+    def revision(self) -> int:
+        with self._lock:
+            return self._revision
+
+    def is_stale(self, revision: int) -> bool:
+        """True if the catalog has changed since ``revision`` was observed."""
+        with self._lock:
+            return revision < self._revision
 
     def get(self, kind: str, id: str) -> CatalogEntry:
         with self._lock:

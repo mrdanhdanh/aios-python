@@ -33,10 +33,24 @@ class Context:
         return clock() - self._created_mono >= self.ttl_s
 
 
+# Inheritance chain: a scope falls back to its parent when a key is missing.
+# SHARED is a root-shared scope (no upward inheritance). Mirrors the runtime
+# layering SYSTEM <- USER <- WORKFLOW <- AGENT <- EXECUTION.
+PARENT: dict[ContextScope, ContextScope | None] = {
+    ContextScope.EXECUTION: ContextScope.AGENT,
+    ContextScope.AGENT: ContextScope.WORKFLOW,
+    ContextScope.WORKFLOW: ContextScope.USER,
+    ContextScope.USER: ContextScope.SYSTEM,
+    ContextScope.SYSTEM: None,
+    ContextScope.SHARED: None,
+}
+
+
 class ContextService:
     """Scoped context store with lazy TTL eviction.
 
     ``clock`` is injectable (monotonic by default) so tests can fake time.
+    Reads support optional parent-scope inheritance via ``inherit=True``.
     """
 
     def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
@@ -56,32 +70,44 @@ class ContextService:
         self._store[scope][key] = ctx
         return ctx
 
-    def get(self, scope: ContextScope, key: str) -> Any:
-        ctx = self._store[scope].get(key)
-        if ctx is None:
-            return None
-        if ctx.is_expired(self._clock):
-            del self._store[scope][key]
-            return None
-        return ctx.value
+    def get(self, scope: ContextScope, key: str, inherit: bool = True) -> Any:
+        ctx = self._lookup(scope, key, inherit)
+        return ctx.value if ctx is not None else None
 
-    def get_context(self, scope: ContextScope, key: str) -> Context | None:
-        ctx = self._store[scope].get(key)
-        if ctx is None:
-            return None
-        if ctx.is_expired(self._clock):
-            del self._store[scope][key]
-            return None
-        return ctx
+    def get_context(self, scope: ContextScope, key: str, inherit: bool = True) -> Context | None:
+        return self._lookup(scope, key, inherit)
+
+    def _lookup(self, scope: ContextScope, key: str, inherit: bool) -> Context | None:
+        current: ContextScope | None = scope
+        visited: set[ContextScope] = set()
+        while current is not None and current not in visited:
+            visited.add(current)
+            ctx = self._store[current].get(key)
+            if ctx is not None and not ctx.is_expired(self._clock):
+                return ctx
+            if ctx is not None and ctx.is_expired(self._clock):
+                del self._store[current][key]
+            if not inherit:
+                break
+            current = PARENT.get(current)
+        return None
 
     def delete(self, scope: ContextScope, key: str) -> None:
         self._store[scope].pop(key, None)
 
-    def get_all(self, scope: ContextScope) -> dict[str, Any]:
+    def get_all(self, scope: ContextScope, inherit: bool = True) -> dict[str, Any]:
         result: dict[str, Any] = {}
-        for key, ctx in list(self._store[scope].items()):
-            if ctx.is_expired(self._clock):
-                del self._store[scope][key]
-                continue
-            result[key] = ctx.value
+        current: ContextScope | None = scope
+        visited: set[ContextScope] = set()
+        while current is not None and current not in visited:
+            visited.add(current)
+            for key, ctx in list(self._store[current].items()):
+                if ctx.is_expired(self._clock):
+                    del self._store[current][key]
+                    continue
+                # First (most-specific) scope wins; don't shadow.
+                result.setdefault(key, ctx.value)
+            if not inherit:
+                break
+            current = PARENT.get(current)
         return result

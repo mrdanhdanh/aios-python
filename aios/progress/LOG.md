@@ -6,6 +6,11 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-12 | TASK-010 | K3 | pytest 402 pass, coverage 94.96%; fix 2 (matcher path bị rule chặn — sửa test; RuntimeError ≠ ModelError) | done — 10/10 AC, offline-first 90% verify | `backend/tests/` |
+| 2026-08-12 | TASK-010 | K1-K2 | Implement orchestrator v1: normalizer/rule_engine/workflow_matcher/planner/agent_selector/system_knowledge/orchestrator | done | `orchestrator/` |
+| 2026-08-12 | TASK-010 | review | Reviewer: 2 R1 blocking (Yêu cầu #5 dừng cứng mâu thuẫn Phạm vi #5; reset llm_calls chưa pin) + 3 R2 + 8 R3 — resolve hết | done | `tasks/TASK-010/review.md` |
+| 2026-08-12 | TASK-010 | critique-2 | Critic v2: 3 P1 (intent None mâu thuẫn #/!skill; Yêu cầu #5; longest vs priority) + 8 P2 + 8 P3 — resolve hết | done | `tasks/TASK-010/critique-2.md` |
+| 2026-08-12 | TASK-010 | critique-1 | Critic v1: 3 P1 (false positive substring; matcher không bao giờ chạy; llm_calls/AC6) + 9 P2 + 8 P3 — resolve hết | done | `tasks/TASK-010/critique-1.md` |
 | 2026-08-12 | M1-review | [bypass] F-001..F-007 | Remediation M1 findings: thêm 12 test targeted (models/prompts/vector/cli/knowledge_graph) → 358 pass, coverage 95.63%; fix `test_simulate_prints_reason` (patch đúng `aios_core.kernel.services.ExecutionService`); erratum coverage F-001..F-005 trong `M1-review-independent.md` (số subset giả → full-suite thật: graph 98%, cli 95%, ollama 94%, openai 74%, prompts 97%, vector 99%); F-007 thêm hash `a3426de` vào `PROGRESS.md`; F-006 audit LOG TASK-002..009 | done | `backend/tests/`, `reviews/M1-review-independent.md`, `PROGRESS.md` |
 | 2026-08-12 | M1-review | [bypass] F-006 | Audit lifecycle TASK-002..009: mỗi task đủ spec→critique×2→review→implement→test→evaluate→commit (số liệu: T002 32 tests/96.14%/commit 7a270ff+486fb9f; T003 107/94.82%/20AC; T004 162/94.77%/commit eb64795; T005 207/95.32%/commit a3426de; T006 233/94.73%; T007 270/94.90%; T008 300/94.92%; T009 346/95.30% — M1 done). Detail evaluation.md mỗi task | done — F-006 addressed | `tasks/TASK-00*/evaluation.md`, `PROGRESS.md` |
 | 2026-08-12 | M1-review | review-brief | Tạo M1 review brief (điền từ template): 7 tiêu chí AC từ PLAN.md + deliverable 16 mục (code/test/hồ sơ) + cách kiểm chứng từng tiêu chí | done | `reviews/M1-review-brief.md` |

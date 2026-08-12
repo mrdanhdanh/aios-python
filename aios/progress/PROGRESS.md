@@ -8,8 +8,8 @@
 | Milestone | Mô tả | Trạng thái |
 |-----------|-------|------------|
 | M0 | Development Foundation (VS Code agent + progress system) | `done` ✅ |
-| M1 | Core Runtime (P0–P2: infra, kernel, model/memory/knowledge, workflow/capability/catalog) | `done` ✅ |
-| M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `todo` ← next |
+| M1 | Core Runtime (P0–P2: infra, kernel, model/memory/knowledge, workflow/capability/catalog) | `done` ✅ (review độc lập PASS) |
+| M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `in-progress` |
 | M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `todo` |
 | M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `todo` |
 | M5 | Enterprise Edition (tương lai — không làm v1) | `todo` |
@@ -88,7 +88,9 @@
 | TASK-007 | M1-P1b — Memory 4 loại + Knowledge pipeline | M1 | `done` ✅ | AIOS Orchestrator |
 | TASK-008 | M1-P2a — Workflow Definition + compilers + library + CLI | M1 | `done` ✅ | AIOS Orchestrator |
 | TASK-009 | M1-P2b — Capability + Prompt Registry + Catalog + Knowledge Graph | M1 | `done` ✅ | AIOS Orchestrator |
-| TASK-010 | M2-P3a — AIOS Orchestrator v1 (Decision Pipeline 4 tầng + Workflow Matcher) | M2 | `todo` | AIOS Orchestrator |
+| TASK-010 | M2-P3a — AIOS Orchestrator v1: Decision Pipeline 4 tầng (Normalizer, Rule Engine, Workflow Matcher, Planner LLM) | M2 | `done` ✅ | AIOS Orchestrator |
+| TASK-012 | M2-P3b — Goal Manager + Task Queue + Permission Broker + Failure Recovery | M2 | `todo` | AIOS Orchestrator |
+| TASK-011 | M1/P3 — Remediation 9 P3 findings từ M1 v2 review (CLI subcommands, contract field-evolution test, resource queue, context inheritance, tool/snapshot events, catalog rebuild, CLI DI, ADR, benchmark) | M1 (follow-up) | `in-progress` | AIOS Orchestrator |
 
 ## Log gần nhất
 
