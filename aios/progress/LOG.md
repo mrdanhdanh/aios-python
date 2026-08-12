@@ -6,6 +6,7 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-12 | M1-review | review-brief | Tạo M1 review brief (điền từ template): 7 tiêu chí AC từ PLAN.md + deliverable 16 mục (code/test/hồ sơ) + cách kiểm chứng từng tiêu chí | done | `reviews/M1-review-brief.md` |
 | 2026-08-12 | M0-review | [bypass] F-004 | Commit M0-review-brief.md (đã sửa nhưng chưa commit — vi phạm AGENTS.md §4) | done — commit 92f1321 | `reviews/M0-review-brief.md` |
 | 2026-08-12 | M0-review | [bypass] F-001 | Thêm quy tắc explicit "không bypass hard gate bằng cách tự tuyên bố hoàn thành" vào orchestrator agent | done — commit 3b7d8b6 | `.github/agents/aios-orchestrator.agent.md` |
 | 2026-08-12 | M0-review | [bypass] F-002 | Cập nhật STATS.md M0: bypass 0 → 1 (khớp LOG.md có 1 entry bypass) | done — commit 3b7d8b6 | `aios/progress/STATS.md` |
