@@ -89,6 +89,29 @@ def test_runtime_kernel_import():
     assert RuntimeKernel is not None
 
 
+def test_models_imports():
+    from aios_core.models import (
+        MockModel,
+        ModelContract,
+        ModelError,
+        ModelNotAvailableError,
+        ModelRegistry,
+        ModelTimeoutError,
+    )
+
+    assert all(
+        x is not None
+        for x in (
+            MockModel,
+            ModelContract,
+            ModelError,
+            ModelNotAvailableError,
+            ModelRegistry,
+            ModelTimeoutError,
+        )
+    )
+
+
 def test_contracts_imports():
     assert ArtifactContract and CompatibilityChecker and ContractMetadata and ContractVersion
     assert Container and ContainerError

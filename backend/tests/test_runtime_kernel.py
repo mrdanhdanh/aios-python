@@ -102,3 +102,12 @@ def test_settings_resources_wired(tmp_path):
     resources = kernel.container.resolve(ResourceService)
     assert resources.limits.max_tokens == 1000
     assert resources.limits.max_concurrent == 2
+
+
+def test_model_registry_wired(tmp_path):
+    from aios_core.models import ModelRegistry
+
+    kernel = RuntimeKernel.create(make_settings(tmp_path))
+    registry = kernel.container.resolve(ModelRegistry)
+    assert "mock" in registry.list()
+    assert registry.default().name == "mock"

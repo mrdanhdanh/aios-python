@@ -51,6 +51,10 @@ class ResourcesSettings(BaseModel):
     max_concurrent: int | None = None
 
 
+class ModelsSettings(BaseModel):
+    default: str = "mock"
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -66,6 +70,7 @@ class Settings(BaseSettings):
     audit: AuditSettings = AuditSettings()
     artifacts: ArtifactsSettings = ArtifactsSettings()
     resources: ResourcesSettings = ResourcesSettings()
+    models: ModelsSettings = ModelsSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

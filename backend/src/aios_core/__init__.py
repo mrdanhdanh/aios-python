@@ -2,7 +2,7 @@
 
 __version__ = "0.1.0"
 
-from . import contracts
+from . import contracts, models
 from .config import Settings, load_settings
 from .container import Container, ContainerError, Scope
 from .healthcheck import (

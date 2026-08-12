@@ -124,3 +124,10 @@ def test_audit_artifacts_from_yaml(tmp_path, monkeypatch):
     settings = load_settings()
     assert settings.audit.db_path == "custom/audit.db"
     assert settings.artifacts.dir == "custom/arts"
+
+
+def test_models_default(tmp_path, monkeypatch):
+    monkeypatch.delenv(CONFIG_PATH_ENV, raising=False)
+    monkeypatch.chdir(tmp_path)
+    settings = load_settings()
+    assert settings.models.default == "mock"

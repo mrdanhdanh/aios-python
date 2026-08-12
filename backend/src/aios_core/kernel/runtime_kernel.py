@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from ..config import ResourcesSettings, Settings
 from ..container import Container
+from ..models import MockModel, ModelRegistry
 from .events import EventBus
 from .services import (
     ArtifactService,
@@ -59,6 +60,11 @@ class RuntimeKernel:
         container.register_instance(ArtifactService, artifact_service)
         container.register_instance(ContextService, context_service)
         container.register_instance(ResourcesSettings, resources_settings)
+
+        # Model registry (pre-register the offline mock).
+        model_registry = ModelRegistry(default_name=settings.models.default)
+        model_registry.register("mock", MockModel())
+        container.register_instance(ModelRegistry, model_registry)
 
         # Remaining services are constructed via the container (type-only hints).
         container.register(PermissionService, PermissionService)
