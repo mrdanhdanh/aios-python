@@ -227,6 +227,9 @@ Policy (cấu hình, có version) quyết định trước khi chạy: Có đư�
 Pool tái sử dụng container theo ngôn ngữ (python/node/go...), warm-start, health check, reset state giữa lần chạy, eviction khi idle. Giảm đáng kể latency so với tạo container mỗi lần.
 
 ## AIOS SDK (đồng bộ từ đầu)
+
+## Architecture Decisions (ADR)
+Xem [`docs/adr/`](adr/): 0001-engine-independence, 0002-capability-first, 0003-policy-first.
 - sdk/python: decorators + base classes để viết Agent, Tool, Capability, Skill, Prompt, Workflow (ví dụ @aios.tool, @aios.agent, @aios.workflow)
 - sdk/typescript: client cho extension + dashboard + viết tool bằng TS
 - SDK dùng chung contract schemas (generate từ backend contracts)

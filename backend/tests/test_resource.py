@@ -55,3 +55,55 @@ def test_stats_snapshot():
 def test_negative_tokens_rejected():
     svc = ResourceService()
     assert svc.acquire_tokens(-5) is False
+
+
+def test_acquire_slot_wait_blocks_until_release():
+    # F-003: blocking acquire_slot_wait queues when full, FIFO wake on release.
+    import threading
+    import time
+
+    svc = ResourceService(ResourcesSettings(max_concurrent=1))
+    assert svc.acquire_slot_wait() is True  # first grants immediately
+    assert svc.pending() == 0
+
+    started = threading.Event()
+    granted = threading.Event()
+
+    def worker():
+        started.wait(1.0)
+        ok = svc.acquire_slot_wait(timeout=2.0)  # should block until release
+        if ok:
+            granted.set()
+
+    t = threading.Thread(target=worker)
+    t.start()
+    started.set()
+    # Poll until the worker has actually enqueued itself (blocked on the slot).
+    for _ in range(200):
+        if svc.pending() == 1:
+            break
+        time.sleep(0.005)
+    # While blocked, pending should be 1 and running must not exceed limit.
+    assert svc.pending() == 1
+    assert svc.stats()["running"] == 1
+    svc.release_slot()  # wake the waiter
+    assert granted.wait(2.0)
+    assert svc.stats()["running"] == 1
+    t.join(2.0)
+    svc.release_slot()
+
+
+def test_acquire_slot_wait_timeout():
+    svc = ResourceService(ResourcesSettings(max_concurrent=1))
+    assert svc.acquire_slot_wait() is True
+    assert svc.acquire_slot_wait(timeout=0.1) is False  # times out, no slot
+    assert svc.pending() == 0  # timeout removed itself from queue
+    svc.release_slot()
+
+
+def test_nonblocking_acquire_slot_backward_compat():
+    # F-003/R2: original non-blocking API still returns False when full.
+    svc = ResourceService(ResourcesSettings(max_concurrent=1))
+    assert svc.acquire_slot() is True
+    assert svc.acquire_slot() is False
+    svc.release_slot()

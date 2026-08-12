@@ -72,6 +72,20 @@
 - CapabilityRegistry + PromptRegistry (str.format v1) + SystemCatalog + KnowledgeGraph + PLAN amend
 - **346 tests pass, coverage 95.30% — M1 HOÀN TẤT (9/9 tasks)**
 
+## M1 — Follow-up (P3 remediation) ✅ (2026-08-12)
+
+**TASK-011 — Remediation 9 P3 findings từ M1 v2 independent review** ✅ (2026-08-12)
+- F-001 CLI subcommands (doctor / catalog list / workflow validate / contract validate, nested parsers)
+- F-002 contract field-evolution regression tests (pydantic dual-class, 4 case direction)
+- F-003 Resource FIFO queue (`acquire_slot_wait` blocking + `pending()`), giữ `acquire_slot` non-blocking
+- F-004 Context inheritance (PARENT map, `get/get_context/get_all` inherit)
+- F-005 Tool/Snapshot events (`SNAPSHOT_SAVED` + `TOOL_STARTED`/`TOOL_FINISHED` emit từ ExecutionService)
+- F-006 Catalog `rebuild()` + `_revision` + `is_stale()`
+- F-007 CLI dùng `RuntimeKernel.create()` / `SystemCatalog()` (DI đúng chỗ), không còn `ExecutionService(...)` trực tiếp
+- F-008 ≥3 ADR (`docs/adr/0001..0003`) + link từ `PLAN.md`
+- F-009 Benchmark harness (`tests/test_benchmark.py`, marked skippable)
+- **428 tests pass, coverage 95.76%, 9/9 AC — M1 runtime hardening hoàn tất**
+
 ## M1 — Core Runtime ✅ (2026-08-12)
 **Toàn bộ P0–P2 xong**: 9 services + contracts + DI + event bus + models (Mock/OpenAI/Ollama) + memory 4 loại + knowledge pipeline + workflow (CLI simulate) + capability + prompt + catalog + knowledge graph. Deliverable `aiagent run workflow.yaml --simulate` ✓
 
@@ -90,12 +104,12 @@
 | TASK-009 | M1-P2b — Capability + Prompt Registry + Catalog + Knowledge Graph | M1 | `done` ✅ | AIOS Orchestrator |
 | TASK-010 | M2-P3a — AIOS Orchestrator v1: Decision Pipeline 4 tầng (Normalizer, Rule Engine, Workflow Matcher, Planner LLM) | M2 | `done` ✅ | AIOS Orchestrator |
 | TASK-012 | M2-P3b — Goal Manager + Task Queue + Permission Broker + Failure Recovery | M2 | `todo` | AIOS Orchestrator |
-| TASK-011 | M1/P3 — Remediation 9 P3 findings từ M1 v2 review (CLI subcommands, contract field-evolution test, resource queue, context inheritance, tool/snapshot events, catalog rebuild, CLI DI, ADR, benchmark) | M1 (follow-up) | `in-progress` | AIOS Orchestrator |
+| TASK-011 | M1/P3 — Remediation 9 P3 findings từ M1 v2 review (CLI subcommands, contract field-evolution test, resource queue, context inheritance, tool/snapshot events, catalog rebuild, CLI DI, ADR, benchmark) | M1 (follow-up) | `done` ✅ | AIOS Orchestrator |
 
 ## Log gần nhất
 
 Xem chi tiết: `LOG.md`. 3 entry cuối:
 
-1. `2026-08-12 | TASK-003 | D5.1 | 107 tests pass ×2 nơi, coverage 94.82%, 20/20 AC` → done
-2. `2026-08-12 | TASK-003 | D2-D4 | Implement + fix 5 lỗi thật (pydantic, container, event bus)` → done
-3. `2026-08-12 | TASK-003 | critique ×2 + review | resolve toàn bộ trước implement` → done
+1. `2026-08-12 | TASK-011 | T9 | pytest 428 pass, coverage 95.76%, 9/9 AC; fix 5 lỗi thật (cli yaml/nodes/path, context inherit default, resource cond-lock, benchmark get O(1), dup SNAPSHOT emit)` → done
+2. `2026-08-12 | TASK-011 | T1-T8 | Implement 9 findings F-001..F-009 (cli subcommands+DI, contract evolution test, resource queue, context inherit, tool/snapshot events, catalog rebuild, ADR ×3, benchmark)` → done
+3. `2026-08-12 | TASK-011 | critique ×2 + review + tasks | resolve 3 critical defect (F-003 API mâu thuẫn, F-007 DI gap, F-002 sai tooling) + N1-N7` → done

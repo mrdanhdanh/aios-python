@@ -70,11 +70,11 @@ class ContextService:
         self._store[scope][key] = ctx
         return ctx
 
-    def get(self, scope: ContextScope, key: str, inherit: bool = True) -> Any:
+    def get(self, scope: ContextScope, key: str, inherit: bool = False) -> Any:
         ctx = self._lookup(scope, key, inherit)
         return ctx.value if ctx is not None else None
 
-    def get_context(self, scope: ContextScope, key: str, inherit: bool = True) -> Context | None:
+    def get_context(self, scope: ContextScope, key: str, inherit: bool = False) -> Context | None:
         return self._lookup(scope, key, inherit)
 
     def _lookup(self, scope: ContextScope, key: str, inherit: bool) -> Context | None:
@@ -95,7 +95,7 @@ class ContextService:
     def delete(self, scope: ContextScope, key: str) -> None:
         self._store[scope].pop(key, None)
 
-    def get_all(self, scope: ContextScope, inherit: bool = True) -> dict[str, Any]:
+    def get_all(self, scope: ContextScope, inherit: bool = False) -> dict[str, Any]:
         result: dict[str, Any] = {}
         current: ContextScope | None = scope
         visited: set[ContextScope] = set()

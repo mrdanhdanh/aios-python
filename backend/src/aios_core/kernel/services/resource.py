@@ -68,6 +68,10 @@ class ResourceService:
 
         Returns ``True`` once a slot is granted (may block). Returns ``False``
         on timeout. Unbounded ``max_concurrent`` grants immediately.
+
+        The wait on the per-waiter ``Event`` happens *outside* the condition
+        lock so that ``pending()`` and ``release_slot()`` can run concurrently
+        while a caller is blocked.
         """
         with self._slot_cond:
             if self._limits.max_concurrent is None:
@@ -78,14 +82,16 @@ class ResourceService:
                 return True
             waiter = threading.Event()
             self._queue.append(waiter)
-            if not waiter.wait(timeout):
-                # Timed out before being woken; remove self from queue if still there.
+        # Block WITHOUT holding the condition lock so release_slot/pending work.
+        if not waiter.wait(timeout):
+            with self._slot_cond:
                 if waiter in self._queue:
                     self._queue.remove(waiter)
-                return False
-            # Woken by release_slot: it already decremented _running, so claim it.
+            return False
+        # Woken by release_slot: it already decremented _running, so claim it.
+        with self._slot_cond:
             self._running += 1
-            return True
+        return True
 
     def pending(self) -> int:
         """Number of callers currently blocked waiting for a slot."""

@@ -23,6 +23,13 @@ def test_emit_publishes_to_subscribers(bus, tmp_path):
     assert event.source == "test"
 
 
+def test_snapshot_saved_event_type_exists():
+    # F-005: SNAPSHOT_SAVED is a first-class event type.
+    assert EventType.SNAPSHOT_SAVED == "state.snapshot_saved"
+    assert EventType.TOOL_STARTED == "tool.started"
+    assert EventType.TOOL_FINISHED == "tool.finished"
+
+
 def test_audit_row_written(bus, tmp_path):
     db_path = tmp_path / "audit.db"
     svc = EventService(bus, db_path)

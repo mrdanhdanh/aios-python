@@ -135,6 +135,72 @@ def test_artifact_validate_false_on_bad_checksum():
     assert a.validate() is False
 
 
+# -- schema-evolution regression (F-002) --------------------------------------
+# Tests pydantic contract semantics with two standalone models (NOT the AIOS
+# framework's CompatibilityChecker — that is semver-only). Label: schema
+# field-evolution direction checks.
+
+from pydantic import BaseModel, ConfigDict  # noqa: E402
+
+
+class SampleContractV1(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    version: str
+
+
+class SampleContractV2AddOptional(SampleContractV1):
+    model_config = ConfigDict(extra="forbid")
+
+    note: str | None = None  # added optional field
+
+
+class SampleContractV2RemoveRequired(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str  # removed "version" (required in V1)
+
+
+class SampleContractV2Rename(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    identifier: str  # renamed from "id"
+    version: str
+
+
+class SampleContractV2Required(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    version: str
+    owner: str  # optional→required in V1 would mean V1 had it optional
+
+
+def test_evolution_add_optional_is_compatible():
+    v1_payload = {"id": "x", "version": "1.0.0"}
+    assert SampleContractV2AddOptional.model_validate(v1_payload)  # compatible
+
+
+def test_evolution_remove_required_is_breaking():
+    v1_payload = {"id": "x", "version": "1.0.0"}
+    with pytest.raises(ValidationError):
+        SampleContractV2RemoveRequired.model_validate(v1_payload)  # extra "version" forbidden
+
+
+def test_evolution_rename_is_breaking():
+    v1_payload = {"id": "x", "version": "1.0.0"}
+    with pytest.raises(ValidationError):
+        SampleContractV2Rename.model_validate(v1_payload)  # "id" forbidden, "identifier" missing
+
+
+def test_evolution_optional_to_required_is_breaking():
+    # V1 had "owner" optional; V2 makes it required → V1 payload without owner breaks.
+    v1_payload = {"id": "x", "version": "1.0.0"}
+    with pytest.raises(ValidationError):
+        SampleContractV2Required.model_validate(v1_payload)  # missing "owner"
+
+
 def test_validate_returns_false_instead_of_raising():
     # Contract.validate() is the enforcement point; ArtifactContract implements it.
     a = _artifact()

@@ -257,6 +257,38 @@ def test_events_emitted(tmp_path):
     assert received[0].payload["execution_id"] == "plan-test"
 
 
+def test_snapshot_and_tool_events_emitted(tmp_path):
+    # F-005: SNAPSHOT_SAVED after each node snapshot, TOOL_STARTED/FINISHED per node.
+    bus = EventBus()
+    snapshot_events = []
+    tool_started = []
+    tool_finished = []
+    bus.subscribe(EventType.SNAPSHOT_SAVED, lambda ev: snapshot_events.append(ev))
+    bus.subscribe(EventType.TOOL_STARTED, lambda ev: tool_started.append(ev))
+    bus.subscribe(EventType.TOOL_FINISHED, lambda ev: tool_finished.append(ev))
+    execution = ExecutionService(
+        EventService(bus, tmp_path / "a.db"),
+        PolicyService(bus),
+        StateService(),
+        ResourceService(),
+    )
+    plan = make_plan()
+    result = execution.execute(plan, {"n1": lambda n, r: 1, "n2": lambda n, r: 2})
+    assert result.status == ExecutionStatus.COMPLETED
+    # One SNAPSHOT_SAVED per node (2 nodes).
+    assert len(snapshot_events) == 2
+    assert all(e.payload.get("execution_id") == plan.id for e in snapshot_events)
+    # One TOOL_STARTED + TOOL_FINISHED per node.
+    assert len(tool_started) == 2
+    assert len(tool_finished) == 2
+    for started, finished in zip(tool_started, tool_finished):
+        assert started.payload["execution_id"] == plan.id
+        assert finished.payload["execution_id"] == plan.id
+        assert finished.payload["ok"] is True
+        # node_id present and matched between start/finish
+        assert started.payload["node_id"] == finished.payload["node_id"]
+
+
 def test_results_saved_in_state(svc):
     plan = make_plan()
     svc.execute(plan, {"n1": lambda n, r: "r1", "n2": lambda n, r: "r2"})

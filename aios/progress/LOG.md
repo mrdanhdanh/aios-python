@@ -6,6 +6,9 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-12 | TASK-011 | T10 | [bypass] fix test `test_scope_isolation`: đúng thiết kế default `inherit=False`, đổi assertion sang `inherit=True` cho nhánh fallback | done — 428 pass, coverage 95.76% | `tests/test_context.py` |
+| 2026-08-12 | TASK-011 | T9 | pytest 428 pass, coverage 95.76%; fix 5 lỗi thật (cli `from_yaml`/`nodes`/`str(_db_path)`; context default `inherit=False`; resource `acquire_slot_wait` chờ ngoài cond-lock; benchmark `get` O(1) thay `tools_for` O(n); dedup `SNAPSHOT_SAVED` emit) | done — 9/9 AC, coverage ≥95% giữ | `backend/tests/`, `backend/src/` |
+| 2026-08-12 | TASK-011 | T1-T8 | Implement 9 findings F-001..F-009: cli subcommands (doctor/catalog/workflow validate/contract validate) + DI `RuntimeKernel.create()`; contract field-evolution test; resource FIFO queue + `pending()`; context PARENT inheritance; `SNAPSHOT_SAVED` + `TOOL_STARTED`/`TOOL_FINISHED` events; catalog `rebuild()`/`_revision`/`is_stale()`; 3 ADR + link PLAN.md; benchmark harness | done | `workflow/cli.py`, `kernel/services/`, `catalog/catalog.py`, `docs/adr/`, `tests/test_benchmark.py` |
 | 2026-08-12 | TASK-010 | K3 | pytest 402 pass, coverage 94.96%; fix 2 (matcher path bị rule chặn — sửa test; RuntimeError ≠ ModelError) | done — 10/10 AC, offline-first 90% verify | `backend/tests/` |
 | 2026-08-12 | TASK-010 | K1-K2 | Implement orchestrator v1: normalizer/rule_engine/workflow_matcher/planner/agent_selector/system_knowledge/orchestrator | done | `orchestrator/` |
 | 2026-08-12 | TASK-010 | review | Reviewer: 2 R1 blocking (Yêu cầu #5 dừng cứng mâu thuẫn Phạm vi #5; reset llm_calls chưa pin) + 3 R2 + 8 R3 — resolve hết | done | `tasks/TASK-010/review.md` |

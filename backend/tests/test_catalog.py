@@ -69,3 +69,60 @@ def test_sorted_results(cat):
 
 def test_count(cat):
     assert cat.count() == 2
+
+
+def test_rebuild_replaces_index_and_bumps_revision():
+    # F-006: rebuild() wipes + re-indexes and bumps the revision.
+    cat = SystemCatalog()
+    cat.index_entry("workflow", "a", {"x": 1})
+    rev0 = cat.revision
+    cat.rebuild([("skill", "s1", {"y": 2}), ("agent", "a1", {"z": 3})])
+    assert cat.count() == 2
+    assert cat.get("skill", "s1").metadata == {"y": 2}
+    with pytest.raises(CatalogError):
+        cat.get("workflow", "a")  # old entry gone
+    assert cat.revision == rev0 + 1
+
+
+def test_is_stale_detects_changes():
+    # F-006: is_stale() reports whether the catalog changed since a revision.
+    cat = SystemCatalog()
+    rev = cat.revision
+    assert cat.is_stale(rev) is False
+    cat.index_entry("workflow", "w", {"d": 1})
+    assert cat.is_stale(rev) is True
+    cat.remove_entry("workflow", "w")
+    assert cat.is_stale(rev) is True  # removal also bumps revision
+
+
+def test_rebuild_thread_safe_under_concurrent_search():
+    import threading
+
+    cat = SystemCatalog()
+    cat.index_entry("workflow", "w", {"d": 1})
+
+    errors = []
+
+    def searcher():
+        try:
+            for _ in range(50):
+                cat.search("")
+                cat.revision
+        except Exception as exc:  # noqa: BLE001
+            errors.append(exc)
+
+    def rebuilder():
+        try:
+            for i in range(50):
+                cat.rebuild([("workflow", f"w{i}", {"d": i})])
+        except Exception as exc:  # noqa: BLE001
+            errors.append(exc)
+
+    threads = [threading.Thread(target=searcher) for _ in range(3)] + [
+        threading.Thread(target=rebuilder) for _ in range(2)
+    ]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(2.0)
+    assert errors == []

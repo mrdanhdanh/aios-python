@@ -29,3 +29,6 @@ path = "src/aios_core/__init__.py"
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "--cov=aios_core --cov-report=term-missing --cov-fail-under=80"
+markers = [
+    "benchmark: performance smoke tests (skip with -m 'not benchmark')",
+]
