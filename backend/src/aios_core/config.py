@@ -55,6 +55,11 @@ class ModelsSettings(BaseModel):
     default: str = "mock"
 
 
+class MemorySettings(BaseModel):
+    conversation_db_path: str = "aios/data/conversations.db"
+    knowledge_db_path: str = "aios/data/knowledge.db"
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -71,6 +76,7 @@ class Settings(BaseSettings):
     artifacts: ArtifactsSettings = ArtifactsSettings()
     resources: ResourcesSettings = ResourcesSettings()
     models: ModelsSettings = ModelsSettings()
+    memory: MemorySettings = MemorySettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

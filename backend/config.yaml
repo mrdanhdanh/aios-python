@@ -23,3 +23,7 @@ resources:
 
 models:
   default: "mock"
+
+memory:
+  conversation_db_path: "aios/data/conversations.db"
+  knowledge_db_path: "aios/data/knowledge.db"

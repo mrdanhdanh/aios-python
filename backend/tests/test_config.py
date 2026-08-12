@@ -131,3 +131,11 @@ def test_models_default(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     settings = load_settings()
     assert settings.models.default == "mock"
+
+
+def test_memory_settings(tmp_path, monkeypatch):
+    monkeypatch.delenv(CONFIG_PATH_ENV, raising=False)
+    monkeypatch.chdir(tmp_path)
+    settings = load_settings()
+    assert settings.memory.conversation_db_path == "aios/data/conversations.db"
+    assert settings.memory.knowledge_db_path == "aios/data/knowledge.db"

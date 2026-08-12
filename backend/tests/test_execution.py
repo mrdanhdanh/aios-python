@@ -113,21 +113,24 @@ def test_timeout_zero_no_timeout(svc):
 
 def test_cancel_between_nodes(svc):
     node1_done = threading.Event()
+    release_node1 = threading.Event()
     node2_ran = []
 
     def n1(node, results):
         node1_done.set()
+        release_node1.wait(2.0)  # hold node 1 until main thread cancels
         return "done1"
 
     plan = make_plan()
-    t = threading.Thread(target=lambda: svc.execute(plan, {"n1": n1, "n2": lambda n, r: node2_ran.append(1)}))
+    t = threading.Thread(
+        target=lambda: svc.execute(plan, {"n1": n1, "n2": lambda n, r: node2_ran.append(1)})
+    )
     t.start()
     assert node1_done.wait(1.0)
     svc.cancel(plan.id)
+    release_node1.set()
     t.join(2.0)
-    assert node2_ran == []
-    # result of that run: need to capture — re-run via flag check
-    svc.cancel(plan.id)  # no-op if unknown, but flag persists
+    assert node2_ran == []  # cancel flag set before node 2 ran
 
 
 def test_cancel_before_execute_immediate(svc):

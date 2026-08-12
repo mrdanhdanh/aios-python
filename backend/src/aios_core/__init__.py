@@ -2,7 +2,7 @@
 
 __version__ = "0.1.0"
 
-from . import contracts, models
+from . import contracts, knowledge, memory, models
 from .config import Settings, load_settings
 from .container import Container, ContainerError, Scope
 from .healthcheck import (
@@ -25,6 +25,9 @@ from .metadata import AiOSMetadata, make_component_metadata
 __all__ = [
     "__version__",
     "contracts",
+    "models",
+    "memory",
+    "knowledge",
     "Settings",
     "load_settings",
     "Container",

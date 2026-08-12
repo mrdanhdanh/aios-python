@@ -112,6 +112,24 @@ def test_models_imports():
     )
 
 
+def test_memory_knowledge_imports():
+    from aios_core.knowledge import ChunkResult, KnowledgeMemory, MockEmbedder
+    from aios_core.memory import ConversationMemory, SessionMemory, SQLiteVectorStore, VectorStore
+
+    assert all(
+        x is not None
+        for x in (
+            ChunkResult,
+            KnowledgeMemory,
+            MockEmbedder,
+            ConversationMemory,
+            SessionMemory,
+            SQLiteVectorStore,
+            VectorStore,
+        )
+    )
+
+
 def test_contracts_imports():
     assert ArtifactContract and CompatibilityChecker and ContractMetadata and ContractVersion
     assert Container and ContainerError
