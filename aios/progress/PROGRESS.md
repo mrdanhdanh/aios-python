@@ -49,7 +49,7 @@
 
 **TASK-005 — Kernel Services II** ✅ (2026-08-12)
 - Scheduler + State + Resource + ExecutionService + RuntimeKernel (9 services wiring)
-- 207 tests pass, coverage 95.32%, 15/15 AC — commit code M1-P0.5c
+- 207 tests pass, coverage 95.32%, 15/15 AC — commit code M1-P0.5c (`a3426de`; done `57f1896`)
 
 ### P1 — Model + Memory + Knowledge
 

@@ -80,6 +80,15 @@ def test_top_k_non_positive_raises(store):
         store.search([1.0, 0.0], top_k=0)
 
 
+def test_cosine_zero_norm_raises():
+    from aios_core.memory.vector import _cosine
+
+    with pytest.raises(ValueError, match="non-zero norm"):
+        _cosine([0.0, 0.0], [1.0, 0.0])
+    with pytest.raises(ValueError, match="non-zero norm"):
+        _cosine([1.0, 0.0], [0.0, 0.0])
+
+
 def test_delete_idempotent_and_count(store):
     store.add("a", [1.0, 0.0])
     store.add("b", [0.0, 1.0])

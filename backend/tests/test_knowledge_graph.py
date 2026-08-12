@@ -77,3 +77,20 @@ def test_delete_node_cascade(graph):
 def test_self_loop_allowed(graph):
     graph.add_edge("agent", "coder", "mentors", "agent", "coder")
     assert ("mentors", "coder") in graph.neighbors("agent", "coder")
+
+
+def test_delete_unknown_node_raises(graph):
+    with pytest.raises(GraphError, match="Unknown graph node"):
+        graph.delete_node("agent", "ghost")
+
+
+def test_find_without_property_filter(graph):
+    # no kind/property filter → lists all nodes (sorted by kind, id)
+    all_nodes = graph.find()
+    assert ("tool", "docker-tool") in all_nodes
+    assert ("agent", "coder") in all_nodes
+    assert all_nodes == sorted(all_nodes, key=lambda n: (n[0], n[1]))
+
+
+def test_find_kind_only(graph):
+    assert graph.find(kind="agent") == [("agent", "coder")]

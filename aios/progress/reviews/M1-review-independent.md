@@ -52,6 +52,28 @@
 
 ---
 
+## Erratum — số liệu coverage F-001…F-005 (cập nhật)
+
+> Khi review, coverage được đo bằng các lệnh chạy **subset** (ví dụ chỉ `test_semver.py` + `test_contracts.py`) nên cho ra số thấp giả tạo. Dưới đây là số đo lại từ **full suite** (`pytest --cov=aios_core`), chạy sau khi đã bổ sung test targeted cho các module này.
+
+| Module | Số claim trong review (subset) | Thực tế full-suite | Ghi chú |
+|--------|-------------------------------|--------------------|---------|
+| `knowledge_graph/graph.py` | 16% (F-001) | **98%** | F-001 premise "coverage thấp" → **SAI** (do đo subset). Đã có test find/delete_node/cascade. |
+| `workflow/cli.py` | 0% (F-002) | **95%** | F-002 premise "0% coverage" → **SAI**. Đã có test simulate run / error / reason. |
+| `models/ollama_provider.py` | 31% (F-003) | **94%** | F-003 vẫn đúng hướng (còn gap error paths) nhưng số thực tế cao hơn nhiều. |
+| `models/openai_provider.py` | 40% (F-003) | **74%** | F-003: gap thật (lines 16,42,65,73,88-95) — module còn thiếu test nhất. |
+| `prompts/registry.py` | 38% (F-004) | **97%** | F-004 premise "38%" → **SAI**. Đã có test list_by_tag/get_latest_version/search. |
+| `memory/vector.py` | 26% (F-005) | **99%** | F-005 premise "26%" → **SAI**. Đã có test embedding/store/retrieve/zero-norm. |
+
+**Kết luận erratum**:
+- **F-001, F-002, F-004, F-005**: premise "coverage thấp" là **sai do đo subset**. Thực tế các module này đã ≥95% trong full suite. Các finding này được giữ lại ở mức P3 như *gợi ý mở rộng test* (đã thực hiện thêm test), nhưng **không phản ánh thiếu hụt coverage** như claim ban đầu.
+- **F-003**: premise đúng (cần thêm error-path tests) nhưng mức độ nhẹ hơn nhiều (ollama 94%, openai 74%). Đây là finding duy nhất còn phản ánh gap coverage thực sự — tập trung vào `openai_provider.py`.
+- Tổng coverage full suite: **95.63%** (106 dòng missing), vượt ngưỡng 80% (`--cov-fail-under=80`).
+
+> Lưu ý: F-006 (LOG.md chi tiết) và F-007 (PROGRESS.md hash TASK-005) được xử lý riêng trong commit remediation — xem `PROGRESS.md` / `LOG.md` cập nhật.
+
+---
+
 ## 5. Gợi ý cải thiện (không bắt buộc)
 
 - Mở rộng coverage cho các module P3 liệt kê ở trên (knowledge_graph, workflow cli, model providers, prompts, memory vector) — mục tiêu 95%+ toàn dự án.

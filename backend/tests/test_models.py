@@ -266,3 +266,55 @@ def test_ollama_invalid_json(monkeypatch):
     model = ollama_provider.OllamaModel()
     with pytest.raises(ModelError, match="JSON"):
         model.chat([msg()])
+
+
+def test_ollama_metadata():
+    model = ollama_provider.OllamaModel(model="llama3.2")
+    meta = model.metadata()
+    assert meta.id == "models.ollama"
+    assert meta.name == "llama3.2"
+    assert meta.version == __version__
+
+
+def test_ollama_is_available_true(monkeypatch):
+    def fake_urlopen(req, timeout=30.0):
+        return FakeResp(status=200, body=b'{"models": []}')
+
+    monkeypatch.setattr(ollama_provider, "urlopen", fake_urlopen)
+    model = ollama_provider.OllamaModel()
+    assert model.is_available() is True
+
+
+def test_ollama_generic_urlerror(monkeypatch):
+    def fake_urlopen(req, timeout=30.0):
+        raise urllib.error.URLError(RuntimeError("boom"))
+
+    monkeypatch.setattr(ollama_provider, "urlopen", fake_urlopen)
+    model = ollama_provider.OllamaModel()
+    with pytest.raises(ModelError, match="request failed"):
+        model.chat([msg()])
+
+
+def test_ollama_missing_message(monkeypatch):
+    def fake_urlopen(req, timeout=30.0):
+        return FakeResp(status=200, body=b'{"model": "llama3.2"}')
+
+    monkeypatch.setattr(ollama_provider, "urlopen", fake_urlopen)
+    model = ollama_provider.OllamaModel()
+    with pytest.raises(ModelError, match="message"):
+        model.chat([msg()])
+
+
+def test_openai_metadata():
+    model = OpenAIModel(model="gpt-4o-mini", client=object())
+    meta = model.metadata()
+    assert meta.id == "models.openai"
+    assert meta.name == "gpt-4o-mini"
+    assert meta.version == __version__
+
+
+def test_openai_available_with_key(monkeypatch):
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.setattr(openai_provider, "_is_openai_installed", lambda: True)
+    model = OpenAIModel(api_key="sk-test")
+    assert model.is_available() is True

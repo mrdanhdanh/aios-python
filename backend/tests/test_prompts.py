@@ -79,6 +79,38 @@ def test_render():
     assert reg.render("coder", {"lang": "python", "task": "api"}) == "Write python code for api"
 
 
+def test_render_missing_variable():
+    reg = PromptRegistry()
+    reg.register(prompt())
+    with pytest.raises(PromptError, match="missing variable"):
+        reg.render("coder", {"lang": "python"})  # task omitted
+
+
+def test_evaluate_and_evaluations():
+    reg = PromptRegistry()
+    reg.register(prompt(version="1.0.0"))
+    reg.register(prompt(version="2.0.0"))
+    reg.evaluate("coder", 0.8, "good")
+    reg.evaluate("coder", 0.9, "better")
+    # latest version (2.0.0) is recorded
+    all_eval = reg.evaluations("coder")
+    assert len(all_eval) == 2
+    assert all(e.version == "2.0.0" for e in all_eval)
+    # filter by version
+    v1 = reg.evaluations("coder", version="1.0.0")
+    assert v1 == []
+    v2 = reg.evaluations("coder", version="2.0.0")
+    assert len(v2) == 2
+    # average sanity
+    assert sum(e.score for e in all_eval) / len(all_eval) == pytest.approx(0.85)
+
+
+def test_evaluations_unknown_id():
+    reg = PromptRegistry()
+    with pytest.raises(PromptError, match="Unknown prompt id"):
+        reg.evaluations("ghost")
+
+
 def test_render_escape_literal():
     reg = PromptRegistry()
     reg.register(PromptTemplate(id="t", name="t", version="1.0.0", template="Literal {{x}} and {v}"))
