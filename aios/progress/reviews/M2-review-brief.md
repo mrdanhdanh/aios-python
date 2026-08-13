@@ -3,7 +3,7 @@
 > **Bản điền sẵn từ** `REVIEW-BRIEF-TEMPLATE.md` — đem cho model khác review độc lập.
 > Copy TOÀN BỘ file này sang model review. Model tự đọc repo, tự kết luận — không xem bản review nội bộ nào trước đó.
 >
-> **Lưu ý cho reviewer:** Template v2 chuyển trọng tâm từ *existence review* (file có tồn tại không) sang **runtime correctness & architecture review** (kiến trúc có đúng không, runtime có hoạt động đúng không, offline-first có thật không). Bắt buộc áp dụng các mục 4–22 trước khi kết luận.
+> **Lưu ý cho reviewer:** Template v2.1 (hard-gate review framework) chuyển trọng tâm từ *existence review* (file có tồn tại không) sang **runtime correctness & architecture review** (kiến trúc có đúng không, runtime có hoạt động đúng không, offline-first có thật không — và **đo được tỷ lệ thực tế**). Bắt buộc áp dụng các mục 4–22 + Acceptance Traceability (22A) + Final Gate (26) trước khi kết luận.
 
 ---
 
@@ -21,11 +21,16 @@ Dự án **AIOS** (AI Operating System) — hệ điều hành agent chạy loca
 
 Review milestone **M2** — Developer Edition (P3–P4): AIOS Orchestrator v1 (Decision Pipeline 4 tầng offline-first), Assistants (General + Coder + Doctor + System Doctor), Tools 6 loại (Python/Docker/REST/MCP/Shell/Git) + ToolRegistry + capability binding, Skills lifecycle 10 trạng thái + Skill Manager, Sandbox Pool (reuse + warm-start), Goal Manager + Task Queue, Permission Broker, Failure Recovery, System Knowledge, Capability Router.
 
+> **QUAN TRỌNG — Chia tách review (đề xuất nâng cấp):**
+> M2 có 2 chế độ review, reviewer phải ghi rõ đang làm chế độ nào ở đầu báo cáo:
+> - **M2-Partial Review**: thực hiện NGAY khi TASK-010→014,016 done (như hiện tại). Review V1, V4–V11 (trừ V2/V3). **Không** kết luận ACCEPTED toàn M2.
+> - **M2-Final Review**: chỉ chạy khi **TASK-015 DONE** (skills + sandbox hoàn tất). Lúc này mới review V2/V3 và mới áp dụng Final Gate đầy đủ. Nếu reviewer được giao M2-Final mà TASK-015 chưa done → trả về INCONCLUSIVE cho V2/V3, không tự suy luận PASS.
+
 Đánh giá độc lập 4 khía cạnh:
 1. **Đúng phạm vi**: deliverable có đúng như PLAN hứa cho M2 không (TASK-010 → TASK-016, trong đó TASK-015 skills/sandbox đang pending)
 2. **Đúng quy trình**: hard gate có được tuân thủ cho từng task không (spec/critique ×2/tasks/review/test/evaluate)
 3. **Hồ sơ nhất quán**: PROGRESS.md ↔ LOG.md ↔ git history ↔ file thực tế ↔ kết quả test có khớp nhau không
-4. **Đúng kiến trúc & runtime correctness**: kiến trúc tuân thủ INV-001..010, **offline-first có thật** (70–90% request không gọi LLM), isolation Worker Plane đúng nguyên tắc
+4. **Đúng kiến trúc & runtime correctness**: kiến trúc tuân thủ INV-001..010, **offline-first có thật** (đo được tỷ lệ thực tế — xem mục 20), isolation Worker Plane đúng nguyên tắc
 
 ## 3. Deliverable cần kiểm tra
 
@@ -85,6 +90,12 @@ Nguyên tắc bắt buộc:
 
 Sai (FAIL): `agents/coder.py` import `ExecutionService`; `tools/shell_tool.py` import `RuntimeKernel`; Orchestrator gọi Tool trực tiếp thay vì Capability.
 
+**Fail-closed scanner (bắt buộc):** Kiểm tra architecture invariants dùng `test_architecture.py` + `_arch_scan.py` (AST pure scan). Nếu scanner gặp **bất kỳ** tình huống sau → kết quả INV tương ứng = **FAIL** (không được PASS):
+- Syntax error / file không đọc được / AST parse lỗi
+- Import không thể resolve (module missing)
+- Scanner bỏ qua file do lỗi try/except không được log
+Reviewer phải xác nhận scanner báo cáo mọi file quét được, không silent-skip.
+
 ## 5. Dependency Rules
 
 Reviewer kiểm tra import graph (dùng `grep`/`ast`):
@@ -101,6 +112,10 @@ Không chỉ ghi "wiring". Phải xác minh:
 - **Singleton / Scoped**: đúng scope
 - **DI resolve**: service resolve qua container (xem TASK-011 F-007 — CLI dùng `RuntimeKernel.create()` / `SystemCatalog()`, không `ExecutionService(...)` trực tiếp)
 
+**Negative test (bắt buộc):** Không chỉ test "service được đăng ký". Phải có test chứng minh service **bắt buộc** resolve qua container và **direct construction bị cấm** ở boundary. Ví dụ: `ExecutionService()` trực tiếp tại CLI/agent → raise hoặc bị container interceptor chặn. Nếu không có negative test → INV-005 = INCONCLUSIVE.
+
+**Task Queue concurrency (bắt buộc):** `dequeue` atomic RETURNING chỉ là implementation detail. Phải có test **nhiều worker dequeue đồng thời** (≥2 thread/process) chứng minh **một task chỉ được claim bởi đúng một worker** (no double-claim, no lost update). Nếu không có concurrency test → V11 = INCONCLUSIVE.
+
 ## 7. Contract Evolution (mở rộng V1)
 
 Đã verify ở M1 (TASK-011 F-002). Reviewer xác nhận regression tests còn tồn tại: `test_contracts.py` có 4 case (add / remove required / rename / optional→required) đúng chiều.
@@ -110,6 +125,18 @@ Không chỉ ghi "wiring". Phải xác minh:
 Workflow Definition độc lập engine — đã verify M1. Reviewer xác nhận không hồi quy (definition không import LangGraph/Docker/Model).
 
 ## 9. Capability Isolation (MỚI — TRỌNG TÂM M2)
+
+**Runtime integration test (bắt buộc — không chỉ import scan):** AST/import scan chỉ chứng minh tĩnh. Phải có integration test chạy thực tế:
+```
+Agent.handle(request)
+  ↓ (Agent gọi capability, KHÔNG biết tool cụ thể)
+Capability.execute()
+  ↓ (Capability router chọn tool impl theo health/availability)
+Tool.run()
+
+**TOCTOU check (bắt buộc):** Permission được approve ở bước A nhưng workflow thay đổi scope ở bước B → phải **re-check** trước execution. Reviewer phải tìm test chứng minh: approve scope `[network]` → workflow sau đó yêu cầu `[shell]` → broker từ chối hoặc yêu cầu approve lại (không dùng lại grant cũ). Nếu không có TOCTOU test → V7 = INCONCLUSIVE.
+```
+và **assert runtime trace** không có direct tool invocation từ Agent (không có `Tool(...)` call-site trong agent execution path). Nếu chỉ có import scan mà không có runtime trace → V6 = INCONCLUSIVE.
 
 Acceptance: `Agent → Capability → Tool`.
 Reviewer phải **TÌM** `DockerTool(...)` / `ShellTool(...)` (tool cụ thể) bên trong `agents/`.
@@ -126,7 +153,18 @@ Event Bus phải **emit** các event (đọc emit sites):
 - Tool Started / Finished (`TOOL_STARTED` / `TOOL_FINISHED` — TASK-011 F-005)
 - Policy Denied
 - Snapshot Saved (`SNAPSHOT_SAVED` — TASK-011 F-005)
-- **M2 mới**: `goal.*` (created/updated/completed/cancelled), `queue.updated`, `recovery.*` (retry/fallback/report) — xem `kernel/events.py` EventType +6
+- **1A. Failure Recovery Verification (MỚI — chi tiết)
+
+Không chỉ assert "recovery chạy". Phải kiểm tra giới hạn:
+- **max retry**: có giới hạn số lần retry (không infinite loop)
+- **backoff**: exponential/backoff nếu có (assert delay tăng)
+- **permanent error**: lỗi permanent → KHÔNG retry (assert fail ngay)
+- **fallback không vòng lặp**: fallback agent lỗi → không fallback về chính nó → report
+- **terminal state luôn đạt được**: dù retry hay fallback, workflow kết thúc ở state dứt khoát (success/failed/reported), không treo
+
+Đọc `failure_recovery.py` + `test_failure_recovery.py`. Nếu thiếu test cho bất kỳ điểm nào → V8 = INCONCLUSIVE.
+
+## 1M2 mới**: `goal.*` (created/updated/completed/cancelled), `queue.updated`, `recovery.*` (retry/fallback/report) — xem `kernel/events.py` EventType +6
 
 ## 12. Resource Review (MỚI)
 
@@ -162,15 +200,26 @@ Event Bus phải **emit** các event (đọc emit sites):
 
 ## 20. Offline-First Verification (TRỌNG TÂM M2 — MỚI)
 
-**ĐÂY LÀ TIÊU CHÍ QUAN TRỌNG NHẤT CỦA M2.** Reviewer phải chứng minh:
-- Tắt LLM (Mock model, 0 lần gọi thực tế) → 70–90% request vẫn routing đúng qua **Rule Engine**:
-  - "Generate API" → Coder
-  - "medical question" → Doctor
-  - "system status" → System Doctor
-- **Planner LLM chỉ gọi khi thật sự cần** (nhiệm vụ mở) — đọc `rule_engine.py` + `planner.py` + test tương ứng (`test_rule_engine.py` với kết quả xác định trước, `test_orchestrator.py` mock model 0 call)
-- **Orchestrator chỉ chọn capability không chọn tool trực tiếp** (INV-004)
+**ĐÂY LÀ TIÊU CHÍ QUAN TRỌNG NHẤT CỦA M2.** Offline-first phải là **measurable invariant**, không chỉ là architectural claim.
 
-Cách kiểm chứng: chạy test với model bị mock/dis bên dưới; đếm số lần `planner.plan()` được gọi. Phải = 0 cho các intent rõ ràng.
+**Claim chuẩn (thay vì "70–90% request không gọi LLM"):**
+> **Target:** ≥70% request trong **benchmark corpus chuẩn** phải được xử lý hoàn toàn deterministic (qua Rule Engine / Workflow Matcher) mà **không gọi Planner LLM**.
+> **Stretch target:** ≥90%.
+> Reviewer phải báo cáo **actual measured rate** (tỷ lệ đo thực tế), **không được suy luận từ unit tests**.
+
+**Benchmark corpus (bắt buộc):**
+- Phải có corpus ≥ **50/100 requests** đại diện (không chỉ 3 câu mẫu).
+- Mỗi request: intent rõ ràng (Generate API, medical, system status, chat, diagnose...) + expected route.
+- Chạy với model **mock/dis bên dưới** (0 call thực tế).
+- Đo:
+  - `deterministic_route_rate` = % request route đúng qua Rule Engine/Matcher không gọi Planner
+  - `planner_call_rate` = % request buộc gọi Planner (nhiệm vụ mở)
+
+**Acceptance:**
+- `deterministic_route_rate >= 70%` (target) / `>= 90%` (stretch)
+- `planner_call_rate <= 30%`
+
+**Runtime evidence:** `planner.plan()` call count = 0 cho intent rõ ràng (assert trong test, đếm thực tế). Nếu chỉ có 3 case mẫu → không đủ chứng minh claim 70–90% → V4 = INCONCLUSIVE.
 
 ## 21. Security Review (MỚI)
 
@@ -188,6 +237,26 @@ Ví dụ: `test_rule_engine.py` chỉ `assert True` vẫn pass nhưng không tes
 Phải **đọc body test**, không chỉ đếm số pass. Kiểm tra mỗi test có assert đúng behavior hay chỉ pass bề mặt.
 Đặc biệt với M2: test offline-first phải **thực sự mock model và đếm call count**, không chỉ assert output.
 
+**Test count không phải bằng chứng duy nhất:** `622 tests pass` chỉ là health metric. Reviewer phải áp dụng **Acceptance Traceability Matrix (mục 22A)** — mỗi AC map sang ít nhất 1 test cụ thể + 1 assertion cụ thể. Số lượng test cao không bù được thiếu traceability.
+
+---
+
+## 22A. Acceptance Traceability Matrix (MỚI — QUAN TRỌNG NHẤT)
+
+Reviewer **BẮT BUỘC** tạo bảng traceability cho mọi mandatory AC:
+
+| AC | Implementation | Test | Assertion | Runtime Evidence | Kết quả |
+|----|----------------|------|-----------|------------------|---------|
+| Offline routing | `rule_engine.py` | `test_rule_engine.py::test_route_coder` | `route == coder` | 0 planner calls | PASS |
+| Capability-first | `capability_router.py` | `test_capability_binding.py::test_agent_via_capability` | tool invoked through capability | runtime trace | PASS |
+| Permission deny | `permission_broker.py` | `test_permission_broker.py::test_default_deny` | execution count = 0 | event log | PASS |
+| Recovery | `failure_recovery.py` | `test_failure_recovery.py::test_retry_then_fallback` | retry→fallback→report | events | PASS |
+
+**Rule cứng:**
+> Acceptance Criterion **không có** implementation + test + assertion + runtime evidence tương ứng → **không được PASS** (chuyển INCONCLUSIVE hoặc FAIL tùy thiếu hụt).
+
+Điều này ngăn chuỗi: `622 tests PASS` → AC chưa thực sự test → Milestone PASS giả.
+
 ---
 
 ## 23. Tiêu chí chấp nhận (nguồn: PLAN.md → Verification M2 + mở rộng)
@@ -197,7 +266,7 @@ Phải **đọc body test**, không chỉ đếm số pass. Kiểm tra mỗi tes
 | V1 | Capability swap (execute_code: docker→mock) **không đổi** agent code | Đọc `agents/` + `capabilities/`; đổi tool impl → agent không sửa | Agent gọi capability, không import tool cụ thể (INV-004) |
 | V2 | Skill lifecycle test đủ 10 trạng thái (resolve/validate/install/enable/disable/unload/reload/upgrade/rollback/remove) | Đọc `skills/` + `test_skills.py` (TASK-015 pending) | 10 trạng thái có test; state machine đúng chuyển tiếp |
 | V3 | Sandbox pool reuse + warm-start | Đọc `sandbox/` + `test_sandbox.py` (TASK-015 pending) | Pool tái sử dụng container, warm-start, reset state, eviction idle |
-| V4 | **Offline-first**: tắt LLM → 70–90% request routing đúng qua Rule Engine (Generate API→Coder, medical→Doctor, system→System Doctor) | Chạy test với model mock/dis bên dưới; đếm `planner.plan()` calls | `test_rule_engine.py` + `test_orchestrator.py`: 0 planner call cho intent rõ ràng; routing đúng |
+| V4 | **Offline-first (measurable)**: `deterministic_route_rate >= 70%` (stretch 90%), `planner_call_rate <= 30%` trên benchmark corpus ≥50 requests với model mock (0 call) | Chạy benchmark corpus; đếm `planner.plan()` calls thực tế; báo cáo **actual measured rate** | `test_rule_engine.py` + `test_orchestrator.py` + benchmark script: measured rate >= 70%, 0 planner call cho intent rõ ràng |
 | V5 | **Planner LLM chỉ gọi khi thật sự cần** (nhiệm vụ mở) | Đọc `planner.py` + test nhiệm vụ mở | Planner chỉ gọi khi Rule Engine/Matcher thất bại; test assertion call count |
 | V6 | **Orchestrator chỉ chọn capability không chọn tool trực tiếp** | Đọc `orchestrator.py` + `agents/` (INV-004) | Không có `Tool(...)` trong orchestrator/agents; capability router chọn |
 | V7 | **Permission Broker**: workflow cần network/shell → gom permission → user approve → mới chạy | Đọc `permission_broker.py` + `test_permission_broker.py` | ask_scopes gom scope; default-deny khi không approve; test cover |
@@ -211,7 +280,7 @@ Phải **đọc body test**, không chỉ đếm số pass. Kiểm tra mỗi tes
 
 **Các tiêu chí architecture (mục 4–22)** phải được reviewer xác minh riêng và báo cáo trong subsection "Architecture Compliance" (xem mục 25).
 
-**Trạng thái hiện tại (2026-08-13)**: TASK-010/011/012/013/014/016 done (622 tests, 0 skip, 96.15% cov). **TASK-015 (Skills + Sandbox) đang PENDING** — V2/V3 sẽ INCONCLUSIVE cho đến khi TASK-015 hoàn tất.
+**Trạng thái hiện tại (2026-08-13)**: TASK-010/011/012/013/014/016 done (622 tests, 0 skip, 96.15% cov). **TASK-015 (Skills + Sandbox) đang PENDING** → đang ở chế độ **M2-Partial Review**; V2/V3 = INCONCLUSIVE cho đến khi TASK-015 done (M2-Final Review).
 
 ## 24. Phương pháp review (BẮT BUỘC làm đủ)
 
@@ -221,7 +290,9 @@ Phải **đọc body test**, không chỉ đếm số pass. Kiểm tra mỗi tes
 4. Kiểm tra chéo 3 nguồn: PROGRESS.md ↔ LOG.md ↔ `git log --oneline` (chạy lệnh thật nếu có quyền)
 5. Tìm lỗ hổng chủ động: file thiếu (đặc biệt TASK-015), stub không có logic, mâu thuẫn, checkbox chưa tick, claim không có bằng chứng, **test pass nhưng không test đúng thứ cần test** (mục 22)
 6. Với mỗi task M2 done: đếm đủ 8 file (spec, critique-1, critique-2, tasks, review, test, evaluation, implementation/)
-7. Phân mức findings: **P1** (sai mục tiêu/tiêu chí — phải sửa trước khi chấp nhận), **P2** (thiếu sót đáng sửa), **P3** (góp ý nhỏ)
+7. Phân mức findings: **P1** (sai mục tiêu/tiêu chí — hard blocker, phải sửa trước khi ACCEPTED), **P2** (thiếu sót đáng sửa — không blocker nếu PLAN cho phép deferred remediation), **P3** (góp ý nhỏ)
+8. **Acceptance Traceability (bắt buộc)**: với mỗi AC (V1–V12), tạo entry trong bảng mục 22A: map AC → implementation file → specific test → specific assertion → runtime evidence. AC thiếu bất kỳ mắt xích nào → INCONCLUSIVE/FAIL.
+9. **Test mapping**: với mỗi test được cite làm evidence, reviewer phải đọc body test và trích dẫn assertion cụ thể (tên hàm + dòng assert). Không chấp nhận "có test X pass" mà không chỉ rõ assert nào cover AC.
 
 ## 25. Format báo cáo trả về (bắt buộc đúng cấu trúc)
 
@@ -232,7 +303,12 @@ Phải **đọc body test**, không chỉ đếm số pass. Kiểm tra mỗi tes
 | # | Tiêu chí | Kết quả (PASS/FAIL/INCONCLUSIVE) | Bằng chứng (file + trích dẫn) |
 
 ## 2. Architecture Compliance
-(đối chiếu mục 4–22: INV-001..010 / Runtime-first / Contract-first / Plugin-first /
+(đối chiếu mục 4–22: INV-001..010 / Runtime-f/ Fail-closed scanner / Negative test /
+Concurrency / TOCTOU / Failure-Recovery-limits — mỗi nguyên tắc ghi PASS/FAIL/INCONCLUSIVE + trích dẫn)
+
+## 2A. Acceptance Traceability Matrix
+(bảng từ mục 22A: mỗi AC V1–V12 có implementation + test + assertion + runtime evidence + kết quả.
+Rule: AC thiếu bất kỳ mắt xích → không PASS
 Capability-first / Policy-first / DI / Event-driven / Dependency / Wiring / Security /
 Performance / Offline-First / Anti-fake-test — mỗi nguyên tắc ghi PASS/FAIL/INCONCLUSIVE + trích dẫn)
 
@@ -247,18 +323,30 @@ Performance / Offline-First / Anti-fake-test — mỗi nguyên tắc ghi PASS/FA
 ## 6. Gợi ý cải thiện (không bắt buộc)
 ```
 
-## 26. Final Gate (nâng cấp)
+## 26. Final Gate (hard-gate review framework)
 
 Kết quả mỗi tiêu chí thuộc một trong 3 trạng thái:
-- **PASS**: Có bằng chứng trực tiếp và kiểm chứng được (đọc code + chạy test/CLI).
+- **PASS**: Có bằng chứng trực tiếp và kiểm chứng được (đọc code + chạy test/CLI + runtime trace).
 - **FAIL**: Có bằng chứng cho thấy không đạt.
-- **INCONCLUSIVE**: Không đủ bằng chứng để kết luận (reviewer không có quyền chạy, thiếu file, hoặc mâu thuẫn không giải được).
+- **INCONCLUSIVE**: Không đủ bằng chứng để kết luận (reviewer không có quyền chạy, thiếu file, scanner lỗi, hoặc mâu thuẫn không giải được).
 
-**Milestone M2 chỉ được ACCEPTED khi:**
-- V1, V4–V11 = **PASS** (không FAIL, không INCONCLUSIVE)
-- V2, V3 = **PASS** (yêu cầu TASK-015 done — hiện INCONCLUSIVE do pending)
-- Không có **P1** finding
-- Không có **INCONCLUSIVE** nào trong bảng tiêu chí
-- Các test bắt buộc (mục 3.2) chạy thành công trên môi trường review (hoặc có bằng chứng thực thi đáng tin cậy nếu reviewer không có quyền chạy)
+**Phân loại finding:**
+- **P1** = hard blocker — milestone KHÔNG được ACCEPTED nếu có bất kỳ P1 nào.
+- **P2** = không blocker nếu PLAN cho phép deferred remediation (ghi rõ deadline); nếu không có kế hoạch remediation → coi như P1.
+- **P3** = góp ý, không ảnh hưởng gate.
 
-> Nếu có bất kỳ **INCONCLUSIVE** nào (VD: TASK-015 chưa xong), milestone không được ACCEPTED cho đến khi reviewer có đủ bằng chứng nâng lên PASS hoặc FAIL.
+**M2-Partial Review** (TASK-010→014,016): chỉ báo cáo V1, V4–V11 + Architecture + Traceability. **KHÔNG** kết luận ACCEPTED toàn M2.
+
+**M2-Final Review — M2 ACCEPTED khi:**
+1. V1, V4–V11 = **PASS**
+2. V2, V3 = **PASS** (chỉ sau TASK-015 done)
+3. Architecture Compliance: INV-001..010 = **PASS** (scanner fail-closed)
+4. Acceptance Traceability: **100% mandatory AC** có implementation + test + assertion + runtime evidence
+5. Offline benchmark: `deterministic_route_rate >= 70%`, `planner_call_rate <= 30%` (measured, corpus ≥50)
+6. Security: không capability bypass / không permission bypass / không unsafe import
+7. Test: **0 unexpected skip**, **0 xfail** che lỗi bắt buộc
+8. Không có **P1**
+9. Không có **INCONCLUSIVE** trong bảng tiêu chí
+10. PROGRESS ↔ LOG ↔ Git ↔ filesystem nhất quán
+
+> Nếu có bất kỳ **INCONCLUSIVE** nào (VD: TASK-015 chưa xong, benchmark thiếu) → milestone không ACCEPTED cho đến khi có đủ bằng chứng nâng lên PASS hoặc FAIL.

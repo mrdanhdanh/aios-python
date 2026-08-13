@@ -6,6 +6,7 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-13 | M2-review | review-brief-v2.1 | Nâng cấp M2 brief → v2.1 hard-gate framework: M2-Partial/Final split, Acceptance Traceability (22A), measured offline benchmark (corpus≥50, rate>=70%), fail-closed scanner, runtime capability test, TOCTOU, failure-recovery limits, queue concurrency negative test, P1/P2 gate | done | `reviews/M2-review-brief.md` |
 | 2026-08-13 | M2-review | review-brief | Tạo M2 review brief (template v2): 12 tiêu chí AC từ PLAN.md + deliverable 21 mục + Architecture Compliance (INV-001..010) + Offline-First verification + Anti-fake-test; ghi chú TASK-015 pending → V2/V3 INCONCLUSIVE | done | `reviews/M2-review-brief.md` |
 | 2026-08-13 | TASK-014 | T4 | evaluation.md: 14/14 AC, 622 pass + 0 skip, coverage 96.15% | done — commit | `evaluation.md`, `PROGRESS.md` |
 | 2026-08-13 | TASK-014 | T3 | 73 test mới (tools_base 13, tool_stubs 22, tool_registry 14, arch allow-list); fix 3 (import Tool, mcp regex, unavailable id) | 622 pass | `backend/tests/` |

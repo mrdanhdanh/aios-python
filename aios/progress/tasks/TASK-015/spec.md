@@ -24,7 +24,7 @@ Xây **Execution Plane skills + sandbox** theo PLAN.md P4:
 
 - **State machine 10 trạng thái TƯỜNG MINH**: bảng transitions đầy đủ (mục 5.1.2), enforce 2 tầng — mã nguồn (`SkillState` + transition map) + **CHECK constraint trong SQLite** (bài học TASK-012: state machine enforced cả code lẫn DB).
 - **DB là nguồn sự thật duy nhất cho trạng thái skill** (pattern TASK-012: connection-per-call + `busy_timeout` + `closing`): mọi lifecycle op đều ghi state vào bảng `skills`; `SkillRegistry` là **read-through view đọc thẳng DB** (không in-memory state riêng → không drift); restart manager (instance mới, cùng `db_path`) → trạng thái + history còn nguyên.
-- **Upgrade/Rollback theo history stack**: `upgrade(id, new_version)` push manifest+version hiện tại vào `history_json`, so sánh semver nội bộ (stdlib-only — `aios_core.semver` nằm ngoài allow-list); `rollback(id)` pop stack → về version trước; rollback khi history rỗng → `SkillStateError`.
+- **Upgrade/Rollback theo history stack**: `upgrade(id, new_version)` push manifest+version hiện tại vào `history_json`, so sánh semver bằng `aios_core.semver` (C1-04 — được phép trong allow-list); `rollback(id)` pop stack → về version trước; rollback khi history rỗng → `SkillStateError`.
 - **Event sink best-effort**: 3 event `SKILL_INSTALLED`/`SKILL_UPDATED`/`SKILL_REMOVED` **ĐÃ tồn tại** (`kernel/events.py:30-32`: `skill.installed`/`skill.updated`/`skill.removed` — đã verify) — dùng string literal, **KHÔNG sửa kernel, KHÔNG thêm event mới**; install/upgrade/remove emit, các op còn lại không emit (không có EventType tương ứng — ghi rõ trong mục 5.2).
 - **SandboxPool reuse + warm-start + evict**: acquire ưu tiên idle cùng language (warm) → tạo mới (cold, nếu dưới `max_size`) → evict idle hết hạn khi đầy → raise nếu vẫn đầy; `evict_idle()` thủ công (KHÔNG thread nền — deterministic, 0 flaky); RLock (KHÔNG Condition — không blocking wait).
 
@@ -56,7 +56,7 @@ Khi `skills/` + `sandbox/` ra đời: toàn bộ test invariant hiện có vẫn
 - **KHÔNG upgrade pipeline đầy đủ M4/P7** (Compatibility Check → Dependency Resolution → Backup → Migration → Health Check → Rollback): v1 chỉ version bump + history stack; contract compatibility sâu → P7
 - **KHÔNG sửa kernel**: `EventType.SKILL_*` (3 giá trị) ĐÃ tồn tại — không thêm event; không sửa `EventService`/`PermissionService`/`PolicyService`
 - **KHÔNG sửa `orchestrator/`**: `skill_manager_proxy` (Control Plane) nối vào `skills/` → task nối Orchestrator sau (M2 còn lại / M3); `skills/` đứng độc lập, test tích hợp dùng callable
-- **KHÔNG import `tools/`, `contracts/`, `capabilities/`, `semver`** vào `skills/`/`sandbox/` (allow-list mục 4.2 — kể cả `aios_core.semver`: so sánh semver bằng helper nội bộ stdlib-only)
+- **KHÔNG import `tools/`, `contracts/`, `capabilities/`** vào `skills/`/`sandbox/` (allow-list mục 4.2); **`aios_core.semver` ĐƯỢC PHÉP** (C1-04)
 - **KHÔNG nối `agents/`** (INV-001/002 giữ nguyên — agent chỉ qua Capability)
 - **KHÔNG thread nền trong sandbox** (không eviction tự động, không warm-up background — deterministic, tránh flaky test); `evict_idle()` gọi thủ công
 - **KHÔNG persist sandbox pool** (in-memory — sandbox là runtime resource; persist → M4)
@@ -73,7 +73,7 @@ Khi `skills/` + `sandbox/` ra đời: toàn bộ test invariant hiện có vẫn
 - TASK-014: pattern `tools/` — allow-list cứng, event sink best-effort injectable, template method, RLock registry, `EVENT_*` string literal constants, fail-closed gate
 - TASK-016: `tests/_arch_scan.py` (`collect_imports`/`dir_imports` — đếm MỌI Import node kể cả TYPE_CHECKING), `tests/test_architecture.py` (pattern allow-list `test_inv_tools_import_allowlist` làm mẫu)
 - `aios_core/metadata.py`: `AiOSMetadata` + `make_component_metadata` (DUY NHẤT module aios_core được phép import từ `skills/`; `sandbox/` không import gì từ aios_core)
-- `aios_core/semver.py`: **KHÔNG import** (ngoài allow-list) — helper so sánh semver nội bộ stdlib-only trong `skills/base.py` (mục 5.1.1)
+- `aios_core/semver.py`: **ĐƯỢC import** (C1-04 — semver chỉ import metadata đã được phép; dùng `parse_version/compare` chính thức)
 - pydantic v2 (đã có), stdlib (`sqlite3`, `contextlib.closing`, `threading`, `uuid`, `time`, `re`, `enum`, `dataclasses`, `json`, `pathlib`...)
 
 **Output:**
@@ -113,12 +113,12 @@ backend/src/aios_core/
 
 ### 4.2 QUYẾT ĐỊNH: Import allow-list cứng cho `skills/` + `sandbox/` (2 rule mới — bổ sung `test_architecture.py`)
 
-**`skills/` — cho phép:** `aios_core.metadata` (AiOSMetadata — Infra contract-level M1), pydantic, stdlib (`sqlite3`, `typing`, `collections`, `abc`, `re`, `logging`, `threading`, `functools`, `time`, `enum`, `dataclasses`, `json`, `uuid`, `pathlib`, `contextlib`), `__future__`. **Cấm:** mọi aios_core khác — **bao gồm `aios_core.tools`, `aios_core.contracts`, `aios_core.semver`, `aios_core.capabilities`, `aios_core.kernel.*`, `aios_core.agents`, `aios_core.orchestrator`, `aios_core.workflow`, `aios_core.models`, `aios_core.healthcheck`, ...** — mọi service qua callable injectable (`source_loader`, `event_sink`); dependency check dùng registry nội bộ + semver helper nội bộ; loại trừ intra-package `aios_core.skills*` trước khi check subset (bài học R1.2 TASK-013).
+**`skills/` — cho phép:** `aios_core.metadata` (AiOSMetadata — Infra contract-level M1), **`aios_core.semver` (C1-04 — semver.py chỉ import metadata, đã được phép; dùng `parse_version/compare` chính thức — tránh helper nội bộ kém chính xác với pre-release)**, pydantic, stdlib (`sqlite3`, `typing`, `collections`, `abc`, `re`, `logging`, `threading`, `functools`, `time`, `enum`, `dataclasses`, `json`, `uuid`, `pathlib`, `contextlib`), `__future__`. **Cấm:** mọi aios_core khác — **bao gồm `aios_core.tools`, `aios_core.contracts`, `aios_core.capabilities`, `aios_core.kernel.*`, `aios_core.agents`, `aios_core.orchestrator`, `aios_core.workflow`, `aios_core.models`, `aios_core.healthcheck`, ...** — mọi service qua callable injectable (`source_loader`, `event_sink`); dependency check dùng registry nội bộ + `aios_core.semver`; loại trừ intra-package `aios_core.skills*` trước khi check subset (bài học R1.2 TASK-013).
 
 **`sandbox/` — cho phép:** KHÔNG import gì từ aios_core (**empty set** — sandbox thuần stdlib + pydantic), pydantic, stdlib (`threading`, `time`, `uuid`, `dataclasses`, `enum`, `typing`, `logging`, `collections`), `__future__`. Lý do: sandbox không cần metadata/skill contract — chỉ quản lý container mock (id/language/state/timestamp); giữ allow-list tối thiểu nhất có thể để dễ mở rộng sau.
 
 Enforcement: 2 test mới trong `test_architecture.py` — **loop `dir.rglob("*.py")` + `collect_imports(SRC_ROOT, rel)` gộp set → loại trừ intra-package → check CẢ 2 ràng buộc** (kiểu `test_inv_tools_import_allowlist`):
-- `test_inv_skills_import_allowlist`: `aios_mods ⊆ {"aios_core.metadata"}` VÀ `external_top_level ⊆ {"pydantic"} ∪ stdlib_allowed` (stdlib_allowed = {sqlite3, typing, collections, abc, re, logging, threading, functools, time, enum, dataclasses, json, uuid, pathlib, contextlib})
+- `test_inv_skills_import_allowlist`: `aios_mods ⊆ {"aios_core.metadata", "aios_core.semver"}` VÀ `external_top_level ⊆ {"pydantic"} ∪ stdlib_allowed` (stdlib_allowed = {sqlite3, typing, collections, abc, re, logging, threading, functools, time, enum, dataclasses, json, uuid, pathlib, contextlib})
 - `test_inv_sandbox_import_allowlist`: `aios_mods ⊆ {}` VÀ `external_top_level ⊆ {"pydantic"} ∪ stdlib_sandbox`
 - Skip condition: `not SKILLS_DIR.is_dir()` / `not SANDBOX_DIR.is_dir()`
 
@@ -191,7 +191,7 @@ class SkillManifest(BaseModel):
 ```
 
 - Validator: `id`/`name` không rỗng (strip); `version` khớp semver regex; `dependencies` mỗi phần tử không rỗng; `capabilities`/`permissions` không rỗng phần tử. Sai → `ValueError` rõ message (fail-fast).
-- **Semver helper nội bộ** `_parse_semver(version) -> tuple[int, int, int]` + `compare_versions(a, b) -> int` (stdlib `re` + `tuple` compare; xử lý pre-release: so sánh phần (major, minor, patch) trước, pre-release chỉ dùng cho equal-check đơn giản — ghi chú giới hạn; KHÔNG import `aios_core.semver`).
+- **Semver**: dùng `aios_core.semver.parse_version/compare` chính thức (C1-04 — xử lý pre-release đúng spec; không helper nội bộ).
 
 #### 5.1.2 `SkillState` + state machine 10 trạng thái (QUYẾT ĐỊNH CHỐT)
 
@@ -216,8 +216,8 @@ class SkillState(str, Enum):
 | T1 | `resolve` | record mới (id chưa tồn tại) | `resolved` | — | id đã tồn tại (kể cả removed) → `SkillError` |
 | T2 | `validate` | `resolved` | `validated` | — | deps + compatibility check |
 | T3 | `install` | `validated` | `installed` | `skill.installed` | `installed_at` set |
-| T4 | `enable` | `installed`, `disabled`, `unloaded`, `upgraded`, `rolled_back` | `enabled` | — | reversible với disable |
-| T5 | `disable` | `enabled`, `reloaded` | `disabled` | — | reversible với enable |
+| T4 | `enable` | `installed`, `disabled`, `upgraded`, `rolled_back` | `enabled` | — | reversible với disable (C1-01: bỏ unloaded — muốn active sau unload phải reload) |
+| T5 | `disable` | `enabled`, `reloaded`, `upgraded`, `rolled_back` | `disabled` | — | reversible với enable (C1-01: thêm upgraded/rolled_back) |
 | T6 | `unload` | `enabled`, `disabled`, `reloaded`, `upgraded`, `rolled_back` | `unloaded` | — | reversible với reload |
 | T7 | `reload` | `unloaded` | `reloaded` | — | reversible với unload |
 | T8 | `upgrade` | `installed`, `enabled`, `disabled`, `unloaded`, `reloaded`, `upgraded`, `rolled_back` | `upgraded` | `skill.updated` | `new_version > current` (semver); push history |
@@ -226,7 +226,7 @@ class SkillState(str, Enum):
 
 - **`removed` là terminal**: mọi op khác (trừ query) trên skill `removed` → `SkillStateError` ("skill removed — terminal state").
 - **Lý do thiết kế**: (a) enable/disable/unload/reload tạo 2 cặp reversible độc lập (enabled↔disabled, enabled→unloaded→reloaded→unloaded...); (b) `reloaded → enable` KHÔNG có (reloaded đã = active — tránh 2 đường vào enabled); (c) muốn active sau unload → **bắt buộc reload** (con đường tường minh duy nhất); (d) upgraded/rolled_back là state version-centric — skill vẫn cài, active-ness do op tiếp theo quyết (cho phép enable/disable/unload từ 2 state này — bảng T4/T5/T6); (e) upgrade từ `installed` hợp lệ (nâng cấp trước khi enable); (f) rollback nhiều bước: `rolled_back → rollback` chỉ khi history còn (T9 từ rolled_back).
-- Enforce: `_TRANSITIONS: dict[SkillState, dict[str, SkillState]]` (op → allowed sources → target) trong `base.py` + `assert_transition(current, op, target)` raise `SkillStateError`; manager gọi trước mọi UPDATE; **DB CHECK constraint** (mục 5.2.1) là tầng 2 (bài học TASK-012).
+- Enforce: `_TRANSITIONS: dict[SkillState, dict[str, SkillState]]` (op → allowed sources → target) trong `base.py` + `assert_transition(current, op, target)` raise `SkillStateError`; manager gọi trước mọi UPDATE; **DB CHECK constraint (mục 5.2.1) là tầng 2 — C1-02: CHECK chỉ enforce DOMAIN (state ∈ 10 giá trị), transition CHỈ enforce ở code** (test tài liệu hóa: SQL chèn trực tiếp resolved→enabled → DB CHẤP NHẬN).
 
 #### 5.1.3 `Skill` (pydantic view)
 
@@ -411,7 +411,7 @@ class SandboxPool:
 3. **State machine 2 tầng** (bài học TASK-012): transition map trong code + **CHECK constraint trong DB** — test chèn SQL state sai trực tiếp → `sqlite3.IntegrityError` (bằng chứng tầng 2).
 4. **SQLite pattern TASK-012**: connection-per-call + `PRAGMA busy_timeout=5000` + `closing` + `mkdir` + `executescript` DDL idempotent (`CREATE TABLE IF NOT EXISTS`); DB là nguồn sự thật duy nhất (registry read-through, restart manager → state còn nguyên).
 5. **Offline-first tuyệt đối**: 0 download/network/git/pip/docker/zipfile thật; 0 exec code; no-syscall invariant test (monkeypatch socket/subprocess/os.system/urllib → resolve + execute vẫn OK).
-6. **Upgrade phải tăng version** (semver so sánh nội bộ stdlib-only — không import `aios_core.semver`); rollback cần history (rỗng → `SkillStateError`); history là stack không giới hạn v1.
+6. **Upgrade phải tăng version** (semver so sánh bằng `aios_core.semver` — C1-04); rollback cần history (rỗng → `SkillStateError`); history là stack không giới hạn v1.
 7. **Event string literal** `"skill.installed"/"skill.updated"/"skill.removed"` khớp chính xác `EventType.SKILL_*.value` (kernel/events.py:30-32 — verify); **kernel đóng băng — không thêm event mới**; sink best-effort (raise → warning + tiếp tục); cross-check bằng test layer ngoài import `EventType`.
 8. **pydantic v2**: `extra="forbid"` mọi model; `Field(default_factory=...)` cho mutable; enum `str, Enum` cho state/source; validate constructor fail-fast (`ValueError` rõ message — bài học TASK-013/014).
 9. **`from __future__ import annotations`** + type hints đầy đủ (DI-compatible — Container/M4 sau này không phải sửa).
@@ -497,7 +497,7 @@ Mỗi AC kiểm chứng bằng test thật (pytest, offline, 0 side effect).
 - TASK-014: pattern `tools/` (allow-list 2 set + R1.2 intra-package exclude, event sink best-effort, fail-fast constructor, no-syscall test, string literal constants) — tham khảo, KHÔNG import
 - TASK-016: `_arch_scan.py` + `test_architecture.py` (pattern allow-list `test_inv_tools_import_allowlist` làm mẫu; INV-001/002/004/005/006 phải giữ nguyên PASS)
 - `aios_core/metadata.py`: `AiOSMetadata` + `make_component_metadata` (import hợp lệ duy nhất cho skills/; sandbox/ không cần)
-- `aios_core/semver.py`: **KHÔNG import** (ngoài allow-list) — helper so sánh semver nội bộ stdlib-only
+- `aios_core/semver.py`: **ĐƯỢC import** (C1-04 — chính thức, xử lý pre-release đúng)
 - Không dependency mới (pydantic v2 + stdlib + sqlite3 đã có)
 
 ## Rủi ro
