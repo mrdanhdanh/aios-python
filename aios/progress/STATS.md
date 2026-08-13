@@ -89,3 +89,43 @@
 33. **Dependent check khi rollback/remove** — constraint vỡ âm thầm nếu không quét dependents (R1 TASK-015).
 34. **Gate fail-closed: gate None/False/RAISE đều DENY** — không side effect không kiểm soát (TASK-014).
 35. **System Brain pattern** — Orchestrator hỏi qua Catalog→KG→SystemKnowledge, không đọc registry trực tiếp (TASK-016).
+
+## M3 — Desktop Edition ✅ (2026-08-13)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task tổng | 3 (TASK-017 API, 018 Dashboard, 019 Extension) — TẤT CẢ done |
+| Task done | 3/3 |
+| Tests | Backend **689 pass — 95.10%**; Dashboard vitest **12/12**; Extension vitest **19/19** + tsc clean + build emit |
+| Critique resolve | 3 task × 2 vòng (TASK-019: 13+3; TASK-018: —; TASK-017: —) |
+| Review | 3 task (TASK-019 CHANGES REQUESTED → 3 R2 + 7 R3 resolved) |
+| Bypass | 1 (vitest require → import) |
+| Deliverable M3 | FastAPI REST+WS, Dashboard 10 tabs, VS Code extension 9 lệnh ✓ |
+| Commit | 3 (16c998f, 33b6b05, 298e4bb) |
+
+## M4 — Platform Edition ✅ (2026-08-13)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task tổng | 3 (TASK-020 Upgrade, 021 Observability, 022 Orchestrator v2) — TẤT CẢ done |
+| Task done | 3/3 |
+| Tests (cuối M4) | **809 pass — 0 skip — coverage 94.92%** (M2: 669 → M4: +140 test) |
+| Critique resolve | TASK-020: 31 vấn đề (9 P1); TASK-021: 36 (9 P1); TASK-022: 24 (7 P1) = **91 vấn đề resolved** |
+| Review | 3 task (020 CHANGES REQUESTED 1R1+3R2; 021 APPROVED có điều kiện 3 amendment; 022 APPROVED có điều kiện 1R2+3R3) |
+| Bypass | 1 (fix `_metrics()` db suffix — R2-1 TASK-022) |
+| Invariants | +2 allow-list tests (upgrade/ + observability/) — tổng 6 allow-list |
+| Deliverable M4 | Upgrade pipeline 6 bước + Observability (metrics/prompt-history/profiler/doctor/arch-health/eval v2) + Orchestrator v2 (advisor/supervisor/collector/goal reporter) ✓ |
+| Commit | 5 (f1f8f90, 362cdb3, f46e086, 9145637 + cleanup) |
+
+## Bài học M3-M4 (bổ sung)
+
+36. **VS Code Selection không có `.text`** — phải `document.getText(selection)`; stub test theo API thật, không bịa (P1 TASK-019).
+37. **vitest ESM: `require()` module TS fail** — dùng `import` (TASK-019).
+38. **Hook-injection giữ allow-list sạch** — upgrade/observability không import skills/catalog: wiring cung cấp hook/lookup (TASK-020/021).
+39. **"Chỉ migrate ROOT, dependency chỉ resolve"** — resolve full closure nhưng mutation chỉ root, tránh vỡ state machine (C2-03 TASK-020).
+40. **Event-driven aggregation: duration từ Event.timestamp** — start/finish ghép theo execution_id, UPDATE row mới nhất (re-run an toàn) (TASK-021).
+41. **AST scan engine 1 nguồn sự thật** — move `_arch_scan.py` vào src, tests dùng shim (P1-5 TASK-021).
+42. **Move file đổi SRC_ROOT phải tính lại parents** — parents[2] khi sâu hơn 1 cấp (P1-1 TASK-021 critique-2).
+43. **`in (set1, set2)` là tuple membership, không phải set union** — bug tool metrics (TASK-021).
+44. **DB suffix convention phải khớp giữa wiring và CLI** — `db_path + ".metrics"`; CLI đọc sai DB = số liệu 0 âm thầm (R2-1 TASK-022).
+45. **Supervisor timebase: clock() float monotonic tách khỏi datetime** — trộn 2 loại = TypeError (P1-1 TASK-022).
