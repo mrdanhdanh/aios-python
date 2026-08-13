@@ -30,3 +30,6 @@ memory:
 
 goals:
   db_path: "aios/data/goals.db"
+
+skills:
+  db_path: "aios/data/skills.db"

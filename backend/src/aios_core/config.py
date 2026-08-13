@@ -66,6 +66,12 @@ class GoalsSettings(BaseModel):
     db_path: str = "aios/data/goals.db"
 
 
+class SkillsSettings(BaseModel):
+    """TASK-017: SkillManager persistence (C2-01)."""
+
+    db_path: str = "aios/data/skills.db"
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -84,6 +90,7 @@ class Settings(BaseSettings):
     models: ModelsSettings = ModelsSettings()
     memory: MemorySettings = MemorySettings()
     goals: GoalsSettings = GoalsSettings()
+    skills: SkillsSettings = SkillsSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

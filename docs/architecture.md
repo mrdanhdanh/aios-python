@@ -34,21 +34,21 @@ graph TB
         COMP --> ENG["Workflow Library + CLI simulate"]
     end
 
-    subgraph T4["Tầng 4 — Orchestrator + Agents 🚧 (M2)"]
+    subgraph T4["Tầng 4 — Orchestrator + Agents ✅ (M2)"]
         subgraph ORCH["AIOS Orchestrator (Control Plane)"]
             DP["Decision Pipeline 4 tầng ✅ (TASK-010)<br/>Normalizer → Rule Engine → Matcher → Planner"]
             MOD1["Agent Selector ✅ · System Knowledge ✅"]
-            MOD2["Goal Manager + Task Queue 🚧 (TASK-012)"]
-            MOD3["Permission Broker + Failure Recovery 🚧 (TASK-012)"]
+            MOD2["Goal Manager + Task Queue ✅ (TASK-012)"]
+            MOD3["Permission Broker + Failure Recovery ✅ (TASK-012)"]
         end
-        WPLANE["Worker Plane agents 🔲"]
+        WPLANE["Worker Plane agents ✅ (TASK-013)"]
     end
 
     subgraph T5["Tầng 5 — Capability ✅ (M1: TASK-009)"]
         CR["Capability Registry + Prompt Registry + System Catalog + Knowledge Graph"]
     end
 
-    subgraph T6["Tầng 6 — Tools 🔲"]
+    subgraph T6["Tầng 6 — Tools ✅ (TASK-014)"]
         TP["Python · Docker · REST · MCP · Shell · Git"]
     end
 
@@ -56,7 +56,7 @@ graph TB
         I1["Model Providers ✅ (TASK-006)<br/>Mock/OpenAI/Ollama + Registry"]
         I2["Memory 4 loại ✅ (TASK-007)<br/>Conversation · Session · Knowledge · Artifact"]
         I3["Knowledge pipeline ✅<br/>Indexer → Chunks → Vectors → Retriever"]
-        I4["Sandbox Pool 🔲"]
+        I4["Sandbox Pool ✅ (TASK-015)"]
         I5["Filesystem ✅"]
     end
 
@@ -205,11 +205,11 @@ graph LR
         B2["TASK-011 Remediation 9 findings ✅<br/>428 tests · coverage 95.76%"]
     end
 
-    subgraph M2["M2 — Developer Edition 🚧 in-progress"]
+    subgraph M2["M2 — Developer Edition ✅ done"]
         C1["TASK-010 Decision Pipeline ✅<br/>402 tests · 10/10 AC"]
         C2["TASK-012 Goal Manager + Task Queue +<br/>Permission Broker + Failure Recovery ✅<br/>490 tests · 95.96% · 12/12 AC"]
         C3["TASK-016 Architecture Invariants ✅<br/>INV-001..010 + AST tests"]
-        C4["P3c-P4: Assistants · Tools · Skills 🔲"]
+        C4["TASK-013 Assistants ✅ · TASK-014 Tools ✅ · TASK-015 Skills+Sandbox ✅"]
     end
 
     subgraph M3["M3 — Desktop Edition 🔲"]
@@ -229,7 +229,7 @@ graph LR
 |---|---|---|
 | M0 — Foundation | ✅ done | 4 agents, progress system, review quy trình |
 | M1 — Core Runtime | ✅ done | 9/9 tasks + remediation, **428 tests, 95.76%** |
-| M2 — Orchestrator | 🚧 in-progress | TASK-010 ✅ (402); TASK-012 ✅ (490 tests, 95.96%, 12/12 AC); TASK-016 ✅ (INV + AST tests); P3c-P4 đang làm |
+| M2 — Orchestrator | ✅ done | TASK-010 ✅ (402); TASK-012 ✅ (490 tests, 95.96%, 12/12 AC); TASK-016 ✅ (INV + AST tests); TASK-013 ✅ Assistants; TASK-014 ✅ Tools; TASK-015 ✅ Skills+Sandbox · **669 tests, 95.51%** |
 | M3 — Desktop Edition | 🔲 todo | Dashboard + VS Code extension |
 | M4 — Platform Edition | 🔲 todo | Observability + upgrade pipeline + Architecture Health (xem PLAN.md) |
 | Deliverable M1 | ✅ | `aiagent run workflow.yaml --simulate` |
@@ -249,7 +249,10 @@ graph LR
 | TASK-011 | Remediation 9 P3 findings (M1 v2 review) | 428 | 95.76% |
 | TASK-010 | M2-P3a Decision Pipeline (orchestrator v1) | 402 | — |
 | TASK-012 | M2-P3b Goal Manager + Task Queue + Permission Broker + Failure Recovery | **490** | **95.96%** |
-| TASK-016 | M2 Architecture Hardening: INV-001..010 + AST tests + reference | 490 + ~12 | 95.96%+ |
+| TASK-013 | M2-P3c Assistants (Worker Plane — INV-001/002) | 549 | 96.03% |
+| TASK-014 | M2-P4 Tools 6 loại + Tool Registry + capability binding | 622 | 96.15% |
+| TASK-015 | M2-P4 Skills lifecycle 10 states + Sandbox Pool | 669 | 95.51% |
+| TASK-016 | M2 Architecture Hardening: INV-001..010 + AST tests + reference | 669 + ~12 | 95.51%+ |
 
 ## 6. Nguyên tắc xuyên suốt
 

@@ -31,6 +31,10 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("doctor", help="Print runtime health")
 
+    serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
+    serve.add_argument("--host", default="127.0.0.1", help="Bind host")
+    serve.add_argument("--port", type=int, default=8000, help="Bind port")
+
     catalog = sub.add_parser("catalog", help="System catalog commands")
     catalog_sub = catalog.add_subparsers(dest="catalog_command", required=True)
     catalog_sub.add_parser("list", help="List indexed catalog entries")
@@ -53,6 +57,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_simulate(args.workflow_file)
     if args.command == "doctor":
         return _doctor()
+    if args.command == "serve":
+        return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
         return _catalog_list()
     if args.command == "workflow" and args.workflow_command == "validate":
@@ -76,6 +82,14 @@ def _doctor() -> int:
         "audit_db_path": str(getattr(event_service, "_db_path", "") or ""),
     }
     print(json.dumps(health, indent=2))
+    return 0
+
+
+def _serve(host: str, port: int) -> int:
+    # Lazy import (C3-04): avoid pulling fastapi for other subcommands.
+    from ..api.serve import run
+
+    run(host=host, port=port)
     return 0
 
 

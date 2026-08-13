@@ -180,9 +180,17 @@ class TaskQueue:
             if row is None:
                 raise QueueError(f"queue item not found: {item_id}")
             current = QueueItemStatus(row[3])
+            # Allowed transitions (INV + correctness): pause/resume, cancel from any
+            # live state, and terminal transitions out of RUNNING. COMPLETED/FAILED/
+            # CANCELLED are terminal (no outgoing edges).
             allowed = {
-                QueueItemStatus.QUEUED: {QueueItemStatus.PAUSED},
-                QueueItemStatus.PAUSED: {QueueItemStatus.QUEUED},
+                QueueItemStatus.QUEUED: {QueueItemStatus.PAUSED, QueueItemStatus.CANCELLED},
+                QueueItemStatus.PAUSED: {QueueItemStatus.QUEUED, QueueItemStatus.CANCELLED},
+                QueueItemStatus.RUNNING: {
+                    QueueItemStatus.COMPLETED,
+                    QueueItemStatus.FAILED,
+                    QueueItemStatus.CANCELLED,
+                },
             }.get(current)
             if allowed is None or target not in allowed:
                 raise QueueError(f"invalid queue transition: {current.value} -> {target.value}")
@@ -204,6 +212,18 @@ class TaskQueue:
     def resume(self, item_id: str) -> QueueItem:
         """paused -> queued. Anything else raises QueueError (no event emitted)."""
         return self._transition(item_id, QueueItemStatus.QUEUED, "resume")
+
+    def complete(self, item_id: str) -> QueueItem:
+        """running -> completed (terminal). Worker finished successfully."""
+        return self._transition(item_id, QueueItemStatus.COMPLETED, "complete")
+
+    def fail(self, item_id: str) -> QueueItem:
+        """running -> failed (terminal). Worker failed after retries/recovery."""
+        return self._transition(item_id, QueueItemStatus.FAILED, "fail")
+
+    def cancel(self, item_id: str) -> QueueItem:
+        """queued/paused/running -> cancelled (terminal). Supervisor abort."""
+        return self._transition(item_id, QueueItemStatus.CANCELLED, "cancel")
 
     def reorder(self, item_ids: list[str]) -> None:
         """Re-assign positions 0..n-1 following ``item_ids`` order.

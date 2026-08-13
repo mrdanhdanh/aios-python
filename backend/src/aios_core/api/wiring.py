@@ -1,0 +1,164 @@
+"""Wire registries for the API app (C1-03/C2-07/C2-08/C2-09)."""
+
+from __future__ import annotations
+
+from ..agents import AssistantRegistry, CoderAssistant, DoctorAssistant, GeneralAssistant, SystemDoctor
+from ..capabilities import CapabilityRegistry
+from ..catalog import SystemCatalog
+from ..config import Settings
+from ..kernel.runtime_kernel import RuntimeKernel
+from ..models import ModelRegistry
+from ..orchestrator.agent_selector import AgentSelector
+from ..orchestrator.normalizer import Normalizer
+from ..orchestrator.orchestrator import Orchestrator
+from ..orchestrator.planner import Planner
+from ..orchestrator.rule_engine import default_rules
+from ..orchestrator.workflow_matcher import WorkflowMatcher
+from ..prompts import PromptRegistry
+from ..sandbox import SandboxPool
+from ..skills import SkillManager
+from ..tools import build_tool_registry
+from ..workflow.library import WorkflowLibrary
+
+CAP_DESCRIPTIONS = {
+    "execute_code": "run python code",
+    "manage_container": "docker containers",
+    "call_api": "http calls",
+    "mcp_call": "mcp servers",
+    "run_shell": "shell commands",
+    "git_ops": "git operations",
+}
+
+
+def build_registries(settings: Settings, kernel: RuntimeKernel, regs: dict) -> dict:
+    """Fill missing registry keys. `regs` may contain injected fakes (tests)."""
+
+    def _ensure(key: str, factory):
+        if key not in regs or regs[key] is None:
+            regs[key] = factory()
+        return regs[key]
+
+    # Core kernel services.
+    from ..kernel.services import ArtifactService, EventService
+
+    regs.setdefault("event_service", kernel.container.resolve(EventService))
+    regs.setdefault("artifact_service", kernel.container.resolve(ArtifactService))
+
+    # Orchestrator (C1-03): default offline-first pipeline with MockModel.
+    def _build_orchestrator():
+        library = WorkflowLibrary()
+        registry = ModelRegistry()
+        from ..models import MockModel
+
+        registry.register("mock", MockModel(responses=["ok"], loop=True))
+        model = registry.default()
+        return Orchestrator(
+            rule_engine=default_rules(),
+            workflow_matcher=WorkflowMatcher(library),
+            planner=Planner(),
+            normalizer=Normalizer(library=library),
+            agent_selector=AgentSelector(),
+            model=model,
+            library=library,
+        )
+
+    _ensure("orchestrator", _build_orchestrator)
+
+    # Assistants + selector wiring (AC11 uses CoderAssistant via intent).
+    def _build_assistants():
+        reg = AssistantRegistry(selector=AgentSelector().select)
+        reg.register(GeneralAssistant())
+        reg.register(CoderAssistant())
+        reg.register(DoctorAssistant())
+        reg.register(SystemDoctor())
+        return reg
+
+    _ensure("assistants", _build_assistants)
+
+    # Tools + capability binding (C2-07 catalog populate uses them).
+    def _build_tools():
+        tool_reg = build_tool_registry()
+        cap_reg = CapabilityRegistry()
+        for cap, desc in CAP_DESCRIPTIONS.items():
+            cap_reg.register_capability(cap, desc)
+        tool_reg.bind_capabilities(lambda cap, tid: cap_reg.bind_tool(cap, tid))
+        return tool_reg
+
+    tools_reg = _ensure("tools", _build_tools)
+    regs.setdefault("capabilities", None)  # populated below
+    if "capabilities" not in regs or regs["capabilities"] is None:
+        cap_reg = CapabilityRegistry()
+        for cap, desc in CAP_DESCRIPTIONS.items():
+            cap_reg.register_capability(cap, desc)
+        tools_reg.bind_capabilities(lambda cap, tid: cap_reg.bind_tool(cap, tid))
+        regs["capabilities"] = cap_reg
+
+    # Skills (C2-01: db_path from Settings.skills).
+    def _build_skills():
+        return SkillManager(db_path=settings.skills.db_path)
+
+    _ensure("skills", _build_skills)
+
+    # Goals (db_path from Settings.goals).
+    def _build_goals():
+        from ..orchestrator.goals import GoalManager
+
+        return GoalManager(event_service=regs["event_service"], db_path=settings.goals.db_path)
+
+    _ensure("goals", _build_goals)
+
+    # Sandbox (C2-09).
+    _ensure("sandbox", lambda: SandboxPool())
+
+    # Prompts + models.
+    _ensure("prompts", PromptRegistry)
+
+    def _build_models():
+        reg = ModelRegistry()
+        from ..models import MockModel
+
+        reg.register("mock", MockModel(responses=["ok"], loop=True))
+        return reg
+
+    _ensure("models", _build_models)
+
+    # Catalog (C2-07: populate entries so production is not empty).
+    def _build_catalog():
+        catalog = SystemCatalog()
+        for tool in tools_reg.list():
+            catalog.index_entry(
+                kind="tool", id=tool.id,
+                metadata={"name": tool.name, "tool_type": tool.tool_type,
+                          "capabilities": list(tool.capabilities)},
+            )
+        for skill in regs["skills"].list():
+            catalog.index_entry(
+                kind="skill", id=skill.id,
+                metadata={"name": skill.name, "version": skill.version,
+                          "state": skill.state.value},
+            )
+        for assistant in regs["assistants"].list():
+            catalog.index_entry(
+                kind="assistant", id=assistant.name,
+                metadata={"intent": assistant.intent},
+            )
+        for model_name in regs["models"].list():
+            catalog.index_entry(kind="model", id=model_name, metadata={})
+        return catalog
+
+    _ensure("catalog", _build_catalog)
+
+    # Health registry.
+    from ..healthcheck import HealthRegistry
+
+    _ensure("health", HealthRegistry)
+
+    # Conversation memory (C2-08).
+    from ..memory import ConversationMemory
+
+    def _build_conversations():
+        return ConversationMemory(settings.memory.conversation_db_path)
+
+    _ensure("conversations", _build_conversations)
+
+    return regs
