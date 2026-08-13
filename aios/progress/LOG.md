@@ -6,6 +6,7 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-13 | M2-review | review-brief | Tạo M2 review brief (template v2): 12 tiêu chí AC từ PLAN.md + deliverable 21 mục + Architecture Compliance (INV-001..010) + Offline-First verification + Anti-fake-test; ghi chú TASK-015 pending → V2/V3 INCONCLUSIVE | done | `reviews/M2-review-brief.md` |
 | 2026-08-13 | TASK-014 | T4 | evaluation.md: 14/14 AC, 622 pass + 0 skip, coverage 96.15% | done — commit | `evaluation.md`, `PROGRESS.md` |
 | 2026-08-13 | TASK-014 | T3 | 73 test mới (tools_base 13, tool_stubs 22, tool_registry 14, arch allow-list); fix 3 (import Tool, mcp regex, unavailable id) | 622 pass | `backend/tests/` |
 | 2026-08-13 | TASK-014 | T1-T2 | tools/ package: base.py (template run 1-6 fail-closed), 6 stub tool (no-exec/ast.parse/urlparse/mock), registry.py (RLock + bind_capabilities ngoài lock); test_architecture.py: allow-list tools/ + urllib AST check | done | `backend/src/aios_core/tools/` |
