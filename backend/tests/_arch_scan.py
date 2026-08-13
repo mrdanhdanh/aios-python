@@ -68,6 +68,8 @@ def collect_imports(package_dir: Path, module_rel: str) -> tuple[set[str], set[s
             mod = node.module or ""
             if level == 0:
                 # absolute: from aios_core.x import y / from langgraph import ...
+                if mod == "__future__":
+                    continue
                 if mod == AIOS_CORE or mod.startswith(AIOS_CORE + "."):
                     aios_mods.add(mod)
                 elif mod:

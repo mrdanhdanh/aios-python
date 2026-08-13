@@ -2,7 +2,7 @@
 
 __version__ = "0.1.0"
 
-from . import capabilities, catalog, contracts, knowledge, knowledge_graph, memory, models, orchestrator, prompts, workflow
+from . import agents, capabilities, catalog, contracts, knowledge, knowledge_graph, memory, models, orchestrator, prompts, workflow
 from .config import Settings, load_settings
 from .container import Container, ContainerError, Scope
 from .healthcheck import (

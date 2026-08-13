@@ -106,6 +106,8 @@
 | TASK-012 | M2-P3b — Goal Manager + Task Queue + Permission Broker + Failure Recovery | M2 | `done` ✅ | AIOS Orchestrator |
 | TASK-011 | M1/P3 — Remediation 9 P3 findings từ M1 v2 review (CLI subcommands, contract field-evolution test, resource queue, context inheritance, tool/snapshot events, catalog rebuild, CLI DI, ADR, benchmark) | M1 (follow-up) | `done` ✅ | AIOS Orchestrator |
 | TASK-016 | M2-ARCH — Architecture Hardening: INV-001..010 + AST tests + reference update (docs/architecture.md, ADR-0004, PLAN.md) | M2 | `done` ✅ | AIOS Orchestrator |
+| TASK-013 | M2-P3c — Assistants: General + Coder Pipeline + Doctor Pipeline + Safety Layer + System Doctor (Worker Plane — INV-001/002) | M2 | `done` ✅ | AIOS Orchestrator |
+| TASK-014 | M2-P4 — Tools 6 loại + Tool Registry + capability binding | M2 | `todo` | AIOS Orchestrator |
 
 ## M2 — Developer Edition (in-progress)
 
@@ -122,10 +124,16 @@
 - Critique ×2: 23 vấn đề resolved (1 P1 + 5 P2...); Review: CHANGES REQUESTED → R1 fix (SRC_ROOT parents[1])
 - **502 passed + 2 skipped, coverage 95.96%, 10/10 AC**
 
+**TASK-013 — M2-P3c: Assistants (Worker Plane)** ✅ (2026-08-13)
+- `agents/` package mới (tuân INV-001/002 — chỉ import models.base/errors + pydantic + stdlib, mọi service qua callable injectable): base.py (template method handle + event sink best-effort), general.py, coder.py (7 steps + Self-Fix loop, repr-escape, exec ns), doctor.py (6 bước + Safety Layer 4 bất biến: disclaimer ok-only, cấm kê đơn trước (d), high→emergency, (d) gate không danger; KB-miss cautious), system_doctor.py (probe + score + FIX_HINTS), registry.py (RLock, resolve_by_intent qua selector)
+- **test_architecture.py**: skip condition INV-002 sửa (chỉ agents/); `test_inv_agents_import_allowlist` (2 set, exclude agents*)
+- Critique ×2: 25 vấn đề resolved (1 Critical + 5 Major...); Review: CHANGES REQUESTED → R1.1 (extractor union default KB) + R1.2 (allow-list exclude intra)
+- **549 passed + 0 skipped, coverage 96.03%, 12/12 AC — INV-001/002 BẬT và PASS**
+
 ## Log gần nhất
 
 Xem chi tiết: `LOG.md`. 3 entry cuối:
 
-1. `2026-08-13 | TASK-016 | T4 | 502 pass + 2 skip (INV-001/002 chờ agents/), coverage 95.96%, 10/10 AC; evaluation.md; commit` → done
-2. `2026-08-13 | TASK-016 | T3 | _arch_scan.py (2 tập, dot-boundary 2 chiều, mọi Import node) + 12 arch tests; fix rule B chặn nhầm models.base (cấm trần == chính xác + provider prefix)` → done
-3. `2026-08-13 | TASK-016 | T1-T2 | architecture.md §7 Invariants + §1.1 Control/Execution Plane + §3.1-3.3 (KB/KG, Context/Memory, 3 vai); ADR-0004; PLAN.md link + index + Health→M4` → done
+1. `2026-08-13 | TASK-013 | T4 | 549 pass + 0 skip (INV-001/002 bật), coverage 96.03%, 12/12 AC; evaluation.md; commit` → done
+2. `2026-08-13 | TASK-013 | T3 | 47 test mới; fix 5 bài học (state merge phẳng+key, MockModel responses, extractor substring, __future__ scanner, danger-only need_more_info)` → done
+3. `2026-08-13 | TASK-013 | T1-T2 | agents/ package (base/general/coder/doctor/system_doctor/registry) + test_architecture.py (skip INV-002 chỉ agents/ + allow-list 2 set exclude agents*)` → done

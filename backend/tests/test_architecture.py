@@ -122,10 +122,49 @@ def test_inv001_worker_no_runtime():
     assert hits == [], f"INV-001 vi phạm: {hits}"
 
 
-@pytest.mark.skipif(not (AGENTS_DIR.is_dir() and TOOLS_DIR.is_dir()), reason="agents//tools/ chưa đủ (TASK-013/014)")
+@pytest.mark.skipif(not AGENTS_DIR.is_dir(), reason="agents/ chưa tồn tại (TASK-013)")
 def test_inv002_worker_no_direct_tool():
+    # INV-002 active once agents/ exists (tools/ target không cần tồn tại — C1-01).
     hits = dir_imports(AGENTS_DIR, ["aios_core.tools"])
     assert hits == [], f"INV-002 vi phạm: {hits}"
+
+
+# -- agents/ import allow-list (TASK-013 — Worker Plane hard isolation) ---------
+
+_AGENTS_ALLOWED_AIOS = {"aios_core.models.base", "aios_core.models.errors"}
+_AGENTS_ALLOWED_EXTERNAL = {
+    "pydantic",
+    "typing",
+    "collections",
+    "abc",
+    "re",
+    "logging",
+    "ast",
+    "dataclasses",
+    "enum",
+    "threading",
+    "functools",
+}
+
+
+@pytest.mark.skipif(not AGENTS_DIR.is_dir(), reason="agents/ chưa tồn tại (TASK-013)")
+def test_inv_agents_import_allowlist():
+    """agents/ (Worker Plane) chỉ được import allow-list — C1-07/C2-06/R1.2.
+
+    Loại trừ aios_core.agents* (intra-package) trước khi check subset; kiểm
+    CẢ aios_mods lẫn external_top_level.
+    """
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(AGENTS_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.agents")}  # intra-package
+    bad_aios = aios_mods - _AGENTS_ALLOWED_AIOS
+    bad_external = external - _AGENTS_ALLOWED_EXTERNAL
+    assert not bad_aios, f"agents/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"agents/ import ngoài allow-list (external): {bad_external}"
 
 
 # -- helper correctness ----------------------------------------------------------

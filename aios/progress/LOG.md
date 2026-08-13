@@ -6,6 +6,11 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-13 | TASK-013 | T4 | evaluation.md: 12/12 AC, 549 pass + 0 skip (INV-001/002 bật), coverage 96.03% | done — commit | `evaluation.md`, `PROGRESS.md` |
+| 2026-08-13 | TASK-013 | T3 | 47 test mới (base 9, coder 11, doctor 12, system 7, registry 8, arch allow-list); fix 5 bài học: state[step_name]+flat merge, MockModel responses, extractor substring (sốt⊂sốt cao), __future__ scanner, danger-only need_more_info | 549 pass | `backend/tests/` |
+| 2026-08-13 | TASK-013 | T1-T2 | agents/ package: base (template handle + event sink best-effort), general, coder (7 steps + self-fix, repr-escape, exec ns), doctor (Safety 4 invariants, KB-miss cautious), system_doctor, registry (RLock + selector); test_architecture.py: INV-002 skip chỉ agents/ + allow-list 2 set exclude agents* | done | `backend/src/aios_core/agents/` |
+| 2026-08-13 | TASK-013 | critique+review | critic ×2: 25 vấn đề resolved (1 Critical, 5 Major...); reviewer CHANGES REQUESTED → R1.1 (extractor union default KB) + R1.2 (allow-list exclude intra-package) | 14/14 + 11/11 resolved | `critique-1/2.md`, `review.md` |
+| 2026-08-13 | TASK-013 | spec | spec-writer: 12 AC, Worker Plane allow-list cứng, wiring registry cạnh AgentSelector | approved | `spec.md` |
 | 2026-08-13 | TASK-016 | T4 | evaluation.md: 10/10 AC, 502 pass + 2 skip, coverage 95.96%; bài học rule B (cấm trần == chính xác, prefix cho nhánh) | done — commit | `evaluation.md`, `PROGRESS.md` |
 | 2026-08-13 | TASK-016 | T3 | `_arch_scan.py` (SRC_ROOT parents[1] + assert fail-fast; 2 tập full dotted; mọi Import node; dot-boundary) + 12 arch tests; fix rule B chặn nhầm models.base | 12 pass, 2 skip (INV-001/002 chờ agents/) | `backend/tests/_arch_scan.py`, `test_architecture.py` |
 | 2026-08-13 | TASK-016 | T1-T2 | architecture.md: §7 10 INV + §1.1 Control/Execution Plane + §3.1-3.3 (KB/KG, Context/Memory, 3 vai) + bảng tiến độ cập nhật; ADR-0004 (4 INV chốt + gap sandbox); PLAN.md link + ADR index 0001..0004 + Architecture Health→M4 | done | `docs/architecture.md`, `docs/adr/0004`, `docs/PLAN.md` |
