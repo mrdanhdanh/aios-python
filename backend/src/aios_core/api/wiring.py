@@ -192,4 +192,45 @@ def build_registries(settings: Settings, kernel: RuntimeKernel, regs: dict) -> d
 
     _ensure("observability", _build_observability)
 
+    # Orchestrator v2 (TASK-022) — advisor/supervisor/collector/goal reporter.
+    # MUST build AFTER observability (R3-2): collector subscribes after
+    # EvaluationStore so rows exist when evaluators run.
+    def _build_orchestrator_v2():
+        from ..orchestrator.advisor import ImprovementAdvisor
+        from ..orchestrator.evaluation_collector import EvaluationCollector
+        from ..orchestrator.goals.reporting import GoalReporter
+        from ..orchestrator.goals.task_queue import QueueItemStatus, TaskQueue
+        from ..orchestrator.supervisor import ExecutionSupervisor
+
+        obs = regs["observability"]
+        task_queue = TaskQueue(event_service=regs["event_service"], db_path=settings.goals.db_path)
+        collector = EvaluationCollector(obs["evaluations"], evaluator=None)
+        # Trigger: subscribe 3 terminal events → collect_workflow (P2-1 v2).
+        from ..kernel.events import EventType
+
+        def _on_terminal(event):
+            if event.type in (
+                EventType.WORKFLOW_COMPLETED,
+                EventType.WORKFLOW_FAILED,
+                EventType.WORKFLOW_CANCELLED,
+            ):
+                collector.collect_workflow(
+                    str(event.payload.get("plan_id") or ""),
+                    str(event.payload.get("execution_id") or ""),
+                    {},
+                )
+
+        kernel.bus.subscribe(None, _on_terminal)
+        return {
+            "advisor": ImprovementAdvisor(obs["evaluations"], obs["metrics"], obs["prompt_history"]),
+            "supervisor": ExecutionSupervisor(
+                kernel.bus,
+                task_queue_count=lambda: len(task_queue.list_items(QueueItemStatus.QUEUED)),
+            ),
+            "collector": collector,
+            "goal_reporter": GoalReporter(regs["goals"]),
+        }
+
+    _ensure("orchestrator_v2", _build_orchestrator_v2)
+
     return regs

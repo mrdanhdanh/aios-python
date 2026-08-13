@@ -35,6 +35,10 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("arch-health", help="Scan architecture violations (M4-P8)")
 
+    sub.add_parser("advisor", help="Improvement suggestions from logs + evaluations (M4-P8)")
+
+    sub.add_parser("supervisor", help="Execution supervisor snapshot (M4-P8)")
+
     serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
     serve.add_argument("--host", default="127.0.0.1", help="Bind host")
     serve.add_argument("--port", type=int, default=8000, help="Bind port")
@@ -75,6 +79,10 @@ def main(argv: list[str] | None = None) -> int:
         return _metrics()
     if args.command == "arch-health":
         return _arch_health()
+    if args.command == "advisor":
+        return _advisor()
+    if args.command == "supervisor":
+        return _supervisor()
     if args.command == "serve":
         return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
@@ -134,7 +142,8 @@ def _metrics() -> int:
 
     kernel = RuntimeKernel.create()
     settings = load_settings()
-    service = MetricsService(kernel.bus, settings.observability.db_path)
+    # [bypass R2-1 TASK-022] suffix convention khớp wiring (db_path + ".metrics")
+    service = MetricsService(kernel.bus, settings.observability.db_path + ".metrics")
     print(json.dumps(service.summary(), indent=2))
     service.close()
     return 0
@@ -153,6 +162,60 @@ def _arch_health() -> int:
         ],
     }
     print(json.dumps(out, indent=2))
+    return 0
+
+
+def _advisor() -> int:
+    # Improvement suggestions (M4-P8) — db suffix convention khớp wiring.
+    from ..config import load_settings
+    from ..kernel import RuntimeKernel
+    from ..observability.evaluation import EvaluationStore
+    from ..observability.metrics import MetricsService
+    from ..observability.prompt_history import PromptHistory
+    from ..orchestrator.advisor import ImprovementAdvisor
+
+    kernel = RuntimeKernel.create()
+    settings = load_settings()
+    db = settings.observability.db_path
+    advisor = ImprovementAdvisor(
+        EvaluationStore(kernel.bus, db + ".evals"),
+        MetricsService(kernel.bus, db + ".metrics"),
+        PromptHistory(db + ".prompts"),
+    )
+    suggestions = advisor.suggest()
+    print(
+        json.dumps(
+            {
+                "count": len(suggestions),
+                "suggestions": [
+                    {"kind": s.kind, "action": s.action, "target": s.target,
+                     "reason": s.reason, "evidence": s.evidence}
+                    for s in suggestions
+                ],
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
+def _supervisor() -> int:
+    # Execution supervisor snapshot (M4-P8).
+    from ..kernel import RuntimeKernel
+    from ..orchestrator.supervisor import ExecutionSupervisor
+
+    kernel = RuntimeKernel.create()
+    supervisor = ExecutionSupervisor(kernel.bus)
+    snap = supervisor.snapshot()
+    out = {
+        "running": list(snap.running),
+        "recent_completed": snap.recent_completed,
+        "recent_failed": snap.recent_failed,
+        "queue_size": snap.queue_size,
+        "stuck": list(snap.stuck),
+    }
+    print(json.dumps(out, indent=2))
+    supervisor.close()
     return 0
 
 

@@ -11,7 +11,7 @@
 | M1 | Core Runtime (P0–P2: infra, kernel, model/memory/knowledge, workflow/capability/catalog) | `done` ✅ (review độc lập PASS) |
 | M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `done` ✅ (669 tests, 95.51%) |
 | M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `done` ✅ (689 pytest + 19 vitest) |
-| M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `in-progress` |
+| M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `done` ✅ (809 tests, 94.92%) |
 | M5 | Enterprise Edition (tương lai — không làm v1) | `todo` |
 
 ## M0 — Development Foundation ✅
@@ -176,11 +176,20 @@
 - Critic ×2: 36 vấn đề (9 P1) resolved; Review: APPROVED có điều kiện → 3 amendment (duration cache, emit scope, doctor key) + R2-2 + R3×7 resolved
 - **779 passed + 0 skipped, coverage 95.11%, 10/10 AC — P8 Phần 1 HOÀN TẤT**
 
+### P8 — TASK-022: Orchestrator v2 ✅ (2026-08-13)
+- `orchestrator/advisor.py` — ImprovementAdvisor: 5 rules deterministic (quality thấp, fail nhiều, tool failures, prompt chưa đánh giá, workflow chậm — duration_by_workflow mới) + dedup/sort; suggestion KHÔNG tự áp dụng
+- `orchestrator/supervisor.py` — ExecutionSupervisor: track running từ bus (clock float monotonic), stuck detect, FAILED+CANCELLED → recent_failed, queue hook
+- `orchestrator/evaluation_collector.py` — EvaluationCollector: evaluator layer trên EvaluationStore, KeyError/error swallow, collect_all aggregate; trigger qua bus wiring
+- `orchestrator/goals/reporting.py` — GoalReporter: 5 status, avg_progress, failed=FAILED+CANCELLED, report_goal detail (qua public API — không sửa GoalManager)
+- API `/api/v1/orchestrator-v2/` (4 GET); wiring regs["orchestrator_v2"] + TaskQueue wire; CLI `aiagent advisor`/`supervisor`; metrics.py +duration_by_workflow
+- Critic ×2: 24 vấn đề (7 P1) resolved; Review: APPROVED có điều kiện → 1 R2 + 3 R3 resolved (+1 bypass fix `_metrics` suffix)
+- **809 passed + 0 skipped, coverage 94.92%, 8/8 AC — P8 HOÀN TẤT → M4 HOÀN TẤT**
+
 ## Log gần nhất
 
 Xem chi tiết: `LOG.md`. 3 entry cuối:
 
-1. `2026-08-13 | TASK-019 | T5 | Extension: 19/19 vitest pass, tsc clean, build emit out/extension.js; critique-1 13 vấn đề + review 3 R2/7 R3 resolved; evaluation.md; M3 DONE` → done
-2. `2026-08-13 | TASK-019 | T1-T4 | extension/: package.json (9 commands), client.ts (3 envelope + trim + 422), context.ts (editorText qua document.getText, gitDiff cwd, 8 prompt), extension.ts (9 commands + INTENTS + guard + editor.edit)` → done
-3. `2026-08-13 | TASK-017/TASK-018 | M3 | API 689 pytest + Dashboard vitest 12 — đã commit (16c998f, 33b6b05)` → done
+1. `2026-08-13 | TASK-022 | T4-T11 | Orchestrator v2: advisor/supervisor/collector/goal_reporter + API 4 GET + CLI; 809 pass, coverage 94.92%; M4 DONE` → done
+2. `2026-08-13 | TASK-022 | [bypass] | fix _metrics() đọc sai db suffix (R2-1 reviewer phát hiện)` → done
+3. `2026-08-13 | TASK-021 | T4-T15 | observability/: metrics/prompt_history/profiler/doctor/arch_health/evaluation + execution emit FAILED/CANCELLED + API/CLI; 779 pass, 95.11%` → done
 

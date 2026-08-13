@@ -25,5 +25,7 @@ aios/data/
 aios/db/
 aios/logs/
 backend/aios/logs/
+backend/aios/
 *.sqlite3
 *.db
+*.db.*

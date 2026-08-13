@@ -155,6 +155,17 @@ class MetricsService:
             ).fetchall()
         return [dict(r) for r in rows]
 
+    def duration_by_workflow(self) -> dict[str, tuple[float, int]]:
+        """{plan_id: (avg_duration_ms, count)} — per-workflow stats (TASK-022)."""
+        self._ensure()
+        with closing(self._connect()) as conn:
+            rows = conn.execute(
+                "SELECT name, AVG(duration_ms) AS avg, COUNT(*) AS n FROM metrics "
+                "WHERE category = 'workflow' AND duration_ms IS NOT NULL "
+                "GROUP BY name"
+            ).fetchall()
+        return {r["name"]: (r["avg"], r["n"]) for r in rows}
+
     def recent(self, limit: int = 20) -> list[dict[str, Any]]:
         self._ensure()
         with closing(self._connect()) as conn:
