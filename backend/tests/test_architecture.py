@@ -17,6 +17,8 @@ AIOS = SRC_ROOT / "aios_core"
 # INV-001/002 become active once TASK-013 (agents) / TASK-014 (tools) exist.
 AGENTS_DIR = AIOS / "agents"
 TOOLS_DIR = AIOS / "tools"
+SKILLS_DIR = AIOS / "skills"  # TASK-015
+SANDBOX_DIR = AIOS / "sandbox"  # TASK-015
 
 
 # -- INV-003: workflow must not know the engine ---------------------------------
@@ -220,6 +222,70 @@ def test_inv_tools_import_allowlist():
     bad_external = external - _TOOLS_ALLOWED_EXTERNAL
     assert not bad_aios, f"tools/ import ngoài allow-list (aios): {bad_aios}"
     assert not bad_external, f"tools/ import ngoài allow-list (external): {bad_external}"
+
+
+# -- skills/ + sandbox/ import allow-list (TASK-015 — Execution Plane) ----------
+
+_SKILLS_ALLOWED_AIOS = {"aios_core.metadata", "aios_core.semver"}  # C1-04
+_SKILLS_ALLOWED_EXTERNAL = {
+    "pydantic",
+    "sqlite3",
+    "typing",
+    "collections",
+    "abc",
+    "re",
+    "logging",
+    "threading",
+    "functools",
+    "time",
+    "enum",
+    "dataclasses",
+    "json",
+    "uuid",
+    "pathlib",
+    "contextlib",
+    "datetime",
+}
+_SANDBOX_ALLOWED_EXTERNAL = {
+    "pydantic",
+    "threading",
+    "time",
+    "uuid",
+    "dataclasses",
+    "enum",
+    "typing",
+    "logging",
+    "collections",
+}
+
+
+@pytest.mark.skipif(not SKILLS_DIR.is_dir(), reason="skills/ chưa tồn tại (TASK-015)")
+def test_inv_skills_import_allowlist():
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(SKILLS_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.skills")}  # intra-package
+    bad_aios = aios_mods - _SKILLS_ALLOWED_AIOS
+    bad_external = external - _SKILLS_ALLOWED_EXTERNAL
+    assert not bad_aios, f"skills/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"skills/ import ngoài allow-list (external): {bad_external}"
+
+
+@pytest.mark.skipif(not SANDBOX_DIR.is_dir(), reason="sandbox/ chưa tồn tại (TASK-015)")
+def test_inv_sandbox_import_allowlist():
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(SANDBOX_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.sandbox")}
+    assert not aios_mods, f"sandbox/ import aios_core ngoài allow-list: {aios_mods}"
+    bad_external = external - _SANDBOX_ALLOWED_EXTERNAL
+    assert not bad_external, f"sandbox/ import ngoài allow-list (external): {bad_external}"
 
 
 # -- helper correctness ----------------------------------------------------------
