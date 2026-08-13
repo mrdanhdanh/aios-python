@@ -33,3 +33,6 @@ goals:
 
 skills:
   db_path: "aios/data/skills.db"
+
+observability:
+  db_path: "aios/data/observability.db"

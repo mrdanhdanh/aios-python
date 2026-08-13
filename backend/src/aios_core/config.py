@@ -72,6 +72,12 @@ class SkillsSettings(BaseModel):
     db_path: str = "aios/data/skills.db"
 
 
+class ObservabilitySettings(BaseModel):
+    """TASK-021: metrics/prompt-history/evaluations persistence."""
+
+    db_path: str = "aios/data/observability.db"
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -91,6 +97,7 @@ class Settings(BaseSettings):
     memory: MemorySettings = MemorySettings()
     goals: GoalsSettings = GoalsSettings()
     skills: SkillsSettings = SkillsSettings()
+    observability: ObservabilitySettings = ObservabilitySettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

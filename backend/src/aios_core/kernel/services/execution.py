@@ -139,12 +139,19 @@ class ExecutionService:
                 PolicyRequest(scopes=scopes, tokens=tokens, internet=False)
             )
             if not decision.approved:
-                return ExecutionResult(
-                    ExecutionStatus.FAILED,
-                    execution_id,
-                    reason=f"policy rejected: {decision.reason} ({decision.policy_version})",
+                reason = f"policy rejected: {decision.reason} ({decision.policy_version})"
+                self._events.emit(
+                    EventType.WORKFLOW_FAILED,
+                    payload={"execution_id": execution_id, "plan_id": plan.id, "reason": reason},
+                    source="execution_service",
                 )
+                return ExecutionResult(ExecutionStatus.FAILED, execution_id, reason=reason)
             if decision.requires_approval:
+                self._events.emit(
+                    EventType.WORKFLOW_FAILED,
+                    payload={"execution_id": execution_id, "plan_id": plan.id, "reason": "approval required"},
+                    source="execution_service",
+                )
                 return ExecutionResult(
                     ExecutionStatus.FAILED,
                     execution_id,
@@ -155,11 +162,21 @@ class ExecutionService:
 
             # Resources.
             if tokens and not self._resources.acquire_tokens(tokens):
+                self._events.emit(
+                    EventType.WORKFLOW_FAILED,
+                    payload={"execution_id": execution_id, "plan_id": plan.id, "reason": "resource unavailable"},
+                    source="execution_service",
+                )
                 return ExecutionResult(
                     ExecutionStatus.FAILED, execution_id, reason="resource unavailable"
                 )
             tokens_acquired = True
             if not self._resources.acquire_slot():
+                self._events.emit(
+                    EventType.WORKFLOW_FAILED,
+                    payload={"execution_id": execution_id, "plan_id": plan.id, "reason": "resource unavailable"},
+                    source="execution_service",
+                )
                 return ExecutionResult(
                     ExecutionStatus.FAILED, execution_id, reason="resource unavailable"
                 )
@@ -190,6 +207,11 @@ class ExecutionService:
             order = self._topo_order(plan)
             for node_id in order:
                 if flag.is_set():
+                    self._events.emit(
+                        EventType.WORKFLOW_CANCELLED,
+                        payload={"execution_id": execution_id, "plan_id": plan.id, "reason": "cancelled"},
+                        source="execution_service",
+                    )
                     return ExecutionResult(
                         ExecutionStatus.CANCELLED, execution_id, node_results, reason="cancelled"
                     )
@@ -211,6 +233,18 @@ class ExecutionService:
                     source="execution_service",
                 )
                 if not ok:
+                    if result == "cancelled":
+                        self._events.emit(
+                            EventType.WORKFLOW_CANCELLED,
+                            payload={"execution_id": execution_id, "plan_id": plan.id, "reason": result},
+                            source="execution_service",
+                        )
+                    else:
+                        self._events.emit(
+                            EventType.WORKFLOW_FAILED,
+                            payload={"execution_id": execution_id, "plan_id": plan.id, "reason": result},
+                            source="execution_service",
+                        )
                     return ExecutionResult(
                         ExecutionStatus.FAILED, execution_id, node_results, reason=result
                     )
@@ -233,9 +267,13 @@ class ExecutionService:
 
         except Exception as exc:  # noqa: BLE001
             logger.exception("Execution %s failed", execution_id)
-            return ExecutionResult(
-                ExecutionStatus.FAILED, execution_id, node_results, reason=f"unexpected: {exc}"
+            reason = f"unexpected: {exc}"
+            self._events.emit(
+                EventType.WORKFLOW_FAILED,
+                payload={"execution_id": execution_id, "plan_id": plan.id, "reason": reason},
+                source="execution_service",
             )
+            return ExecutionResult(ExecutionStatus.FAILED, execution_id, node_results, reason=reason)
         finally:
             if tokens_acquired:
                 self._resources.release_tokens(tokens)

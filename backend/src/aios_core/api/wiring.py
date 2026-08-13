@@ -161,4 +161,35 @@ def build_registries(settings: Settings, kernel: RuntimeKernel, regs: dict) -> d
 
     _ensure("conversations", _build_conversations)
 
+    # Observability (TASK-021) — metrics/prompt-history/doctor/arch-health/evaluations.
+    def _build_observability():
+        from ..observability.arch_health import ArchitectureHealth
+        from ..observability.doctor import HealthDoctor
+        from ..observability.evaluation import EvaluationStore
+        from ..observability.metrics import MetricsService
+        from ..observability.prompt_history import PromptHistory
+
+        db_path = settings.observability.db_path
+        metrics = MetricsService(kernel.bus, f"{db_path}.metrics" if not db_path.endswith(".metrics") else db_path)
+        from pathlib import Path
+
+        base = Path(db_path)
+        return {
+            "metrics": metrics,
+            "prompt_history": PromptHistory(base.with_name(base.name + ".prompts")),
+            "doctor": HealthDoctor(
+                health_registry=regs["health"],
+                diagnostics=[
+                    lambda: {"skills": len(regs["skills"].list())},
+                    lambda: {"catalog_entries": regs["catalog"].count()},
+                    lambda: {"prompts": len(regs["prompts"].list())},
+                ],
+                metrics_summary=metrics.summary,
+            ),
+            "arch_health": ArchitectureHealth(),
+            "evaluations": EvaluationStore(kernel.bus, base.with_name(base.name + ".evals")),
+        }
+
+    _ensure("observability", _build_observability)
+
     return regs

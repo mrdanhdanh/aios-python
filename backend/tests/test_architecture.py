@@ -20,6 +20,7 @@ TOOLS_DIR = AIOS / "tools"
 SKILLS_DIR = AIOS / "skills"  # TASK-015
 SANDBOX_DIR = AIOS / "sandbox"  # TASK-015
 UPGRADE_DIR = AIOS / "upgrade"  # TASK-020 (M4-P7)
+OBSERVABILITY_DIR = AIOS / "observability"  # TASK-021 (M4-P8)
 
 
 # -- INV-003: workflow must not know the engine ---------------------------------
@@ -325,6 +326,48 @@ def test_inv_upgrade_import_allowlist():
     bad_external = external - _UPGRADE_ALLOWED_EXTERNAL
     assert not bad_aios, f"upgrade/ import ngoài allow-list (aios): {bad_aios}"
     assert not bad_external, f"upgrade/ import ngoài allow-list (external): {bad_external}"
+
+
+# -- observability/ import allow-list (TASK-021 — control plane) ---------------
+
+_OBSERVABILITY_ALLOWED_AIOS = {
+    "aios_core.kernel.events",
+    "aios_core.kernel.services",
+    "aios_core.healthcheck",
+    "aios_core.semver",
+    "aios_core.logging",
+}
+_OBSERVABILITY_ALLOWED_EXTERNAL = {
+    "sqlite3",
+    "pathlib",
+    "contextlib",
+    "json",
+    "dataclasses",
+    "typing",
+    "datetime",
+    "uuid",
+    "collections",
+    "time",
+    "ast",
+    "statistics",
+    "logging",
+}
+
+
+@pytest.mark.skipif(not OBSERVABILITY_DIR.is_dir(), reason="observability/ chưa tồn tại (TASK-021)")
+def test_inv_observability_import_allowlist():
+    """observability/ (control plane) chỉ import allow-list — diagnostics hooks."""
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(OBSERVABILITY_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.observability")}
+    bad_aios = aios_mods - _OBSERVABILITY_ALLOWED_AIOS
+    bad_external = external - _OBSERVABILITY_ALLOWED_EXTERNAL
+    assert not bad_aios, f"observability/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"observability/ import ngoài allow-list (external): {bad_external}"
 
 
 # -- helper correctness ----------------------------------------------------------

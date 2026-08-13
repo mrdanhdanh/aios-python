@@ -31,6 +31,10 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("doctor", help="Print runtime health")
 
+    sub.add_parser("metrics", help="Print observability metrics summary (M4-P8)")
+
+    sub.add_parser("arch-health", help="Scan architecture violations (M4-P8)")
+
     serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
     serve.add_argument("--host", default="127.0.0.1", help="Bind host")
     serve.add_argument("--port", type=int, default=8000, help="Bind port")
@@ -67,6 +71,10 @@ def main(argv: list[str] | None = None) -> int:
         return _run_simulate(args.workflow_file)
     if args.command == "doctor":
         return _doctor()
+    if args.command == "metrics":
+        return _metrics()
+    if args.command == "arch-health":
+        return _arch_health()
     if args.command == "serve":
         return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
@@ -81,19 +89,70 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _doctor() -> int:
-    # Runtime health via the DI container (no direct service construction).
+    # Runtime health via the DI container + observability HealthDoctor (M4-P8).
+    from ..config import load_settings
     from ..kernel import RuntimeKernel
     from ..kernel.services import EventService
+    from ..observability.doctor import HealthDoctor
 
     kernel = RuntimeKernel.create()
+    settings = load_settings()
     event_service = kernel.container.resolve(EventService)
-    health = {
+    from ..healthcheck import HealthRegistry
+    from ..skills import SkillManager
+    from ..catalog import SystemCatalog
+
+    registry = HealthRegistry()
+    doctor = HealthDoctor(
+        health_registry=registry,
+        diagnostics=[
+            lambda: {"kernel": "ok", "bus_alive": kernel.bus is not None,
+                     "event_service": "registered" if event_service is not None else "missing"},
+            lambda: {"skills": len(SkillManager(db_path=str(settings.skills.db_path)).list())},
+            lambda: {"catalog_entries": SystemCatalog().count()},
+        ],
+    )
+    report = doctor.report()
+    out = {
+        "status": report.status.value,
         "kernel": "ok",
-        "bus_alive": kernel.bus is not None,
-        "event_service": "registered" if event_service is not None else "missing",
-        "audit_db_path": str(getattr(event_service, "_db_path", "") or ""),
+        "checks": [
+            {"name": c.name, "status": c.status.value, "message": c.message}
+            for c in report.checks
+        ],
+        "diagnostics": report.diagnostics,
     }
-    print(json.dumps(health, indent=2))
+    print(json.dumps(out, indent=2))
+    return 0
+
+
+def _metrics() -> int:
+    # Observability metrics summary (M4-P8). Empty DB → zeros, no error.
+    from ..config import load_settings
+    from ..kernel import RuntimeKernel
+    from ..observability.metrics import MetricsService
+
+    kernel = RuntimeKernel.create()
+    settings = load_settings()
+    service = MetricsService(kernel.bus, settings.observability.db_path)
+    print(json.dumps(service.summary(), indent=2))
+    service.close()
+    return 0
+
+
+def _arch_health() -> int:
+    # Architecture violation scan (M4-P8) — pure AST, no runtime import.
+    from ..observability.arch_health import ArchitectureHealth
+
+    report = ArchitectureHealth().scan()
+    out = {
+        "healthy": report.healthy,
+        "violations": [
+            {"kind": v.kind, "module": v.module, "message": v.message}
+            for v in report.violations
+        ],
+    }
+    print(json.dumps(out, indent=2))
     return 0
 
 

@@ -167,6 +167,15 @@
 - `test_architecture.py`: `test_inv_upgrade_import_allowlist` (internal: contracts/semver/kernel.events/skills.errors; hook-injected — không import skills.manager)
 - Critic ×2: 31 vấn đề (9 P1) resolved — **quyết định: chỉ migrate ROOT, dependency chỉ resolve**; Review: CHANGES REQUESTED → 1 R1 + 3 R2 + 6 R3 resolved
 - **730 passed + 0 skipped, coverage 95.00%, 10/10 AC — P7 HOÀN TẤT**
+
+### P8 — TASK-021: Observability & Diagnostics ✅ (2026-08-13)
+- `observability/` package: metrics.py (MetricsService — subscribe EventBus, category workflow/tool, duration từ Event.timestamp, UPDATE row mới nhất chưa finish, orphan NULL, tool_failures), prompt_history.py (PromptHistory — SQLite sort_keys), profiler.py (Profiler — fake clock, double-start raise), doctor.py (HealthDoctor — worst-wins + diagnostics hooks, tránh trùng agents.SystemDoctor), arch_scan.py (move từ tests/ — 1 engine, SRC_ROOT parents[2]), arch_health.py (ArchitectureHealth — scan(package_dir), layer/contract/policy 3 check), evaluation.py (EvaluationStore — cache STARTED duration, COMPLETED→success / FAILED+CANCELLED→failed, evaluate() feedback)
+- `kernel/services/execution.py`: +5 emit (WORKFLOW_FAILED 6 nhánh _run, WORKFLOW_CANCELLED flag + cancel giữa node; resume ×2 + cancel trước execute không emit)
+- `api/routers/observability.py`: 5 GET (metrics/prompt-history/doctor/arch-health/evaluations) + POST feedback (404/422); wiring regs["observability"]; config ObservabilitySettings
+- CLI: `aiagent metrics` / `doctor` (giữ key kernel) / `arch-health`
+- Critic ×2: 36 vấn đề (9 P1) resolved; Review: APPROVED có điều kiện → 3 amendment (duration cache, emit scope, doctor key) + R2-2 + R3×7 resolved
+- **779 passed + 0 skipped, coverage 95.11%, 10/10 AC — P8 Phần 1 HOÀN TẤT**
+
 ## Log gần nhất
 
 Xem chi tiết: `LOG.md`. 3 entry cuối:
