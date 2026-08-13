@@ -11,7 +11,7 @@
 | M1 | Core Runtime (P0–P2: infra, kernel, model/memory/knowledge, workflow/capability/catalog) | `done` ✅ (review độc lập PASS) |
 | M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `done` ✅ (669 tests, 95.51%) |
 | M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `done` ✅ (689 pytest + 19 vitest) |
-| M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `todo` |
+| M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `in-progress` |
 | M5 | Enterprise Edition (tương lai — không làm v1) | `todo` |
 
 ## M0 — Development Foundation ✅
@@ -158,7 +158,15 @@
 - `extension/`: package.json (9 commands + activationEvents + config aios.serverUrl), client.ts (AiosClient.callChat — 3 envelope + 422 array + trim slash), context.ts (editorText qua document.getText — Selection thật không có .text; gitDiff(cwd); buildPrompt 8 template), extension.ts (activate với vscode injected, 9 commands, INTENTS map đúng bảng §4, guard selection warning, editor.edit replace cho fix/generate_test)
 - Critic ×2: critique-1 13 vấn đề (1 P1 — Selection.text, 7 P2, 5 P3) + critique-2 3 vấn đề — resolved hết; Review: APPROVED có điều kiện → 3 R2 (gitDiff cwd, intent test 9 case, editor.edit test) + 7 R3 resolved
 - **vitest 19/19 pass + tsc clean + build emit out/extension.js — M3 HOÀN TẤT**
+## M4 — Platform Edition (in-progress)
 
+### P7 — TASK-020: Upgrade Pipeline ✅ (2026-08-13)
+- `upgrade/` package: dependency.py (ComponentSpec/Dependency frozen, DependencyResolver — DFS post-order, sort (name,version), missing/cycle/conflict, deterministic), backup.py (BackupStore SQLite — backup/restore/list, persist cross-instance), migrator.py (Migrator Protocol + DictMigrator + SkillMigrator wrap SkillManager — payload = model_dump JSON), pipeline.py (6 bước: read current → skip check → compatibility → dependencies → backup → migrate → health → complete; dry-run 0→2; rollback best-effort: migrator.rollback ưu tiên, fallback write_current backup; 9 UPGRADE_* events), errors.py (UpgradeError)
+- `kernel/events.py`: +8 EventType members (UPGRADE_STARTED..ROLLED_BACK, value "upgrade.<snake>")
+- `workflow/cli.py`: subcommand `aiagent upgrade <kind> <id> --version X [--dry-run]` — v1 chỉ wire skill (SkillMigrator + SkillManager từ settings); exit codes chuẩn
+- `test_architecture.py`: `test_inv_upgrade_import_allowlist` (internal: contracts/semver/kernel.events/skills.errors; hook-injected — không import skills.manager)
+- Critic ×2: 31 vấn đề (9 P1) resolved — **quyết định: chỉ migrate ROOT, dependency chỉ resolve**; Review: CHANGES REQUESTED → 1 R1 + 3 R2 + 6 R3 resolved
+- **730 passed + 0 skipped, coverage 95.00%, 10/10 AC — P7 HOÀN TẤT**
 ## Log gần nhất
 
 Xem chi tiết: `LOG.md`. 3 entry cuối:

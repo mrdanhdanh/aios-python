@@ -49,6 +49,16 @@ def main(argv: list[str] | None = None) -> int:
     c_validate = contract_sub.add_parser("validate", help="Validate a contract payload")
     c_validate.add_argument("contract_file", help="Path to contract JSON")
 
+    upgrade = sub.add_parser("upgrade", help="Upgrade a component via the upgrade pipeline (M4-P7)")
+    upgrade.add_argument("kind", help="Component kind (v1: skill)")
+    upgrade.add_argument("component_id", help="Component id")
+    upgrade.add_argument("--version", required=True, help="Target version (semver)")
+    upgrade.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Run compatibility + dependency checks only (no changes)",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "run":
@@ -65,6 +75,8 @@ def main(argv: list[str] | None = None) -> int:
         return _workflow_validate(args.workflow_file)
     if args.command == "contract" and args.contract_command == "validate":
         return _contract_validate(args.contract_file)
+    if args.command == "upgrade":
+        return _upgrade(args.kind, args.component_id, args.version, args.dry_run)
     return 1
 
 
@@ -137,6 +149,82 @@ def _contract_validate(contract_file: str) -> int:
 def _read_text(path: str) -> str:
     with open(path, "r", encoding="utf-8") as fh:
         return fh.read()
+
+
+def _upgrade(kind: str, component_id: str, version: str, dry_run: bool) -> int:
+    """Upgrade pipeline CLI — v1 wires only the skill kind (TASK-020)."""
+    # Lazy imports: avoid pulling upgrade/skills for other subcommands.
+    from pathlib import Path
+
+    from ..config import load_settings
+    from ..skills import SkillManager
+    from ..upgrade import (
+        BackupStore,
+        Dependency,
+        DependencyResolver,
+        SkillMigrator,
+        UpgradePipeline,
+    )
+
+    if kind != "skill":
+        print(f"not wired: kind '{kind}' is not supported in v1 (only 'skill')")
+        return 1
+
+    settings = load_settings()
+    skill_manager = SkillManager(db_path=str(settings.skills.db_path))
+    skill = skill_manager.get(component_id)
+    if skill is None:
+        print(f"component not found: {component_id}")
+        return 1
+
+    def parse_deps(manifest: dict) -> tuple:
+        deps: list[Dependency] = []
+        for dep in manifest.get("dependencies") or []:
+            # "id" hoặc "id@>=1.2.3" → pin version (R2-3)
+            if "@" not in dep:
+                continue
+            name, _, constraint = dep.partition("@")
+            version = constraint.lstrip("<>=").strip()
+            if name and version:
+                deps.append(Dependency(name=name, version=version))
+        return tuple(deps)
+
+    def lookup(kind_: str, dep_name: str):
+        found = skill_manager.get(dep_name)
+        if found is None:
+            return None
+        return type(skill)(
+            **{
+                **found.model_dump(),
+                "dependencies": parse_deps(found.manifest),
+            }
+        )
+
+    migrator = SkillMigrator(skill_manager)
+    pipeline = UpgradePipeline(
+        migrator=migrator,
+        backup_store=BackupStore(Path(settings.skills.db_path).parent / "upgrade.db"),
+        resolver=DependencyResolver(lookup),
+    )
+    try:
+        result = pipeline.run(kind, component_id, version, dry_run=dry_run)
+    except ValueError as exc:
+        print(f"invalid version: {exc}")
+        return 1
+
+    print(f"status: {result.status}")
+    if result.reason:
+        print(f"reason: {result.reason}")
+    if result.plan:
+        print("plan: " + " -> ".join(f"{s.component_id}@{s.version}" for s in result.plan))
+    if result.backup_id is not None:
+        print(f"backup_id: {result.backup_id}")
+    if result.status == "failed":
+        print(f"failed at step: {result.step}")
+        return 1
+    if result.status == "skipped":
+        return 0
+    return 0
 
 
 def _run_simulate(workflow_file: str) -> int:

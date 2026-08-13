@@ -19,6 +19,7 @@ AGENTS_DIR = AIOS / "agents"
 TOOLS_DIR = AIOS / "tools"
 SKILLS_DIR = AIOS / "skills"  # TASK-015
 SANDBOX_DIR = AIOS / "sandbox"  # TASK-015
+UPGRADE_DIR = AIOS / "upgrade"  # TASK-020 (M4-P7)
 
 
 # -- INV-003: workflow must not know the engine ---------------------------------
@@ -286,6 +287,44 @@ def test_inv_sandbox_import_allowlist():
     assert not aios_mods, f"sandbox/ import aios_core ngoài allow-list: {aios_mods}"
     bad_external = external - _SANDBOX_ALLOWED_EXTERNAL
     assert not bad_external, f"sandbox/ import ngoài allow-list (external): {bad_external}"
+
+
+# -- upgrade/ import allow-list (TASK-020 — control plane, hook-injected) -------
+
+_UPGRADE_ALLOWED_AIOS = {
+    "aios_core.contracts",
+    "aios_core.semver",
+    "aios_core.kernel.events",
+    "aios_core.skills.errors",  # SkillMigrator catch SkillError/SkillStateError (R1-1)
+}
+_UPGRADE_ALLOWED_EXTERNAL = {
+    "sqlite3",
+    "pathlib",
+    "contextlib",
+    "json",
+    "dataclasses",
+    "typing",
+    "datetime",
+    "uuid",
+    "collections",
+    "logging",
+}
+
+
+@pytest.mark.skipif(not UPGRADE_DIR.is_dir(), reason="upgrade/ chưa tồn tại (TASK-020)")
+def test_inv_upgrade_import_allowlist():
+    """upgrade/ (control plane) chỉ import allow-list — migrators hook-injected."""
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(UPGRADE_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.upgrade")}
+    bad_aios = aios_mods - _UPGRADE_ALLOWED_AIOS
+    bad_external = external - _UPGRADE_ALLOWED_EXTERNAL
+    assert not bad_aios, f"upgrade/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"upgrade/ import ngoài allow-list (external): {bad_external}"
 
 
 # -- helper correctness ----------------------------------------------------------

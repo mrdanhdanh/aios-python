@@ -45,6 +45,15 @@ class EventType(str, Enum):
     QUEUE_UPDATED = "queue.updated"
     RECOVERY_RETRY = "recovery.retry"
     RECOVERY_FALLBACK = "recovery.fallback"
+    # M4-P7 (TASK-020): upgrade pipeline events.
+    UPGRADE_STARTED = "upgrade.started"
+    UPGRADE_SKIPPED = "upgrade.skipped"
+    UPGRADE_COMPATIBILITY_OK = "upgrade.compatibility_ok"
+    UPGRADE_DEPENDENCIES_OK = "upgrade.dependencies_ok"
+    UPGRADE_BACKUP_CREATED = "upgrade.backup_created"
+    UPGRADE_MIGRATED = "upgrade.migrated"
+    UPGRADE_HEALTH_OK = "upgrade.health_ok"
+    UPGRADE_ROLLED_BACK = "upgrade.rolled_back"
 
 
 @dataclass
