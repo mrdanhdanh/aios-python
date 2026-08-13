@@ -61,3 +61,31 @@
 22. **Fixture tên ngắn dễ conflict** — g/cat thiếu tham số → FixtureFunctionDefinition; tên rõ + tham số tường minh.
 23. **Thread-safe test: id phải unique theo thread** — agent-{i} × 2 thread = 50 unique không phải 100.
 24. **Regex lookaround + scan escape-first** — validate template lúc construct (object hỏng không tồn tại).
+
+## M2 — Developer Edition ✅ (2026-08-13)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task tổng | 6 (TASK-010, 012, 016, 013, 014, 015) — TẤT CẢ done |
+| Task done | 6/6 |
+| Tests (cuối M2) | **669 pass — 0 skip — coverage 95.51%** |
+| Critique resolve | 6 task × 2 vòng: 16+31+23+25+27+27 = **149 vấn đề resolved** |
+| Review | 6 task (TASK-016/013/015 CHANGES REQUESTED → R1 fix) |
+| Bypass | 1 (test scope_isolation) |
+| Invariants | **INV-001..010 chốt + 4 allow-list tests bật** (agents/tools/skills/sandbox) |
+| Deliverable M2 | Decision Pipeline + 4 assistants + 6 tools + skills lifecycle + sandbox pool ✓ |
+| Commit | ~36 commits |
+
+## Bài học M2 (bổ sung)
+
+25. **Allow-list AST check top-level không bắt module con** — `urllib.request` lọt qua external check; phải AST walk module con (R3 TASK-014).
+26. **Cấm trần `from aios_core import X`** — scanner trả "aios_core" ∉ allow-set → phải dùng dotted import (C2-01 TASK-015).
+27. **Optimistic concurrency cho multi-instance SQLite** — RLock chỉ serialize 1 instance; `UPDATE WHERE state=old` + rowcount==0 (R2 TASK-015).
+28. **DB CHECK chỉ enforce domain, không enforce transition** — đừng claim "enforce 2 tầng" quá mức (C1-02 TASK-015).
+29. **Extractor substring phải lọc keyword con** — "sốt" ⊂ "sốt cao" sau longest-match (TASK-013).
+30. **No-exec marker test phải assert đúng chiều** — "marker VẪN tồn tại" (không exec), không phải "không tồn tại" (C1-01 TASK-014).
+31. **Evict idle test dùng time.monotonic() base** — không số giả (TASK-015).
+32. **PowerShell Set-Content phá encoding tiếng Việt** — tuyệt đối không dùng để sửa file markdown có dấu; dùng công cụ edit (bài học đắt giá TASK-015).
+33. **Dependent check khi rollback/remove** — constraint vỡ âm thầm nếu không quét dependents (R1 TASK-015).
+34. **Gate fail-closed: gate None/False/RAISE đều DENY** — không side effect không kiểm soát (TASK-014).
+35. **System Brain pattern** — Orchestrator hỏi qua Catalog→KG→SystemKnowledge, không đọc registry trực tiếp (TASK-016).

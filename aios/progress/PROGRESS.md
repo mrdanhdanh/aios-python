@@ -9,8 +9,8 @@
 |-----------|-------|------------|
 | M0 | Development Foundation (VS Code agent + progress system) | `done` ✅ |
 | M1 | Core Runtime (P0–P2: infra, kernel, model/memory/knowledge, workflow/capability/catalog) | `done` ✅ (review độc lập PASS) |
-| M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `in-progress` |
-| M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `todo` |
+| M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `done` ✅ (669 tests, 95.51%) |
+| M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `in-progress` |
 | M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `todo` |
 | M5 | Enterprise Edition (tương lai — không làm v1) | `todo` |
 
