@@ -1,0 +1,55 @@
+{
+  "name": "aios-extension",
+  "displayName": "AIOS Assistant",
+  "description": "AIOS coding assistant — 9 commands talking to the AIOS backend",
+  "version": "0.1.0",
+  "publisher": "aios",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onCommand:aios.chat",
+    "onCommand:aios.explain",
+    "onCommand:aios.fixSelection",
+    "onCommand:aios.generateTest",
+    "onCommand:aios.reviewPr",
+    "onCommand:aios.refactor",
+    "onCommand:aios.rename",
+    "onCommand:aios.askWorkspace",
+    "onCommand:aios.chatRepo"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "aios.chat", "title": "AIOS: Chat" },
+      { "command": "aios.explain", "title": "AIOS: Explain selection" },
+      { "command": "aios.fixSelection", "title": "AIOS: Fix selection" },
+      { "command": "aios.generateTest", "title": "AIOS: Generate test" },
+      { "command": "aios.reviewPr", "title": "AIOS: Review PR" },
+      { "command": "aios.refactor", "title": "AIOS: Refactor selection" },
+      { "command": "aios.rename", "title": "AIOS: Rename suggestion" },
+      { "command": "aios.askWorkspace", "title": "AIOS: Ask workspace" },
+      { "command": "aios.chatRepo", "title": "AIOS: Chat with repo" }
+    ],
+    "configuration": {
+      "title": "AIOS",
+      "properties": {
+        "aios.serverUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8000",
+          "description": "AIOS backend server URL"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  }
+}

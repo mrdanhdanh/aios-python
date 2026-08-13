@@ -10,7 +10,7 @@
 | M0 | Development Foundation (VS Code agent + progress system) | `done` ✅ |
 | M1 | Core Runtime (P0–P2: infra, kernel, model/memory/knowledge, workflow/capability/catalog) | `done` ✅ (review độc lập PASS) |
 | M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `done` ✅ (669 tests, 95.51%) |
-| M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `in-progress` |
+| M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `done` ✅ (689 pytest + 19 vitest) |
 | M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `todo` |
 | M5 | Enterprise Edition (tương lai — không làm v1) | `todo` |
 
@@ -143,10 +143,27 @@
 - Critique ×2: 27 vấn đề resolved (1 Critical + 4 Major...); Review: CHANGES REQUESTED → R1 (dependent check spec body) + R2 (optimistic spec body) + R3 (semver 6 chỗ)
 - **669 passed + 0 skipped, coverage 95.51%, 18/18 AC — M2-P4 HOÀN TẤT**
 
+## M3 — Desktop Edition ✅ (2026-08-13)
+
+**TASK-017 — M3-P5: FastAPI REST + WebSocket API** ✅ (commit 16c998f)
+- `api/` package: app.py (create_app), wiring.py (build_registries — MockModel registered đầu, catalog populated), serve.py (uvicorn), routers/ 9 router (health score = 1 - weight/2, events REST + WS loop.call_soon_threadsafe, catalog, goals, skills, tools, memory, prompts, chat ChatRequest → orchestrator → assistant resolve theo intent)
+- CLI `aiagent serve --host --port` (lazy import)
+- **689 passed + 0 skipped, coverage 95.10%** (14 API test + 6 chat/serve test mới)
+
+**TASK-018 — M3-P5: Dashboard SPA (React + Vite + TS)** ✅ (commit 33b6b05)
+- `dashboard/`: vite proxy /api → 127.0.0.1:8000 (ws: true), 10 tabs (Chat/Workflow/Events/Tools/Memory/Artifacts/Skills/Models/Prompts/Health), api.ts 3-envelope, ws.ts reconnect 3s + MockWebSocket stub
+- **vitest 12/12 pass + vite build OK**
+
+**TASK-019 — M3-P6: VS Code Extension (TS, 9 lệnh)** ✅
+- `extension/`: package.json (9 commands + activationEvents + config aios.serverUrl), client.ts (AiosClient.callChat — 3 envelope + 422 array + trim slash), context.ts (editorText qua document.getText — Selection thật không có .text; gitDiff(cwd); buildPrompt 8 template), extension.ts (activate với vscode injected, 9 commands, INTENTS map đúng bảng §4, guard selection warning, editor.edit replace cho fix/generate_test)
+- Critic ×2: critique-1 13 vấn đề (1 P1 — Selection.text, 7 P2, 5 P3) + critique-2 3 vấn đề — resolved hết; Review: APPROVED có điều kiện → 3 R2 (gitDiff cwd, intent test 9 case, editor.edit test) + 7 R3 resolved
+- **vitest 19/19 pass + tsc clean + build emit out/extension.js — M3 HOÀN TẤT**
+
 ## Log gần nhất
 
 Xem chi tiết: `LOG.md`. 3 entry cuối:
 
-1. `2026-08-13 | TASK-015 | T5 | 669 pass + 0 skip (2 allow-list mới bật), coverage 95.51%, 18/18 AC; evaluation.md; commit` → done
-2. `2026-08-13 | TASK-015 | T4 | 47 test mới; fix 4 bài học (evict dùng monotonic, rollback không từ installed, datetime allow-list, loader 2 tham số)` → done
-3. `2026-08-13 | TASK-015 | T1-T3 | skills/ (state machine + manager optimistic + dependents + sources) + sandbox/ (pool warm/evict) + 2 allow-list arch tests` → done
+1. `2026-08-13 | TASK-019 | T5 | Extension: 19/19 vitest pass, tsc clean, build emit out/extension.js; critique-1 13 vấn đề + review 3 R2/7 R3 resolved; evaluation.md; M3 DONE` → done
+2. `2026-08-13 | TASK-019 | T1-T4 | extension/: package.json (9 commands), client.ts (3 envelope + trim + 422), context.ts (editorText qua document.getText, gitDiff cwd, 8 prompt), extension.ts (9 commands + INTENTS + guard + editor.edit)` → done
+3. `2026-08-13 | TASK-017/TASK-018 | M3 | API 689 pytest + Dashboard vitest 12 — đã commit (16c998f, 33b6b05)` → done
+

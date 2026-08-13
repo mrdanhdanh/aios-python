@@ -6,6 +6,12 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-13 | TASK-019 | T5 | evaluation.md 6/6 AC; PROGRESS.md M3 → done; review.md (3 R2 + 7 R3 resolved: gitDiff cwd, intent test 9 case, editor.edit test, tsconfig.build.json tách) | 19/19 vitest + tsc clean + build OK — **M3 HOÀN TẤT** | `evaluation.md`, `review.md`, `PROGRESS.md` |
+| 2026-08-13 | TASK-019 | T4 | Fix critique-1 P1: selectionText → editorText dùng document.getText (Selection thật không có .text); INTENTS map đúng bảng §4 (ask_workspace→system); guard selection + editor.edit cho fix/generate_test; gitDiff(cwd); buildPrompt default trả extra | 19/19 vitest pass (client 9 + extension 10) | `extension/src/*.ts`, `__tests__/*` |
+| 2026-08-13 | TASK-019 | T1-T3 | Implement extension/: package.json (9 commands + activationEvents + config), client.ts (callChat 3 envelope + 422 array + trim slash), context.ts (editorText, gitDiff, buildPrompt), extension.ts (activate + 9 commands) + tsconfig.build.json | done — tsc clean | `extension/` |
+| 2026-08-13 | TASK-019 | critique-1 | Critic subagent: 13 vấn đề (1 P1 — editor.selection.text KHÔNG tồn tại trong @types/vscode, 7 P2 — intent sai 2/9, askInput dead code, reviewPr input, output không replace, thiếu network test; 5 P3) | RESOLVED 13/13 | `tasks/TASK-019/critique-1.md` |
+| 2026-08-13 | TASK-019 | critique-2 | 3 vấn đề (vscode lazy-inject, fetch global, command IDs khớp contributes) | RESOLVED 3/3 | `tasks/TASK-019/critique-2.md` |
+| 2026-08-13 | TASK-019 | fix-test | [bypass] vitest require("../extension") → MODULE_NOT_FOUND (vitest ESM) — đổi sang import { activate }; test 10/10 pass | done | `extension/src/__tests__/extension.test.ts` |
 | 2026-08-13 | TASK-015 | T5 | evaluation.md: 18/18 AC, 669 pass + 0 skip (2 allow-list mới), coverage 95.51% | done — commit | `evaluation.md`, `PROGRESS.md` |
 | 2026-08-13 | TASK-015 | T4 | 47 test mới (skills_base 11, skill_manager 16, sandbox_pool 16, arch 2 allow-list); fix 4 (evict monotonic, rollback không từ installed, datetime allow-list, loader 2 tham số) | 669 pass | `backend/tests/` |
 | 2026-08-13 | TASK-015 | T1-T3 | skills/ package (state machine T1-T10, manager optimistic + dependents, sources stub, schema CHECK sinh từ hằng số) + sandbox/ (pool warm/evict/health) + test_architecture.py 2 allow-list | done | `backend/src/aios_core/skills/`, `sandbox/` |
