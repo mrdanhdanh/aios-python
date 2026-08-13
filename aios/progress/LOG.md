@@ -6,6 +6,11 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-13 | TASK-014 | T4 | evaluation.md: 14/14 AC, 622 pass + 0 skip, coverage 96.15% | done — commit | `evaluation.md`, `PROGRESS.md` |
+| 2026-08-13 | TASK-014 | T3 | 73 test mới (tools_base 13, tool_stubs 22, tool_registry 14, arch allow-list); fix 3 (import Tool, mcp regex, unavailable id) | 622 pass | `backend/tests/` |
+| 2026-08-13 | TASK-014 | T1-T2 | tools/ package: base.py (template run 1-6 fail-closed), 6 stub tool (no-exec/ast.parse/urlparse/mock), registry.py (RLock + bind_capabilities ngoài lock); test_architecture.py: allow-list tools/ + urllib AST check | done | `backend/src/aios_core/tools/` |
+| 2026-08-13 | TASK-014 | critique+review | critic ×2: 27 vấn đề resolved (1 P1 no-exec assertion ngược, 7 P2...); reviewer APPROVED + 3 lưu ý (duration_s error, gate-raise test, urllib AST) | 17/17 + 10/10 | `critique-1/2.md`, `review.md` |
+| 2026-08-13 | TASK-014 | spec | spec-writer: 14 AC, allow-list tools/ cứng, gate fail-closed, binding qua callable | approved | `spec.md` |
 | 2026-08-13 | TASK-013 | T4 | evaluation.md: 12/12 AC, 549 pass + 0 skip (INV-001/002 bật), coverage 96.03% | done — commit | `evaluation.md`, `PROGRESS.md` |
 | 2026-08-13 | TASK-013 | T3 | 47 test mới (base 9, coder 11, doctor 12, system 7, registry 8, arch allow-list); fix 5 bài học: state[step_name]+flat merge, MockModel responses, extractor substring (sốt⊂sốt cao), __future__ scanner, danger-only need_more_info | 549 pass | `backend/tests/` |
 | 2026-08-13 | TASK-013 | T1-T2 | agents/ package: base (template handle + event sink best-effort), general, coder (7 steps + self-fix, repr-escape, exec ns), doctor (Safety 4 invariants, KB-miss cautious), system_doctor, registry (RLock + selector); test_architecture.py: INV-002 skip chỉ agents/ + allow-list 2 set exclude agents* | done | `backend/src/aios_core/agents/` |

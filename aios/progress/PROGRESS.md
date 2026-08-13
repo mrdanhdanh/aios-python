@@ -107,7 +107,7 @@
 | TASK-011 | M1/P3 — Remediation 9 P3 findings từ M1 v2 review (CLI subcommands, contract field-evolution test, resource queue, context inheritance, tool/snapshot events, catalog rebuild, CLI DI, ADR, benchmark) | M1 (follow-up) | `done` ✅ | AIOS Orchestrator |
 | TASK-016 | M2-ARCH — Architecture Hardening: INV-001..010 + AST tests + reference update (docs/architecture.md, ADR-0004, PLAN.md) | M2 | `done` ✅ | AIOS Orchestrator |
 | TASK-013 | M2-P3c — Assistants: General + Coder Pipeline + Doctor Pipeline + Safety Layer + System Doctor (Worker Plane — INV-001/002) | M2 | `done` ✅ | AIOS Orchestrator |
-| TASK-014 | M2-P4 — Tools 6 loại + Tool Registry + capability binding | M2 | `todo` | AIOS Orchestrator |
+| TASK-014 | M2-P4 — Tools 6 loại (Python/Docker/REST/MCP/Shell/Git) + Tool Registry + capability binding | M2 | `done` ✅ | AIOS Orchestrator |
 
 ## M2 — Developer Edition (in-progress)
 
@@ -130,10 +130,16 @@
 - Critique ×2: 25 vấn đề resolved (1 Critical + 5 Major...); Review: CHANGES REQUESTED → R1.1 (extractor union default KB) + R1.2 (allow-list exclude intra)
 - **549 passed + 0 skipped, coverage 96.03%, 12/12 AC — INV-001/002 BẬT và PASS**
 
+**TASK-014 — M2-P4: Tools (Execution Plane)** ✅ (2026-08-13)
+- `tools/` package mới (allow-list cứng — chỉ metadata + pydantic + stdlib + urllib.parse; KHÔNG kernel/capabilities/agents/orchestrator): base.py (template run 1-6: tool_id → gate fail-closed [None/False/raise] → started → _run(input, context) → finished → output), 6 stub tool (Python ast.parse no-exec / Docker mock / REST validate / MCP registry giả / Shell no-exec scope bắt buộc / Git mock), registry.py (RLock, bind_capabilities qua callable — idempotent)
+- **test_architecture.py**: `test_inv_tools_import_allowlist` (2 set + urllib AST module-con check R3)
+- Critique ×2: 27 vấn đề resolved (1 P1 + 7 P2...); Review: APPROVED + 3 lưu ý (duration_s error path, gate-raise test, urllib AST)
+- **622 passed + 0 skipped, coverage 96.15%, 14/14 AC**
+
 ## Log gần nhất
 
 Xem chi tiết: `LOG.md`. 3 entry cuối:
 
-1. `2026-08-13 | TASK-013 | T4 | 549 pass + 0 skip (INV-001/002 bật), coverage 96.03%, 12/12 AC; evaluation.md; commit` → done
-2. `2026-08-13 | TASK-013 | T3 | 47 test mới; fix 5 bài học (state merge phẳng+key, MockModel responses, extractor substring, __future__ scanner, danger-only need_more_info)` → done
-3. `2026-08-13 | TASK-013 | T1-T2 | agents/ package (base/general/coder/doctor/system_doctor/registry) + test_architecture.py (skip INV-002 chỉ agents/ + allow-list 2 set exclude agents*)` → done
+1. `2026-08-13 | TASK-014 | T4 | 622 pass + 0 skip (allow-list tools/ bật), coverage 96.15%, 14/14 AC; evaluation.md; commit` → done
+2. `2026-08-13 | TASK-014 | T3 | 73 test mới (base 13, stubs 22, registry 14, arch allow-list); fix: import Tool, mcp regex, unavailable id` → done
+3. `2026-08-13 | TASK-014 | T1-T2 | tools/ package (base template run, 6 stub, registry bind) + test_architecture.py allow-list (2 set + urllib AST)` → done

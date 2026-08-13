@@ -167,6 +167,61 @@ def test_inv_agents_import_allowlist():
     assert not bad_external, f"agents/ import ngoài allow-list (external): {bad_external}"
 
 
+# -- tools/ import allow-list (TASK-014 — Execution Plane hard isolation) -------
+
+_TOOLS_ALLOWED_AIOS = {"aios_core.metadata"}
+_TOOLS_ALLOWED_EXTERNAL = {
+    "pydantic",
+    "urllib",  # chỉ urllib.parse — check module-con ở dưới (C1-04/R3)
+    "typing",
+    "collections",
+    "abc",
+    "re",
+    "logging",
+    "ast",
+    "threading",
+    "functools",
+    "time",
+    "enum",
+    "dataclasses",
+}
+
+
+@pytest.mark.skipif(not TOOLS_DIR.is_dir(), reason="tools/ chưa tồn tại (TASK-014)")
+def test_inv_tools_import_allowlist():
+    """tools/ (Execution Plane) chỉ import metadata + pydantic + stdlib.
+
+    R3: urllib module-con check bằng AST walk — mọi import chạm 'urllib.*'
+    phải == 'urllib.parse' (collect_imports nén external về top-level nên
+    external check không bắt được urllib.request).
+    """
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(TOOLS_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.tools")}  # intra-package
+        # R3: AST walk chặn urllib.request/error/robotparser (và import urllib trần)
+        tree = ast.parse(py.read_text(encoding="utf-8"), filename=str(py))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == "urllib" or alias.name.startswith("urllib."):
+                        assert alias.name == "urllib.parse", (
+                            f"tools/ import urllib không hợp lệ: {alias.name} ({rel})"
+                        )
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                if node.module == "urllib" or node.module.startswith("urllib."):
+                    assert node.module == "urllib.parse", (
+                        f"tools/ import urllib không hợp lệ: {node.module} ({rel})"
+                    )
+    bad_aios = aios_mods - _TOOLS_ALLOWED_AIOS
+    bad_external = external - _TOOLS_ALLOWED_EXTERNAL
+    assert not bad_aios, f"tools/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"tools/ import ngoài allow-list (external): {bad_external}"
+
+
 # -- helper correctness ----------------------------------------------------------
 
 def test_arch_scan_detects_violation(tmp_path):
