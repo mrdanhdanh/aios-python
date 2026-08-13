@@ -105,6 +105,7 @@
 | TASK-010 | M2-P3a — AIOS Orchestrator v1: Decision Pipeline 4 tầng (Normalizer, Rule Engine, Workflow Matcher, Planner LLM) | M2 | `done` ✅ | AIOS Orchestrator |
 | TASK-012 | M2-P3b — Goal Manager + Task Queue + Permission Broker + Failure Recovery | M2 | `done` ✅ | AIOS Orchestrator |
 | TASK-011 | M1/P3 — Remediation 9 P3 findings từ M1 v2 review (CLI subcommands, contract field-evolution test, resource queue, context inheritance, tool/snapshot events, catalog rebuild, CLI DI, ADR, benchmark) | M1 (follow-up) | `done` ✅ | AIOS Orchestrator |
+| TASK-016 | M2-ARCH — Architecture Hardening: INV-001..010 + AST tests + reference update (docs/architecture.md, ADR-0004, PLAN.md) | M2 | `done` ✅ | AIOS Orchestrator |
 
 ## M2 — Developer Edition (in-progress)
 
@@ -114,10 +115,17 @@
 - Critique ×2: 31 vấn đề resolved (C1-01..C1-16, C2-01..C2-15) — gồm 3 Critical, 6 Major
 - **490 tests pass (baseline 428 + 62), coverage 95.96%, 12/12 AC**
 
+**TASK-016 — Architecture Hardening** ✅ (2026-08-13)
+- 10 Architecture Invariants (INV-001..010) chốt vào `docs/architecture.md` §7 + ADR-0004 + PLAN.md (link + index + Architecture Health→M4)
+- Control/Execution Plane tách bạch; dependency 1 chiều Agent→Capability→Tool→Infra; Evaluation = post-execution observer; KB vs KG; Context vs Memory; Scheduler/Resource/Execution 3 vai; System Knowledge = System Brain
+- **12 architecture tests** (`tests/test_architecture.py` + `_arch_scan.py`, AST pure scan — không import runtime): INV-003/004/005(A+B allow-list)/006/007(hard call-site)/009(4 business)/010 + helper; INV-001/002 skip (chờ agents//tools/)
+- Critique ×2: 23 vấn đề resolved (1 P1 + 5 P2...); Review: CHANGES REQUESTED → R1 fix (SRC_ROOT parents[1])
+- **502 passed + 2 skipped, coverage 95.96%, 10/10 AC**
+
 ## Log gần nhất
 
 Xem chi tiết: `LOG.md`. 3 entry cuối:
 
-1. `2026-08-13 | TASK-012 | T8 | 490 pass, coverage 95.96%, 12/12 AC; evaluation.md; commit` → done
-2. `2026-08-13 | TASK-012 | T7 | 62 test mới: goal 14, queue 14, broker 10, recovery 11, import+policy 3; fix 6 bài học (subscribe 2 tham số, query_audit trả Event, COALESCE -1, reorder 2 pha, state machine chuỗi, history spec)` → done
-3. `2026-08-13 | TASK-012 | T1-T6 | Implement goals/ package + kernel additive (EventType+6, ask_scopes 5 nhánh, GoalsSettings); schema.py chống circular import` → done
+1. `2026-08-13 | TASK-016 | T4 | 502 pass + 2 skip (INV-001/002 chờ agents/), coverage 95.96%, 10/10 AC; evaluation.md; commit` → done
+2. `2026-08-13 | TASK-016 | T3 | _arch_scan.py (2 tập, dot-boundary 2 chiều, mọi Import node) + 12 arch tests; fix rule B chặn nhầm models.base (cấm trần == chính xác + provider prefix)` → done
+3. `2026-08-13 | TASK-016 | T1-T2 | architecture.md §7 Invariants + §1.1 Control/Execution Plane + §3.1-3.3 (KB/KG, Context/Memory, 3 vai); ADR-0004; PLAN.md link + index + Health→M4` → done

@@ -149,6 +149,8 @@ Thứ tự ưu tiên: **1. Rule Engine → 2. Workflow Library → 3. Planner LL
 Orchestrator là agent DUY NHẤT truy cập trực tiếp: Runtime Services, Event Bus, Resource Service, Scheduler, Policy Engine, Capability/Agent/Workflow/Tool/Skill/Prompt/Contract/Model Registry, Knowledge Base + Graph, Observability, Health System, System Catalog.
 Mọi agent khác (Worker Plane) chỉ truy cập qua Capability + Runtime — enforced bởi Permission Service + Policy Engine.
 
+**Architecture Invariants (INV-001..010)** — bất biến kiến trúc bắt buộc, vi phạm = FAIL architecture review. Xem [ADR-0004](adr/0004-architecture-invariants.md) + `docs/architecture.md` §7 + enforcement tự động `backend/tests/test_architecture.py`. 4 invariant chốt: Orchestrator không God Object; Agent không chạm Tool; Workflow không biết Engine; Execution không bypass Policy.
+
 ### Vị trí trong milestones
 - **M1 (P0.5–P2)**: Policy Engine core + System Catalog (index/search từ registry) + Knowledge Graph (đồ thị metadata) xây cùng kernel/registry
 - **M2 (P3)**: Orchestrator v1 — Decision Pipeline đầy đủ (Normalizer, Rule Engine, Workflow Matcher, Planner LLM), Workflow Library, Goal Manager + Task Queue v1, Permission Broker, Failure Recovery, System Knowledge, Capability Router
@@ -229,7 +231,10 @@ Pool tái sử dụng container theo ngôn ngữ (python/node/go...), warm-start
 ## AIOS SDK (đồng bộ từ đầu)
 
 ## Architecture Decisions (ADR)
-Xem [`docs/adr/`](adr/): 0001-engine-independence, 0002-capability-first, 0003-policy-first.
+Xem [`docs/adr/`](adr/): 0001-engine-independence, 0002-capability-first, 0003-policy-first, 0004-architecture-invariants.
+
+## Architecture Health (kế hoạch M4 — P8)
+Ngoài health hạ tầng (Docker/model/memory), M4 bổ sung **Architecture Health**: contract violations, layer violations, dependency violations, capability bypass, permission bypass, orphan components, broken registrations, circular dependencies, deprecated contracts — phù hợp hướng System Doctor + System Evolution Engine (TASK-016 đã ghi nhận, chưa enforce).
 - sdk/python: decorators + base classes để viết Agent, Tool, Capability, Skill, Prompt, Workflow (ví dụ @aios.tool, @aios.agent, @aios.workflow)
 - sdk/typescript: client cho extension + dashboard + viết tool bằng TS
 - SDK dùng chung contract schemas (generate từ backend contracts)

@@ -6,6 +6,11 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-13 | TASK-016 | T4 | evaluation.md: 10/10 AC, 502 pass + 2 skip, coverage 95.96%; bài học rule B (cấm trần == chính xác, prefix cho nhánh) | done — commit | `evaluation.md`, `PROGRESS.md` |
+| 2026-08-13 | TASK-016 | T3 | `_arch_scan.py` (SRC_ROOT parents[1] + assert fail-fast; 2 tập full dotted; mọi Import node; dot-boundary) + 12 arch tests; fix rule B chặn nhầm models.base | 12 pass, 2 skip (INV-001/002 chờ agents/) | `backend/tests/_arch_scan.py`, `test_architecture.py` |
+| 2026-08-13 | TASK-016 | T1-T2 | architecture.md: §7 10 INV + §1.1 Control/Execution Plane + §3.1-3.3 (KB/KG, Context/Memory, 3 vai) + bảng tiến độ cập nhật; ADR-0004 (4 INV chốt + gap sandbox); PLAN.md link + ADR index 0001..0004 + Architecture Health→M4 | done | `docs/architecture.md`, `docs/adr/0004`, `docs/PLAN.md` |
+| 2026-08-13 | TASK-016 | critique+review | critic ×2: 23 vấn đề (1 P1 rule B bypass, 5 P2, ...) resolved; reviewer CHANGES REQUESTED → R1 fix (SRC_ROOT off-by-one parents[2]→[1]) | 13/13 + 10/10 resolved | `critique-1/2.md`, `review.md` |
+| 2026-08-13 | TASK-016 | spec | Phân tích 12 điểm user → spec: 10 INV + AST tests + docs reference | approved | `spec.md` |
 | 2026-08-13 | TASK-012 | T8 | evaluation.md: 12/12 AC, 490 pass (428+62), coverage 95.96%; xử lý đủ R1-R6; 6 bài học mới | done — commit | `evaluation.md`, `PROGRESS.md` |
 | 2026-08-13 | TASK-012 | T7 | 62 test mới (goal 14 / queue 14 / broker 10 / recovery 11 / import+policy 3); fix: subscribe(event_type, handler), query_audit trả Event, COALESCE(MAX,-1)+1, reorder 2 pha, state machine pending→queued→running→completed, history recovery theo spec | 490 pass, 0 fail | `backend/tests/` |
 | 2026-08-13 | TASK-012 | T1-T6 | Implement `orchestrator/goals/`: goal.py (state machine + cascade cancel + resume recompute), task_queue.py (dequeue RETURNING, reorder 2 pha, recover_stale_running, enqueue atomic), permission_broker.py (ask_scopes, default-deny no-approver, audit schema C2-04), failure_recovery.py (retry→fallback→report, ERROR mọi fail), schema.py (shared DDL — fix circular import), build_goal_modules; kernel additive: EventType +6, PolicyDecision.ask_scopes 5 nhánh, GoalsSettings + config.yaml | done | `backend/src/aios_core/orchestrator/goals/` |
