@@ -200,3 +200,13 @@ def test_scheduler_settings(tmp_path, monkeypatch):
     assert load_settings().scheduler.resource_wait_timeout_s == 0.5
     with pytest.raises(ValidationError):
         SchedulerSettings(resource_wait_timeout_s=-1)
+
+
+def test_harness_settings(tmp_path, monkeypatch):
+    """TASK-029: harness block defaults + env override + forbid."""
+    monkeypatch.delenv(CONFIG_PATH_ENV, raising=False)
+    monkeypatch.chdir(tmp_path)
+    settings = load_settings()
+    assert settings.harness.diagnose_on_failure is True
+    monkeypatch.setenv("AIOS_HARNESS__DIAGNOSE_ON_FAILURE", "false")
+    assert load_settings().harness.diagnose_on_failure is False

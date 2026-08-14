@@ -622,6 +622,88 @@ def test_inv016_planning_no_scheduler():
     assert hits == [], f"INV-016 vi phạm: {hits}"
 
 
+# -- harness/ import allow-list + INV-017/018 (TASK-029, M6-H1) ----------------
+
+_HARNESS_ALLOWED_AIOS = {
+    "aios_core.config",
+    "aios_core.logging",
+    "aios_core.kernel.services.state",
+    "aios_core.kernel.services.artifacts",
+    "aios_core.contracts.artifact",
+}
+_HARNESS_ALLOWED_EXTERNAL = {
+    "pydantic", "typing", "datetime", "enum", "re", "json", "threading",
+    "time", "abc", "collections",  # B7: top-level (collections.abc -> collections)
+}
+
+
+@pytest.mark.skipif(not (AIOS / "harness").is_dir(),
+                    reason="harness/ chưa tồn tại (TASK-029)")
+def test_inv017_harness_import_allowlist():
+    """harness/ chỉ import allow-list — CẤM kernel.services.execution|resource|
+    scheduler|policy|permissions|context + orchestrator/models/memory/knowledge
+    kể cả TYPE_CHECKING. Loop rglob (C3-07: phủ subdir H2-H5 tương lai)."""
+    harness_dir = AIOS / "harness"
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(harness_dir.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.harness")}
+    bad_aios = aios_mods - _HARNESS_ALLOWED_AIOS
+    bad_external = external - _HARNESS_ALLOWED_EXTERNAL
+    assert not bad_aios, f"harness/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"harness/ import ngoài allow-list (external): {bad_external}"
+
+
+def test_inv017_harness_no_kernel_impl():
+    """INV-017: harness/ không chui kernel implementation (rglob đệ quy)."""
+    hits = dir_imports(AIOS / "harness", [
+        "aios_core.kernel.services.execution",
+        "aios_core.kernel.services.resource",
+        "aios_core.kernel.services.scheduler",
+        "aios_core.kernel.services.policy",
+        "aios_core.kernel.services.permissions",
+        "aios_core.kernel.services.context",
+    ])
+    assert hits == [], f"INV-017 vi phạm: {hits}"
+
+
+def test_inv017_harness_no_god_object():
+    """contracts.py là leaf (import-based — C2-04 v2); runner/registry/lifecycle
+    tách module; không def execute("""
+    contracts_src = (AIOS / "harness" / "contracts.py").read_text(encoding="utf-8")
+    tree = ast.parse(contracts_src)
+    imports = [
+        node for node in ast.walk(tree)
+        if isinstance(node, (ast.Import, ast.ImportFrom))
+    ]
+    # leaf: chỉ stdlib/pydantic — không import aios_core nào
+    for node in imports:
+        mod = getattr(node, "module", None) or ""
+        assert not mod.startswith("aios_core"), \
+            f"contracts.py không được import aios_core: {mod}"
+    # runner.execute() là public API chính — chỉ registry/lifecycle/context
+    # không được định nghĩa execute (trách nhiệm duy nhất thuộc runner).
+    for name in ("registry.py", "lifecycle.py", "context.py"):
+        src = (AIOS / "harness" / name).read_text(encoding="utf-8")
+        assert "def execute(" not in src, f"{name} không được định nghĩa execute"
+
+
+def test_inv018_runner_builds_evidence():
+    """INV-018: runner.py phải chứa literal HarnessArtifact( (build evidence)."""
+    runner_src = (AIOS / "harness" / "runner.py").read_text(encoding="utf-8")
+    assert "HarnessArtifact(" in runner_src
+    assert "finally" in runner_src  # evidence trong finally (C1-03)
+
+
+def test_inv017_no_harness_in_kernel():
+    """kernel/services không import harness (đảo chiều)."""
+    hits = dir_imports(AIOS / "kernel" / "services", ["aios_core.harness"])
+    assert hits == [], f"INV-017 vi phạm: {hits}"
+
+
 # -- models/router/ import allow-list (TASK-025 — Model Router) ---------------
 
 _ROUTER_ALLOWED_AIOS = {

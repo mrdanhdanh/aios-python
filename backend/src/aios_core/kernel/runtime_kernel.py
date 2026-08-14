@@ -171,4 +171,16 @@ class RuntimeKernel:
         )
         container.register_instance(GraphScheduler, graph_scheduler)
 
+        # Harness kernel (TASK-029, M6-H1): registry + runner (INV-017/018).
+        from ..harness import HarnessRegistry, HarnessRunner
+
+        harness_registry = HarnessRegistry()
+        harness_runner = HarnessRunner(
+            state_service=container.resolve(StateService),  # shared
+            artifact_service=container.resolve(ArtifactService),  # shared (M1)
+            diagnose_on_failure=settings.harness.diagnose_on_failure,
+        )
+        container.register_instance(HarnessRegistry, harness_registry)
+        container.register_instance(HarnessRunner, harness_runner)
+
         return cls(container, bus)

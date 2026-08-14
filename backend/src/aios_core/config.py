@@ -185,6 +185,14 @@ class SchedulerSettings(BaseModel):
         return value
 
 
+class HarnessSettings(BaseModel):
+    """TASK-029: harness kernel tuning (M6-H1)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    diagnose_on_failure: bool = True
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -208,6 +216,7 @@ class Settings(BaseSettings):
     planning: PlanningSettings = PlanningSettings()
     graph: GraphSettings = GraphSettings()
     scheduler: SchedulerSettings = SchedulerSettings()
+    harness: HarnessSettings = HarnessSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

@@ -161,6 +161,30 @@ def test_graph_scheduler_wired(tmp_path):
     assert result.graph.execution_order == ["A", "B"]
 
 
+def test_harness_wired(tmp_path):
+    """TASK-029 (M6-H1): registry/runner resolvable + shared services."""
+    from aios_core.harness import Harness, HarnessRegistry, HarnessRunner
+
+    class H(Harness):
+        id = "h1"
+        name = "H1"
+        version = "1.0.0"
+
+        def run(self, ctx):
+            return "ok"
+
+    kernel = RuntimeKernel.create(make_settings(tmp_path))
+    registry = kernel.container.resolve(HarnessRegistry)
+    runner = kernel.container.resolve(HarnessRunner)
+    assert runner._state is kernel.container.resolve(StateService)
+    assert runner._artifacts is kernel.container.resolve(ArtifactService)
+    registry.register(H())
+    ctx = runner.create_context(registry.get("h1"), target="t")
+    report = runner.execute(registry.get("h1"), ctx)
+    assert report.result.status.value == "completed"
+    assert len(report.artifacts) == 2  # INV-018 evidence
+
+
 def test_model_router_wired(tmp_path):
     """TASK-025: router resolvable; offline select works (no chat calls)."""
     from aios_core.models import ModelRouter, RouteRequest

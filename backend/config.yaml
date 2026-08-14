@@ -57,3 +57,6 @@ graph:
 
 scheduler:
   resource_wait_timeout_s: null
+
+harness:
+  diagnose_on_failure: true

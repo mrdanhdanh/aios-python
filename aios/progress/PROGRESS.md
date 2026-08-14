@@ -207,6 +207,19 @@
 | TASK-026 | Planning Engine — Goal Analyzer → Task Decomposer → Dependency Analyzer → Capability Resolver → Risk Analyzer → Execution Planner → Execution Graph; plan validation 8 hạng mục; INV-014 | `done` ✅ | 1003 pass, coverage 95.00%, 11/11 AC (2026-08-15) |
 | TASK-027 | Execution Graph — ExecutionGraph/GraphNode/GraphEdge/Dependency/Condition/JoinPolicy/FailurePolicy; graph state 8 trạng thái; INV-015 | `done` ✅ | 1055 pass, coverage 95.09%, 13/13 AC (2026-08-15) |
 | TASK-028 | Parallel Scheduler — Graph Scheduler → Resource → Execution → State; không sở hữu Resource/Execution; INV-016 | `done` ✅ | 1086 pass, coverage 95.22%, 12/12 AC (2026-08-15) — **M5 HOÀN TẤT** |
+
+## M6 — AIOS Harness (in-progress) — 2026-08-15
+
+> PLAN.md §M6: subsystem `harness/` giúp AIOS tự kiểm thử/xác minh/quan sát/cải tiến (H1-H5). Không sửa Runtime/Orchestrator — chỉ gọi qua API. INV-017..021.
+
+| Task | Nội dung | Trạng thái | Ghi chú |
+|------|----------|------------|---------|
+| TASK-029 | H1 Harness Kernel — contracts chung + lifecycle 8-state + registry + runner + evidence (INV-018); INV-017 isolation | `done` ✅ | 1124 pass, coverage 95.20%, 10/10 AC (2026-08-15) |
+| TASK-030 | H2 Execution Verification — Preconditions/Postconditions/Verdict + Evidence Package + Replay; INV-019 | `todo` | sau 029 |
+| TASK-031 | H3 Test & Simulation — Scenario + Simulation Mode; không side effect | `todo` | |
+| TASK-032 | H4 Evaluation Harness — Evaluation Model + Suite + Trajectory; INV-020 | `todo` | |
+| TASK-033 | H4 Benchmark + Regression Gate — INV-021 | `todo` | sau 032 |
+| TASK-034 | H5 Doctor & Readiness — Doctor architecture + Readiness Score | `todo` | |
 | INV-011..016 | Enforcement tests (AST) trong `tests/test_architecture.py` + observability metrics M5 | `todo` | tích hợp trong các task |
 
 ## Log gần nhất
