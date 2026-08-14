@@ -14,6 +14,14 @@
 | M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `done` ✅ (809 tests, 94.92%) |
 | M5 | Enterprise Edition (tương lai — không làm v1) | `todo` |
 
+## Hạ tầng bổ sung (bypass)
+
+| Mục | Nội dung | Trạng thái | Ghi chú |
+|-----|----------|------------|---------|
+| Secret scan | GitHub Actions Gitleaks — quét secret trên push/PR master + manual trigger | `done` | `.github/workflows/secret-scan.yml` (2026-08-14) |
+| Remote | Chuyển origin → repo GitHub mới `mrdanhdanh/aios-python` (PUBLIC) | `done` | commit e42bae4 (2026-08-14) |
+
+
 ## M0 — Development Foundation ✅
 
 | Bước | Nội dung | Trạng thái | Ghi chú |

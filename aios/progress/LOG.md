@@ -6,6 +6,7 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-14 | security | [bypass] | Thêm GitHub Actions workflow `.github/workflows/secret-scan.yml` chạy Gitleaks trên push/PR master + manual trigger: checkout full history (fetch-depth 0) → quét toàn bộ code + lịch sử commit, fail build nếu lộ secret — lý do: fix nhỏ (1 file CI), không đổi hành vi hệ thống | done | `.github/workflows/secret-scan.yml` |
 | 2026-08-14 | git | [bypass] | Commit toàn bộ (5e17b74, 12 files) + chuyển remote origin từ repo cũ `mrdanhdanh/AIAgent` (dự án PowerShell, lịch sử không liên quan) sang repo GitHub mới **`mrdanhdanh/aios-python`** (PUBLIC) do người dùng chọn tạo mới; push master thành công (1080 objects, 744 KB) — lý do: thao tác git/repo, không đổi code | done — up to date, working tree clean | `https://github.com/mrdanhdanh/aios-python` |
 | 2026-08-14 | docs | [bypass] | Thêm §3.4 "Hành trình một lệnh — theo code thật" vào `docs/architecture.md`: flowchart kênh nhập + sequence diagram 12 bước + bảng module thật + ví dụ CLI — lý do: tài liệu tham chiếu, không đổi hành vi hệ thống | done | `docs/architecture.md` |
 | 2026-08-14 | docs | [bypass] | Cập nhật `docs/architecture.md` theo trạng thái 2026-08-14: M3 done (REST+WS API, Dashboard SPA, VS Code Extension), M4 done (Upgrade, Observability, Orchestrator v2), LEARN modules ✅, §8 Architecture Health hiện thực hóa — lý do: tài liệu tham chiếu, không đổi hành vi hệ thống | done | `docs/architecture.md` |
