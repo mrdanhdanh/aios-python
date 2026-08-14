@@ -659,5 +659,6 @@ class TestConfigWiring:
             artifacts=ArtifactsSettings(dir=str(tmp_path / "artifacts")),
         ))
         reg = kernel.container.resolve(HarnessRegistry)
-        # TASK-029/030/031/032: verification, test, evaluation
-        assert set(reg.list()) == {"verification", "test", "evaluation"}
+        # TASK-029..033: verification, test, evaluation, benchmark
+        assert set(reg.list()) == {"verification", "test", "evaluation",
+                                   "benchmark"}

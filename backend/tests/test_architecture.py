@@ -899,6 +899,63 @@ def test_inv020_suite_loader_safe_load():
     assert "full_load" not in src
 
 
+# -- harness/benchmark/ (TASK-033 — Benchmark + Regression Gate, INV-021) -----
+
+@pytest.mark.skipif(not (AIOS / "harness" / "benchmark").is_dir(),
+                    reason="harness/benchmark chưa tồn tại (TASK-033)")
+def test_inv021_benchmark_no_kernel_impl():
+    """INV-021a: benchmark/ không import kernel.services.execution|events|
+    resource|scheduler + kernel.graph|orchestrator.planning (run_fn injectable)."""
+    hits = dir_imports(AIOS / "harness" / "benchmark", [
+        "aios_core.kernel.services.execution",
+        "aios_core.kernel.services.events",
+        "aios_core.kernel.services.resource",
+        "aios_core.kernel.services.scheduler",
+        "aios_core.kernel.graph",
+        "aios_core.orchestrator.planning",
+    ])
+    assert hits == [], f"INV-021 vi phạm: {hits}"
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "benchmark").is_dir(),
+                    reason="harness/benchmark chưa tồn tại (TASK-033)")
+def test_inv021_gate_blocks_release():
+    """INV-021b (behavioral): benchmark.py chứa literal `GateBlockedError(` +
+    type `RegressionGate` — gate fail → raise block release."""
+    src = (AIOS / "harness" / "benchmark" / "benchmark.py").read_text(encoding="utf-8")
+    assert "GateBlockedError(" in src
+    assert "RegressionGate" in src
+    assert "blocked" in src
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "benchmark").is_dir(),
+                    reason="harness/benchmark chưa tồn tại (TASK-033)")
+def test_inv021_benchmark_no_side_effects():
+    """INV-021c: benchmark/ không side effect (AST — pattern INV-020b)."""
+    forbidden = ("sqlite3", "httpx", "socket", "requests", "os")
+    for py in (AIOS / "harness" / "benchmark").rglob("*.py"):
+        src = py.read_text(encoding="utf-8")
+        tree = ast.parse(src)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    assert alias.name.split(".")[0] not in forbidden, \
+                        f"{py.name} side-effect import: {alias.name}"
+            elif isinstance(node, ast.ImportFrom):
+                assert (node.module or "").split(".")[0] not in forbidden, \
+                    f"{py.name} side-effect import: {node.module}"
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "benchmark").is_dir(),
+                    reason="harness/benchmark chưa tồn tại (TASK-033)")
+def test_inv021_persist_before_block():
+    """INV-021d: persist TRƯỚC raise GateBlockedError trong verify (evidence-first)."""
+    src = (AIOS / "harness" / "benchmark" / "benchmark.py").read_text(encoding="utf-8")
+    verify_block = src[src.find("def verify"):src.find("def _persist")]
+    assert "_persist" in verify_block
+    assert verify_block.index("_persist") < verify_block.index("raise GateBlockedError")
+
+
 def test_inv017_no_harness_in_kernel():
     """kernel/services không import harness (đảo chiều)."""
     hits = dir_imports(AIOS / "kernel" / "services", ["aios_core.harness"])

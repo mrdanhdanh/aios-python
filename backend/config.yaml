@@ -74,3 +74,9 @@ evaluation:
   default_threshold: 0.8
   strict: true
   max_items: 1000
+
+benchmark:
+  max_scenarios: 100
+  strict: true
+  quality_max_delta: -5.0
+  failure_rate_max_delta: 0.02

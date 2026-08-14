@@ -222,6 +222,17 @@ class EvaluationSettings(BaseModel):
     max_items: int = 1000  # C2-06: cap dataset (deterministic)
 
 
+class BenchmarkSettings(BaseModel):
+    """TASK-033: benchmark + regression gate tuning (M6-H4)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_scenarios: int = 100  # 100 scenarios (PLAN)
+    strict: bool = True  # gate fail → GateBlockedError
+    quality_max_delta: float = -5.0  # % — quality giảm > 5% → block
+    failure_rate_max_delta: float = 0.02  # pp — tăng > 2pp → block
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -249,6 +260,7 @@ class Settings(BaseSettings):
     execution: ExecutionSettings = ExecutionSettings()
     testing: TestingSettings = TestingSettings()
     evaluation: EvaluationSettings = EvaluationSettings()
+    benchmark: BenchmarkSettings = BenchmarkSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

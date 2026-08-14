@@ -282,6 +282,7 @@ class TestScheduler:
         d1 = r1.model_dump(); d2 = r2.model_dump()
         for d in (d1, d2):
             d.pop("queue_time_ms")
+            d["graph"].pop("latency_ms")  # timing thật — không deterministic
             for m in d["node_metrics"].values():
                 m.pop("resource_wait_ms")
         assert d1 == d2

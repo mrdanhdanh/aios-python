@@ -228,4 +228,26 @@ class RuntimeKernel:
         harness_registry.register(evaluation_harness)  # id="evaluation"
         container.register_instance(EvaluationHarness, evaluation_harness)
 
+        # Benchmark + Regression Gate (TASK-033, M6-H4): run_fn placeholder
+        # deterministic — real runner inject qua config (INV-021).
+        from ..harness.benchmark import (
+            BenchmarkHarness, BenchmarkRunner, RegressionGate, default_rules,
+        )
+        from ..harness.benchmark.contracts import RunResult
+
+        def _placeholder_run(scenario_id: str) -> RunResult:
+            return RunResult(scenario_id=scenario_id)
+
+        benchmark_harness = BenchmarkHarness(
+            BenchmarkRunner(_placeholder_run,
+                            max_scenarios=settings.benchmark.max_scenarios),
+            RegressionGate(default_rules(
+                quality_max_delta=settings.benchmark.quality_max_delta,
+                failure_rate_max_delta=settings.benchmark.failure_rate_max_delta,
+            )),
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(benchmark_harness)  # id="benchmark"
+        container.register_instance(BenchmarkHarness, benchmark_harness)
+
         return cls(container, bus)
