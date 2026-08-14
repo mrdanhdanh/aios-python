@@ -956,6 +956,63 @@ def test_inv021_persist_before_block():
     assert verify_block.index("_persist") < verify_block.index("raise GateBlockedError")
 
 
+# -- harness/doctor/ (TASK-034 — Doctor & Readiness) --------------------------
+
+@pytest.mark.skipif(not (AIOS / "harness" / "doctor").is_dir(),
+                    reason="harness/doctor chưa tồn tại (TASK-034)")
+def test_inv022_doctor_no_kernel_impl():
+    """doctor/ không import kernel.services.execution|events|resource|scheduler
+    + kernel.graph|orchestrator.planning (checks injectable)."""
+    hits = dir_imports(AIOS / "harness" / "doctor", [
+        "aios_core.kernel.services.execution",
+        "aios_core.kernel.services.events",
+        "aios_core.kernel.services.resource",
+        "aios_core.kernel.services.scheduler",
+        "aios_core.kernel.graph",
+        "aios_core.orchestrator.planning",
+    ])
+    assert hits == [], f"INV-022 vi phạm: {hits}"
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "doctor").is_dir(),
+                    reason="harness/doctor chưa tồn tại (TASK-034)")
+def test_inv022_doctor_13_kinds():
+    """DoctorKind phải đủ 13 loại (PLAN §H5)."""
+    src = (AIOS / "harness" / "doctor" / "contracts.py").read_text(encoding="utf-8")
+    kinds = [
+        "ARCHITECTURE", "RUNTIME", "WORKFLOW", "AGENT", "CAPABILITY", "TOOL",
+        "MEMORY", "MODEL", "POLICY", "REGISTRY", "PERFORMANCE", "SECURITY",
+        "EVIDENCE",
+    ]
+    for kind in kinds:
+        assert f"{kind} = " in src, f"thiếu DoctorKind.{kind}"
+    assert src.count("= \"") >= 13
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "doctor").is_dir(),
+                    reason="harness/doctor chưa tồn tại (TASK-034)")
+def test_inv022_readiness_policy_gate():
+    """Hard gate policy: readiness.py chứa literal `RELEASE BLOCKED` +
+    `policy_violations` (policy violation > 0 → block dù overall cao)."""
+    src = (AIOS / "harness" / "doctor" / "readiness.py").read_text(encoding="utf-8")
+    assert "RELEASE BLOCKED" in src
+    assert "policy_violations" in src
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "doctor").is_dir(),
+                    reason="harness/doctor chưa tồn tại (TASK-034)")
+def test_inv022_persist_before_raise():
+    """doctor.py + readiness.py: persist TRƯỚC raise (evidence-first).
+    Dùng rfind — early-return raise (no results) đứng trước persist."""
+    for name, err in (("doctor.py", "DoctorError"),
+                      ("readiness.py", "ReadinessError")):
+        src = (AIOS / "harness" / "doctor" / name).read_text(encoding="utf-8")
+        verify_block = src[src.find("def verify"):src.find("def _persist")]
+        assert "_persist" in verify_block
+        assert verify_block.index("_persist") < \
+            verify_block.rfind(f"raise {err}")
+
+
 def test_inv017_no_harness_in_kernel():
     """kernel/services không import harness (đảo chiều)."""
     hits = dir_imports(AIOS / "kernel" / "services", ["aios_core.harness"])

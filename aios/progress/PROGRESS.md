@@ -13,6 +13,7 @@
 | M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `done` ✅ (689 pytest + 19 vitest) |
 | M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `done` ✅ (809 tests, 94.92%) |
 | M5 | Core Intelligence (P9–P10: memory/context/model/planning/graph/scheduler) | `done` ✅ (1086 tests, 95.22%) |
+| M6 | AIOS Harness (P11: harness kernel, verification, test & simulation, evaluation, benchmark, doctor & readiness) | `done` ✅ (1521 tests, 95.35%) |
 
 ## Hạ tầng bổ sung (bypass)
 
@@ -219,7 +220,7 @@
 | TASK-031 | H3 Test & Simulation — Scenario + Simulation Mode; không side effect | `done` ✅ | 1299 pass, coverage 95.26%, 12/12 AC (2026-08-15) |
 | TASK-032 | H4 Evaluation Harness — Evaluation Model + Suite + Trajectory; INV-020 | `done` ✅ | 1387 pass, coverage 95.27%, 12/12 AC (2026-08-15) |
 | TASK-033 | H4 Benchmark + Regression Gate — INV-021 | `done` ✅ | 1450 pass, coverage 95.31%, 11/11 AC (2026-08-15) |
-| TASK-034 | H5 Doctor & Readiness — Doctor architecture + Readiness Score | `todo` | |
+| TASK-034 | H5 Doctor & Readiness — Doctor architecture + Readiness Score | `done` ✅ | 1521 pass, coverage 95.35%, 11/11 AC (2026-08-15) — **M6 HOÀN TẤT** |
 | INV-011..016 | Enforcement tests (AST) trong `tests/test_architecture.py` + observability metrics M5 | `todo` | tích hợp trong các task |
 
 ## Log gần nhất

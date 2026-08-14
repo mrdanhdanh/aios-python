@@ -80,3 +80,8 @@ benchmark:
   strict: true
   quality_max_delta: -5.0
   failure_rate_max_delta: 0.02
+
+doctor:
+  strict: true
+  min_overall: 0.0
+  policy_gate: true

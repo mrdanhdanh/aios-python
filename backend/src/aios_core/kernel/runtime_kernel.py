@@ -250,4 +250,26 @@ class RuntimeKernel:
         harness_registry.register(benchmark_harness)  # id="benchmark"
         container.register_instance(BenchmarkHarness, benchmark_harness)
 
+        # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
+        # injectable qua register (placeholder deterministic v1, INV-022).
+        from ..harness.doctor import (
+            DoctorChecks, DoctorHarness, ReadinessHarness, ReadinessScorer,
+        )
+
+        doctor_checks = DoctorChecks()
+        doctor_harness = DoctorHarness(
+            doctor_checks,
+            state_service=container.resolve(StateService),  # shared
+        )
+        readiness_harness = ReadinessHarness(
+            doctor_checks,  # P1-01: dùng chung instance
+            ReadinessScorer(min_overall=settings.doctor.min_overall,
+                            policy_gate=settings.doctor.policy_gate),
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(doctor_harness)  # id="doctor"
+        harness_registry.register(readiness_harness)  # id="readiness"
+        container.register_instance(DoctorHarness, doctor_harness)
+        container.register_instance(ReadinessHarness, readiness_harness)
+
         return cls(container, bus)

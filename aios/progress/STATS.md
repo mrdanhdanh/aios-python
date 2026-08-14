@@ -117,6 +117,33 @@
 | Deliverable M4 | Upgrade pipeline 6 bước + Observability (metrics/prompt-history/profiler/doctor/arch-health/eval v2) + Orchestrator v2 (advisor/supervisor/collector/goal reporter) ✓ |
 | Commit | 5 (f1f8f90, 362cdb3, f46e086, 9145637 + cleanup) |
 
+## M5 — Core Intelligence ✅ (2026-08-15)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task tổng | 6 (TASK-023 Memory/Context, 024 Context Optimizer, 025 Model Router, 026 Planning, 027 Execution Graph, 028 Parallel Scheduler) — TẤT CẢ done |
+| Task done | 6/6 |
+| Tests (cuối M5) | **1086 pass — coverage 95.22%** (M4: 809 → M5: +277 test) |
+| Critique resolve | 6 task × 2 vòng (~180 vấn đề) — spec-writer/critic/reviewer subagent 5 lần không phản hồi → orchestrator tự viết/phản biện/review độc lập (ghi rõ trong file) |
+| Review | 6 task (028 CHANGES REQUESTED 1R1; còn lại APPROVED có điều kiện) |
+| Invariants | INV-011..016 + 6 allow-list (memory/context/models/router/planning/graph/scheduler) |
+| Deliverable M5 | Memory Coordinator + Context Optimizer + Model Router + Planning Engine + Execution Graph + Parallel Scheduler ✓ |
+| Commit | 6 (0e9e7d2, 352d251, a73563d, 012a584, 53c13c7, 06602d9) |
+
+## M6 — AIOS Harness ✅ (2026-08-15)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task tổng | 6 (TASK-029 Harness Kernel, 030 Execution Verification, 031 Test & Simulation, 032 Evaluation, 033 Benchmark + Regression Gate, 034 Doctor & Readiness) — TẤT CẢ done |
+| Task done | 6/6 |
+| Tests (cuối M6) | **1521 pass — coverage 95.35%** (M5: 1086 → M6: +435 test) |
+| Critique resolve | 6 task × 2 vòng — spec-writer/critic/reviewer subagent không phản hồi phần lớn phiên → orchestrator tự phản biện/review độc lập (ghi rõ trong file, hard gate giữ nguyên) |
+| Review | 6 task (029 CHANGES REQUESTED 1R1; 030 APPROVED có điều kiện 2R2; còn lại APPROVED) |
+| Invariants | INV-017 Harness Isolation · INV-018 Evidence First · INV-019 Verification Before Verdict · INV-020 Evaluation Determinism · INV-021 Release Gate + doctor INV-022 (13 kinds, policy gate) |
+| Harnesses đăng ký | 6: verification, test, evaluation, benchmark, doctor, readiness |
+| Deliverable M6 | harness/ 4 subsystem (execution, testing, evaluation, benchmark, doctor) + evidence mọi run (INV-018) + replay + scenario/simulation + trajectory + regression gate + readiness score ✓ |
+| Commit | 6 (b62ac75, 117fbfe, c543816, 9c7f3e0, b8762f1, + cuối) |
+
 ## Bài học M3-M4 (bổ sung)
 
 36. **VS Code Selection không có `.text`** — phải `document.getText(selection)`; stub test theo API thật, không bịa (P1 TASK-019).

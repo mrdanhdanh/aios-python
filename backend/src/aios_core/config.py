@@ -233,6 +233,16 @@ class BenchmarkSettings(BaseModel):
     failure_rate_max_delta: float = 0.02  # pp — tăng > 2pp → block
 
 
+class DoctorSettings(BaseModel):
+    """TASK-034: doctor & readiness tuning (M6-H5)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    strict: bool = True  # doctor/readiness: fail → raise
+    min_overall: float = 0.0  # P2-03: không block vô lý khi chưa cấu hình
+    policy_gate: bool = True  # policy violation > 0 → RELEASE BLOCKED
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -261,6 +271,7 @@ class Settings(BaseSettings):
     testing: TestingSettings = TestingSettings()
     evaluation: EvaluationSettings = EvaluationSettings()
     benchmark: BenchmarkSettings = BenchmarkSettings()
+    doctor: DoctorSettings = DoctorSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:
