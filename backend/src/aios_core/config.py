@@ -128,6 +128,18 @@ class ObservabilitySettings(BaseModel):
     db_path: str = "aios/data/observability.db"
 
 
+class PlanningSettings(BaseModel):
+    """TASK-026: planning engine tuning (INV-014 validation bounds)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_nodes: int = 32
+    default_timeout_s: float = 300.0
+    min_timeout_s: float = 1.0
+    max_timeout_s: float = 3600.0
+    warn_token_threshold: int = 20_000
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -148,6 +160,7 @@ class Settings(BaseSettings):
     goals: GoalsSettings = GoalsSettings()
     skills: SkillsSettings = SkillsSettings()
     observability: ObservabilitySettings = ObservabilitySettings()
+    planning: PlanningSettings = PlanningSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

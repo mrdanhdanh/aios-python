@@ -380,6 +380,84 @@ def test_inv_context_import_allowlist():
     assert not bad_external, f"context/ import ngoài allow-list (external): {bad_external}"
 
 
+# -- planning/ import allow-list + INV-014 (TASK-026) --------------------------
+
+_PLANNING_ALLOWED_AIOS = {
+    "aios_core.kernel.execution_plan",
+    "aios_core.kernel.services",
+    "aios_core.kernel.dag",
+    "aios_core.capabilities",
+    "aios_core.capabilities.registry",
+    "aios_core.workflow.library",
+    "aios_core.orchestrator.errors",
+    "aios_core.logging",
+}
+_PLANNING_ALLOWED_EXTERNAL = {
+    "pydantic", "typing", "enum", "dataclasses", "re", "time", "threading",
+    "abc", "logging", "collections",
+}
+
+
+@pytest.mark.skipif(not (AIOS / "orchestrator" / "planning").is_dir(),
+                    reason="planning/ chưa tồn tại (TASK-026)")
+def test_inv_planning_import_allowlist():
+    """planning/ chỉ import allow-list — CẤM models/knowledge/context/contracts
+    kể cả TYPE_CHECKING (bài học C2-01). Loop qua mọi file (C2-12 v2)."""
+    planning_dir = AIOS / "orchestrator" / "planning"
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(planning_dir.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {
+            m for m in mods
+            if not m.startswith("aios_core.orchestrator.planning")
+            and not m.startswith("aios_core.orchestrator")
+        }
+    bad_aios = aios_mods - _PLANNING_ALLOWED_AIOS
+    bad_external = external - _PLANNING_ALLOWED_EXTERNAL
+    assert not bad_aios, f"planning/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"planning/ import ngoài allow-list (external): {bad_external}"
+
+
+def test_inv014_planning_gate():
+    """INV-014: engine phải validate plan trước khi trả (AST call-site)."""
+    src = (AIOS / "orchestrator" / "planning" / "engine.py").read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    found = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and node.attr == "validate":
+            value = node.value
+            if isinstance(value, ast.Attribute) and value.attr == "_validator":
+                found = True
+                break
+    assert found, "INV-014 vi phạm: engine.py phải có call-site self._validator.validate(...)"
+
+
+def test_inv014_runtime_no_planning():
+    """Runtime services không được phụ thuộc planning (intelligence ở trên)."""
+    hits = dir_imports(AIOS / "kernel" / "services", ["aios_core.orchestrator.planning"])
+    assert hits == [], f"INV-014 vi phạm: {hits}"
+
+
+def test_inv014_validation_has_8_rules():
+    """INV-014: validator phải kiểm đủ 8 hạng mục PLAN §14."""
+    src = (AIOS / "orchestrator" / "planning" / "validation.py").read_text(encoding="utf-8")
+    for rule in ("CONTRACT", "CAPABILITY", "PERMISSION", "POLICY",
+                 "DEPENDENCY", "RESOURCE", "CYCLE", "TIMEOUT"):
+        assert f"ValidationRule.{rule}" in src, f"INV-014 thiếu rule {rule}"
+
+
+def test_inv014_no_god_object():
+    """planning/ không God Object: engine điều phối 6 module con."""
+    src = (AIOS / "orchestrator" / "planning" / "engine.py").read_text(encoding="utf-8")
+    for component in ("GoalAnalyzer", "TaskDecomposer", "DependencyAnalyzer",
+                      "CapabilityResolver", "RiskAnalyzer", "ExecutionPlanner",
+                      "PlanValidator"):
+        assert component in src, f"engine thiếu component {component}"
+
+
 # -- models/router/ import allow-list (TASK-025 — Model Router) ---------------
 
 _ROUTER_ALLOWED_AIOS = {

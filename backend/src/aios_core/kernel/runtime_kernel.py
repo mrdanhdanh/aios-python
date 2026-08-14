@@ -119,6 +119,26 @@ class RuntimeKernel:
         )
         container.register_instance(ContextOptimizer, context_optimizer)
 
+        # Planning engine (TASK-026): offline-first pipeline
+        # (workflow → template → rule → LLM) with INV-014 plan validation.
+        from ..capabilities.registry import CapabilityRegistry
+        from ..orchestrator.planner import Planner
+        from ..orchestrator.planning import PlanningEngine
+        from ..workflow.library import WorkflowLibrary
+
+        planning_engine = PlanningEngine(
+            library=WorkflowLibrary(),
+            capabilities=CapabilityRegistry(),
+            policy=PolicyService(bus),
+            resources=resources_settings,
+            planner=Planner(),
+            router=model_router,  # untyped inject (INV-005 rule A)
+            model=None,  # None → router decides on LLM path
+            registry=model_registry,  # LLM path: model = registry.get(...)
+            settings=settings.planning,
+        )
+        container.register_instance(PlanningEngine, planning_engine)
+
         # Remaining services are constructed via the container (type-only hints).
         container.register(PermissionService, PermissionService)
         container.register(PolicyService, PolicyService)

@@ -104,6 +104,23 @@ def test_context_optimizer_wired(tmp_path):
     assert "[User Request]" in final.render()
 
 
+def test_planning_engine_wired(tmp_path):
+    """TASK-026: planning engine resolvable + offline plan (tmp settings)."""
+    from aios_core.orchestrator.planning import PlanningEngine
+
+    class Req:
+        def __init__(self, text):
+            self.text = text
+            self.policy = None
+            self.source = "test"
+
+    kernel = RuntimeKernel.create(make_settings(tmp_path))
+    engine = kernel.container.resolve(PlanningEngine)
+    result = engine.plan(Req("check status"))
+    assert result.llm_calls == 0  # offline-first
+    assert result.plan.status.value == "ready"
+
+
 def test_model_router_wired(tmp_path):
     """TASK-025: router resolvable; offline select works (no chat calls)."""
     from aios_core.models import ModelRouter, RouteRequest
