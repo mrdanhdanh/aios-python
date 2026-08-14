@@ -165,3 +165,24 @@ def test_memory_budget_env_override(tmp_path, monkeypatch):
     monkeypatch.setenv("AIOS_MEMORY__BUDGET__KNOWLEDGE", "8000")
     settings = load_settings()
     assert settings.memory.budget.knowledge == 8000
+
+
+def test_graph_settings_defaults(tmp_path, monkeypatch):
+    """TASK-027: graph block defaults + env override."""
+    monkeypatch.delenv(CONFIG_PATH_ENV, raising=False)
+    monkeypatch.chdir(tmp_path)
+    settings = load_settings()
+    assert settings.graph.max_parallel == 1
+    assert settings.graph.default_failure_policy == "fail_fast"
+    monkeypatch.setenv("AIOS_GRAPH__MAX_PARALLEL", "2")
+    assert load_settings().graph.max_parallel == 2
+
+
+def test_graph_settings_invalid(tmp_path, monkeypatch):
+    """TASK-027: invalid policy string rejected."""
+    from aios_core.config import GraphSettings
+
+    with pytest.raises(ValidationError):
+        GraphSettings(default_failure_policy="bogus")
+    with pytest.raises(ValidationError):
+        GraphSettings(max_parallel=0)

@@ -121,6 +121,24 @@ def test_planning_engine_wired(tmp_path):
     assert result.plan.status.value == "ready"
 
 
+def test_graph_executor_wired(tmp_path):
+    """TASK-027: graph executor resolvable + shares StateService instance."""
+    from aios_core.kernel.execution_plan import PlanNode, PlanNodeType
+    from aios_core.kernel.graph import ExecutionGraph, GraphExecutor, GraphNode
+
+    kernel = RuntimeKernel.create(make_settings(tmp_path))
+    executor = kernel.container.resolve(GraphExecutor)
+    assert executor._state is kernel.container.resolve(StateService)  # shared
+    graph = ExecutionGraph(id="g", nodes=[
+        GraphNode(id="A", type=PlanNodeType.TASK, name="a"),
+        GraphNode(id="B", type=PlanNodeType.TASK, name="b",
+                  depends_on=[{"node_id": "A"}]),
+    ])
+    result = executor.execute(graph, lambda n, ctx: n.id)
+    assert result.status.value == "succeeded"
+    assert result.execution_order == ["A", "B"]
+
+
 def test_model_router_wired(tmp_path):
     """TASK-025: router resolvable; offline select works (no chat calls)."""
     from aios_core.models import ModelRouter, RouteRequest

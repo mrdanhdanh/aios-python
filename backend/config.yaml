@@ -50,3 +50,7 @@ planning:
   min_timeout_s: 1.0
   max_timeout_s: 3600.0
   warn_token_threshold: 20000
+
+graph:
+  max_parallel: 1
+  default_failure_policy: fail_fast

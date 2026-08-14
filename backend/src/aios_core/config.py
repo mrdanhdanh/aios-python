@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_PREFIX = "AIOS_"
@@ -140,6 +140,33 @@ class PlanningSettings(BaseModel):
     warn_token_threshold: int = 20_000
 
 
+class GraphSettings(BaseModel):
+    """TASK-027: execution graph tuning (INV-015 bounds).
+
+    ``default_failure_policy`` is consumed by TASK-028 when building graphs
+    via plan_to_graph; the executor reads the policy from the graph itself.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_parallel: int = 1
+    default_failure_policy: str = "fail_fast"
+
+    @field_validator("max_parallel")
+    @classmethod
+    def _validate_parallel(cls, value: int) -> int:
+        if value < 1:
+            raise ValueError("max_parallel must be >= 1")
+        return value
+
+    @field_validator("default_failure_policy")
+    @classmethod
+    def _validate_policy(cls, value: str) -> str:
+        if value not in ("fail_fast", "continue", "skip_dependents"):
+            raise ValueError(f"unknown failure policy: {value!r}")
+        return value
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -161,6 +188,7 @@ class Settings(BaseSettings):
     skills: SkillsSettings = SkillsSettings()
     observability: ObservabilitySettings = ObservabilitySettings()
     planning: PlanningSettings = PlanningSettings()
+    graph: GraphSettings = GraphSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

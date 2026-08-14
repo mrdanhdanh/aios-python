@@ -147,4 +147,15 @@ class RuntimeKernel:
         container.register(ResourceService, ResourceService)
         container.register(ExecutionService, ExecutionService)
 
+        # Execution graph (TASK-027): DAG execution + graph state (INV-015).
+        # MUST come after StateService registration so resolve() returns the
+        # same singleton instance that ExecutionService will use.
+        from ..kernel.graph import GraphExecutor
+
+        graph_executor = GraphExecutor(
+            state_service=container.resolve(StateService),  # shared instance
+            settings=settings.graph,
+        )
+        container.register_instance(GraphExecutor, graph_executor)
+
         return cls(container, bus)

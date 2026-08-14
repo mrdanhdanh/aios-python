@@ -458,6 +458,80 @@ def test_inv014_no_god_object():
         assert component in src, f"engine thiếu component {component}"
 
 
+# -- kernel/graph/ import allow-list + INV-015 (TASK-027) ----------------------
+
+_GRAPH_ALLOWED_AIOS = {
+    "aios_core.kernel.execution_plan",
+    "aios_core.kernel.dag",
+    "aios_core.kernel.services.state",
+    "aios_core.kernel.services",
+    "aios_core.config",
+    "aios_core.logging",
+}
+_GRAPH_ALLOWED_EXTERNAL = {
+    "pydantic", "typing", "enum", "dataclasses", "threading",
+    "concurrent", "time", "logging", "datetime",
+}
+
+
+@pytest.mark.skipif(not (AIOS / "kernel" / "graph").is_dir(),
+                    reason="kernel/graph/ chưa tồn tại (TASK-027)")
+def test_inv_graph_import_allowlist():
+    """kernel/graph/ chỉ import allow-list — CẤM orchestrator/models/memory/
+    context/knowledge/tools/agents/capabilities/workflow/contracts/execution/
+    resource/scheduler/runtime_kernel kể cả TYPE_CHECKING."""
+    graph_dir = AIOS / "kernel" / "graph"
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(graph_dir.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.kernel.graph")}
+    bad_aios = aios_mods - _GRAPH_ALLOWED_AIOS
+    bad_external = external - _GRAPH_ALLOWED_EXTERNAL
+    assert not bad_aios, f"kernel/graph/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"kernel/graph/ import ngoài allow-list (external): {bad_external}"
+
+
+def test_inv015_graph_acyclicity_gate():
+    """INV-015: contracts.py VÀ executor.py phải chứa literal validate_dag(."""
+    contracts = (AIOS / "kernel" / "graph" / "contracts.py").read_text(encoding="utf-8")
+    executor = (AIOS / "kernel" / "graph" / "executor.py").read_text(encoding="utf-8")
+    assert "validate_dag(" in contracts, "INV-015: contracts.py thiếu validate_dag("
+    assert "validate_dag(" in executor, "INV-015: executor.py thiếu validate_dag("
+
+
+def test_inv015_planning_no_graph():
+    """planning/ (intelligence) không import kernel.graph (không đảo chiều)."""
+    hits = dir_imports(AIOS / "orchestrator" / "planning", ["aios_core.kernel.graph"])
+    assert hits == [], f"INV-015 vi phạm: {hits}"
+
+
+def test_inv015_graph_no_god_object():
+    """graph layer không God Object: executor điều phối, state machine tách."""
+    executor = (AIOS / "kernel" / "graph" / "executor.py").read_text(encoding="utf-8")
+    state_machine = (AIOS / "kernel" / "graph" / "state_machine.py").read_text(encoding="utf-8")
+    converter = (AIOS / "kernel" / "graph" / "converter.py").read_text(encoding="utf-8")
+    assert "GraphStateMachine" in executor
+    assert "def execute(" not in state_machine
+    assert "def execute(" not in converter
+    assert "def plan_to_graph(" not in executor
+    assert "import executor" not in contracts_src() or True  # leaf check below
+
+
+def contracts_src() -> str:
+    return (AIOS / "kernel" / "graph" / "contracts.py").read_text(encoding="utf-8")
+
+
+def test_inv015_contracts_leaf():
+    """contracts.py không import executor/converter/state_machine (leaf)."""
+    src = contracts_src()
+    assert "executor" not in src
+    assert "converter" not in src
+    assert "state_machine" not in src
+
+
 # -- models/router/ import allow-list (TASK-025 — Model Router) ---------------
 
 _ROUTER_ALLOWED_AIOS = {
