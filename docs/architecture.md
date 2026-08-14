@@ -2,17 +2,18 @@
 
 > Tài liệu tham chiếu: kiến trúc 7 tầng + Orchestrator + tiến độ triển khai theo trạng thái hiện tại.
 > Nguồn gốc: `docs/PLAN.md` (master plan v6) + `aios/progress/PROGRESS.md` (trạng thái build thực tế).
-> Cập nhật lần cuối: 2026-08-13.
+> Cập nhật lần cuối: 2026-08-14.
 
 ## 1. Kiến trúc tổng thể 7 tầng — theo trạng thái build
 
 ```mermaid
 graph TB
-    subgraph T1["Tầng 1 — UI Layer 🔲 (M3)"]
-        UI1["Dashboard SPA"]
-        UI2["CLI ✅ (M1: TASK-008/011)"]
-        UI3["VS Code Extension"]
-        UI4["AIOS SDK"]
+    subgraph T1["Tầng 1 — UI Layer ✅ (M3: TASK-017→019)"]
+        UI1["Dashboard SPA ✅ (TASK-018)<br/>React+Vite+TS · 10 tabs · WS reconnect"]
+        UI2["CLI ✅ (M1+M2+M4)<br/>simulate · serve · upgrade · metrics · advisor"]
+        UI3["VS Code Extension ✅ (TASK-019)<br/>9 commands · TS · vitest 19/19"]
+        UI4["REST API + WebSocket ✅ (TASK-017)<br/>FastAPI · 9 routers · serve"]
+        UI5["AIOS SDK 🔲 (stubs)"]
     end
 
     subgraph T2["Tầng 2 — Runtime Kernel ✅ (M1: TASK-003→005)"]
@@ -34,14 +35,15 @@ graph TB
         COMP --> ENG["Workflow Library + CLI simulate"]
     end
 
-    subgraph T4["Tầng 4 — Orchestrator + Agents ✅ (M2)"]
+    subgraph T4["Tầng 4 — Orchestrator + Agents ✅ (M2 + M4: TASK-022)"]
         subgraph ORCH["AIOS Orchestrator (Control Plane)"]
             DP["Decision Pipeline 4 tầng ✅ (TASK-010)<br/>Normalizer → Rule Engine → Matcher → Planner"]
             MOD1["Agent Selector ✅ · System Knowledge ✅"]
-            MOD2["Goal Manager + Task Queue ✅ (TASK-012)"]
+            MOD2["Goal Manager + Task Queue ✅ (TASK-012) + Goal Reporter ✅ (TASK-022)"]
             MOD3["Permission Broker + Failure Recovery ✅ (TASK-012)"]
+            MOD4["Execution Supervisor ✅ · Evaluation Collector ✅ · Improvement Advisor ✅ (TASK-022)"]
         end
-        WPLANE["Worker Plane agents ✅ (TASK-013)"]
+        WPLANE["Worker Plane agents ✅ (TASK-013)<br/>General · Coder · Doctor · System Doctor"]
     end
 
     subgraph T5["Tầng 5 — Capability ✅ (M1: TASK-009)"]
@@ -52,12 +54,12 @@ graph TB
         TP["Python · Docker · REST · MCP · Shell · Git"]
     end
 
-    subgraph T7["Tầng 7 — Infra ✅/🚧"]
+    subgraph T7["Tầng 7 — Infra ✅ (M1 + M2 + M4)"]
         I1["Model Providers ✅ (TASK-006)<br/>Mock/OpenAI/Ollama + Registry"]
         I2["Memory 4 loại ✅ (TASK-007)<br/>Conversation · Session · Knowledge · Artifact"]
         I3["Knowledge pipeline ✅<br/>Indexer → Chunks → Vectors → Retriever"]
-        I4["Sandbox Pool ✅ (TASK-015)"]
-        I5["Filesystem ✅"]
+        I4["Sandbox Pool ✅ (TASK-015) · Skills Manager ✅ (lifecycle 10 states)"]
+        I5["Filesystem ✅ · Upgrade Pipeline ✅ (TASK-020)<br/>Observability ✅ (TASK-021)"]
     end
 
     T1 -.-> T2
@@ -106,30 +108,31 @@ flowchart TD
     R -.-> EP
 
     subgraph COORD["Điều phối & Thực thi"]
-        TP["Task Planner 🔲"]
+        TP["Task Planner 🔲 (qua Task Planner của Orchestrator)"]
         AS["Agent Selector ✅ (TASK-010)"]
-        CR2["Capability Router 🔲 (TASK-009 đã có registry)"]
+        CR2["Capability Router ✅ (TASK-014 — tool registry + capability binding)"]
         RS["Resource Scheduler ✅ (TASK-005)"]
-        ES["Execution Supervisor ✅ (TASK-005)"]
-        FR["Failure Recovery ✅ (TASK-012)"]
+        ES["Execution Supervisor ✅ v2 (TASK-022 — stuck detect, queue hook)"]
+        FR["Failure Recovery ✅ (TASK-012 — retry→fallback→report)"]
         CC["Context Coordinator ✅ (TASK-004)"]
-        MC["Memory Coordinator 🔲"]
+        MC["Memory Coordinator 🔲 (chưa có task riêng)"]
     end
 
     subgraph ADMIN["Quản trị & Policy"]
         PE["Policy Engine ✅ (TASK-004)"]
-        PB["Permission Broker ✅ (TASK-012)"]
-        SM["Skill Manager Proxy 🔲 (M2)"]
-        GM["Goal Manager ✅ (TASK-012)"]
-        TQ["Task Queue ✅ (TASK-012)"]
-        SC["System Catalog ✅ (TASK-009)"]
+        PB["Permission Broker ✅ (TASK-012 — ask_scopes, default-deny)"]
+        SM["Skill Manager ✅ (TASK-015 — lifecycle 10 states + zip/git/pip)"]
+        GM["Goal Manager ✅ (TASK-012 + TASK-022 GoalReporter)"]
+        TQ["Task Queue ✅ (TASK-012 — atomic dequeue, reorder, recover stale)"]
+        SC["System Catalog ✅ (TASK-009 + TASK-011 rebuild/is_stale)"]
         SK["System Knowledge ✅ (TASK-010)"]
     end
 
-    subgraph LEARN["Cải tiến & Học hỏi 🔲 (M4)"]
-        EC["Evaluation Collector"]
-        IA["Improvement Advisor"]
+    subgraph LEARN["Cải tiến & Học hỏi ✅ (M4: TASK-021/022)"]
+        EC["Evaluation Collector ✅ (TASK-022)<br/>evaluator trên EvaluationStore"]
+        IA["Improvement Advisor ✅ (TASK-022)<br/>5 rules deterministic + suggestions"]
         KG["Knowledge Graph ✅ (TASK-009)"]
+        OB["Observability ✅ (TASK-021)<br/>metrics · prompt history · profiler · doctor · arch-health"]
     end
 
     EP --> COORD
@@ -212,12 +215,14 @@ graph LR
         C4["TASK-013 Assistants ✅ · TASK-014 Tools ✅ · TASK-015 Skills+Sandbox ✅"]
     end
 
-    subgraph M3["M3 — Desktop Edition 🔲"]
-        D1["Dashboard + VS Code Extension"]
+    subgraph M3["M3 — Desktop Edition ✅ done"]
+        D1["TASK-017 REST + WS API ✅<br/>TASK-018 Dashboard SPA ✅<br/>TASK-019 VS Code Extension ✅<br/>689 pytest + 19 vitest"]
     end
 
-    subgraph M4["M4 — Platform Edition 🔲"]
-        E1["Observability + upgrade pipeline"]
+    subgraph M4["M4 — Platform Edition ✅ done"]
+        E1["TASK-020 Upgrade Pipeline ✅"]
+        E2["TASK-021 Observability ✅"]
+        E3["TASK-022 Orchestrator v2 ✅<br/>809 tests · 94.92%"]
     end
 
     M0 --> M1 --> M2 --> M3 --> M4
@@ -230,9 +235,11 @@ graph LR
 | M0 — Foundation | ✅ done | 4 agents, progress system, review quy trình |
 | M1 — Core Runtime | ✅ done | 9/9 tasks + remediation, **428 tests, 95.76%** |
 | M2 — Orchestrator | ✅ done | TASK-010 ✅ (402); TASK-012 ✅ (490 tests, 95.96%, 12/12 AC); TASK-016 ✅ (INV + AST tests); TASK-013 ✅ Assistants; TASK-014 ✅ Tools; TASK-015 ✅ Skills+Sandbox · **669 tests, 95.51%** |
-| M3 — Desktop Edition | 🔲 todo | Dashboard + VS Code extension |
-| M4 — Platform Edition | 🔲 todo | Observability + upgrade pipeline + Architecture Health (xem PLAN.md) |
+| M3 — Desktop Edition | ✅ done | TASK-017 REST+WS API · TASK-018 Dashboard SPA · TASK-019 VS Code Extension — **689 pytest + 19 vitest** |
+| M4 — Platform Edition | ✅ done | TASK-020 Upgrade · TASK-021 Observability · TASK-022 Orchestrator v2 — **809 tests, 94.92%** |
+| M5 — Enterprise Edition | 🔲 todo | tương lai — không làm v1 |
 | Deliverable M1 | ✅ | `aiagent run workflow.yaml --simulate` |
+| Deliverable M3/M4 | ✅ | `aiagent serve` + Dashboard + Extension + `aiagent arch-health` |
 
 ### Chi tiết tasks M1 (đã hoàn thành) + M2 (đến hiện tại)
 
@@ -253,6 +260,12 @@ graph LR
 | TASK-014 | M2-P4 Tools 6 loại + Tool Registry + capability binding | 622 | 96.15% |
 | TASK-015 | M2-P4 Skills lifecycle 10 states + Sandbox Pool | 669 | 95.51% |
 | TASK-016 | M2 Architecture Hardening: INV-001..010 + AST tests + reference | 669 + ~12 | 95.51%+ |
+| TASK-017 | M3-P5 FastAPI REST + WebSocket (9 routers, serve) | 689 | 95.10% |
+| TASK-018 | M3-P5 Dashboard SPA (React+Vite+TS, 10 tabs, WS) | 12 vitest + build | — |
+| TASK-019 | M3-P6 VS Code Extension (9 commands, TS) | 19 vitest + tsc | — |
+| TASK-020 | M4-P7 Upgrade Pipeline (resolve/backup/migrate/pipeline, `aiagent upgrade`) | 730 | 95.00% |
+| TASK-021 | M4-P8 Observability (metrics/prompt_history/profiler/doctor/arch_health/evaluation + API) | 779 | 95.11% |
+| TASK-022 | M4-P8 Orchestrator v2 (advisor/supervisor/collector/goal_reporter + API v2) | **809** | **94.92%** |
 
 ## 6. Nguyên tắc xuyên suốt
 
@@ -287,6 +300,6 @@ graph LR
 
 **Ghi chú gap hiện tại**: `sandbox_required` từ policy chưa được enforce trong ExecutionService v1 (chỉ `logger.warning` — xem ADR-0004); INV-009 chưa phủ context/state/resource/scheduler; INV-001/002 có hiệu lực khi TASK-013 (agents) + TASK-014 (tools) ra đời.
 
-## 8. Architecture Health (kế hoạch M4)
+## 8. Architecture Health ✅ (hiện thực hóa M4 — TASK-021)
 
-Kế hoạch cho M4 (P8): Architecture Health — ngoài health hạ tầng (Docker/model/memory), hệ thống còn đo: contract violations, layer violations, dependency violations, capability bypass, permission bypass, orphan components, broken registrations, circular dependencies, deprecated contracts. Phù hợp hướng System Doctor + System Evolution Engine. Chi tiết: `docs/PLAN.md`.
+`observability/arch_health.py` — `ArchitectureHealth.scan(package_dir)` kiểm tra 3 nhóm: **layer** (dependency 1 chiều), **contract** (purity `contracts/`), **policy** (INV-007 call-site). Expose qua API `/api/v1/observability/arch-health` + CLI `aiagent arch-health`. Ngoài ra còn đo: contract violations, layer violations, dependency violations, capability bypass, permission bypass, orphan components, broken registrations, circular dependencies, deprecated contracts (định hướng System Doctor + System Evolution Engine). Chi tiết: `docs/PLAN.md`.
