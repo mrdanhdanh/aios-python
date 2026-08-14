@@ -4,7 +4,7 @@
 > Mọi phiên làm việc: BẮT ĐẦU = đọc file này + `aios/progress/`; KẾT THÚC = cập nhật `aios/progress/` + commit.
 
 ## TL;DR
-Xây AIOS (AI Operating System) chạy local desktop: Runtime gồm các service nội bộ tách rời, Contract-First version hóa, DI container, capability discovery động, skill lifecycle đầy đủ, workflow snapshot/resume, prompt registry + evaluation framework, sandbox pool, AIOS SDK. AIOS Orchestrator dùng **Decision Pipeline 4 tầng offline-first** (Normalizer → Rule Engine → Workflow Matcher → Planner LLM): 70–90% request xử lý deterministic không cần LLM. LangGraph chỉ là một workflow engine có thể thay thế. **Phát triển dự án qua VS Code Custom Agent "AIOS Orchestrator" + hệ thống progress/log bắt buộc** (aios/progress/). Delivery theo **10 milestone** (M0–M4 core, M5–M10 nâng cao), mỗi milestone là sản phẩm hoàn chỉnh dùng được.
+Xây AIOS (AI Operating System) chạy local desktop: Runtime gồm các service nội bộ tách rời, Contract-First version hóa, DI container, capability discovery động, skill lifecycle đầy đủ, workflow snapshot/resume, prompt registry + evaluation framework, sandbox pool, AIOS SDK. AIOS Orchestrator dùng **Decision Pipeline 4 tầng offline-first** (Normalizer → Rule Engine → Workflow Matcher → Planner LLM): 70–90% request xử lý deterministic không cần LLM. LangGraph chỉ là một workflow engine có thể thay thế. **Phát triển dự án qua VS Code Custom Agent "AIOS Orchestrator" + hệ thống progress/log bắt buộc** (aios/progress/). Delivery theo **11 milestone** (M0–M4 core, M5–M10 nâng cao), mỗi milestone là sản phẩm hoàn chỉnh dùng được.
 
 ## Kiến trúc tổng thể
 ```
@@ -478,10 +478,11 @@ Planning → Execution Graph → Graph Scheduler → Resource Service → Execut
 #### 20. M5 Execution Flow hoàn chỉnh
 ```
 User → API → Normalizer → Rule Engine → Workflow Matcher → Memory Coordinator
-     → Context Optimizer → Planner → Model Router → Planning Engine
+  → Context Optimizer → Policy/Requirements → Model Router → Planner/Planning Engine
      → Execution Graph → Policy → Graph Scheduler → Resource Service
      → Execution Service → Agent → Capability → Tool
 ```
+Model Router chỉ cần chạy khi request cần model; với workflow/template/rule đã biết, pipeline được rút gọn và không gọi LLM. Policy phải được kiểm tra trước model selection và trước execution.
 
 #### 21. Tránh Pipeline quá dài (adaptive intelligence)
 - **Request đơn giản**: `Request → Normalizer → Rule → Workflow → Execution`
@@ -588,7 +589,7 @@ scenario:
 
 **Failure Injection** (Chaos nhẹ): `faults: [{target: model, type: timeout}, {target: tool.python, type: failure}, {target: resource, type: exhausted}]` → kiểm tra Retry/Fallback/Recovery/Policy/Final state.
 
-#### 5. H4 — Evaluation & Benchmark (TASK-032)
+#### 5. H4 — Evaluation & Benchmark (TASK-032, TASK-033)
 Phân biệt **Test** ("Có đúng điều kiện không?") vs **Evaluation** ("Chất lượng tốt đến mức nào?" — VD HTTP 200 vs answer relevance 0.91).
 
 **Evaluation Model** (thứ tự, LLM Judge không mặc định): `Deterministic → Semantic → LLM Judge → Human → Composite`.
@@ -603,6 +604,8 @@ suite:
 ```
 **Trajectory Evaluation**: không chỉ Input→Output mà đánh giá cả trajectory (Decision → Tool A → Tool B → Recovery → Final Output). VD final đúng nhưng gọi sai tool → bị deny → retry → gọi đúng → đánh dấu `Final Correct / Trajectory Warning`. Thông tin giá trị cho Improvement Advisor.
 
+**TASK-032 — Evaluation**: đánh giá output và trajectory theo suite, evaluator và thresholds; kết quả phải lưu được để tái lập.
+
 **TASK-033 — Benchmark**: "AIOS phiên bản mới có tốt hơn cũ không?" — chạy 100 scenarios, theo dõi đồng thời Quality/Cost/Latency/Token/Failure Rate/Policy Violations (không chỉ score).
 
 **Regression Gate**: Before Task success 91% → After 86% → **FAIL**. Quality +2% nhưng Cost +80% → WARNING/FAIL tùy policy. Eval làm quality gate chặn release khi regression vượt threshold.
@@ -610,7 +613,7 @@ suite:
 #### 6. H5 — Doctor & Readiness (TASK-034)
 Nâng cấp `aiagent doctor` + `aiagent arch-health` thành **AIOS Doctor Harness** (không tạo Doctor mới hoàn toàn).
 
-**Doctor Architecture**: Architecture · Runtime · Workflow · Agent · Capability · Tool · Memory · Model · Policy · Registry · Performance. Mỗi Doctor trả về `PASS · WARNING · ERROR · UNKNOWN`.
+**Doctor Architecture**: Architecture · Runtime · Workflow · Agent · Capability · Tool · Memory · Model · Policy · Registry · Performance · Security · Evidence. Mỗi Doctor trả về `PASS · WARNING · ERROR · UNKNOWN`.
 
 **Readiness Score** (không chỉ 1 con số, phải có hard gates):
 ```
@@ -688,7 +691,7 @@ AIOS Execute → Trace → Harness (Test/Evaluate) → Failure/Score
 → Kết quả: AIOS có subsystem kiểm thử/xác minh/quan sát/cải tiến chính nó (H1–H5), dùng chung Runtime + Core Intelligence (M5), không tạo hệ thống song song, không phá architecture (INV-017..021)
 
 ### M7 – Enterprise (P12)
-> M7 **không biến AIOS thành hệ thống cloud/distributed khổng lồ ngay lập tức**. Mục tiêu: đưa AIOS từ **single-instance AIOS mạnh** thành **AIOS vận hành an toàn trong môi trường doanh nghiệp**. Enterprise chủ yếu giải quyết 6 vấn đề: `Identity · Multi-tenancy · Isolation · Distributed Execution · Governance · Operations`.
+> M7 **không biến AIOS thành hệ thống cloud/distributed khổng lồ ngay lập tức**. Mục tiêu: đưa AIOS từ **single-instance AIOS mạnh** thành **AIOS vận hành an toàn trong môi trường doanh nghiệp**. Enterprise chủ yếu giải quyết 7 vấn đề: `Identity · Multi-tenancy · Isolation · Distributed Execution · Governance · Security · Operations`.
 
 #### 1. Mục tiêu tiến hóa
 ```
@@ -906,7 +909,7 @@ from aios import Agent, Capability, Tool, Workflow
 **SDK Components** (không expose internal service): `Agent · Capability · Tool · Skill · Workflow · Model · Memory · Context · Artifact · Event · Policy · Harness · Client`.
 
 #### 4. E2 — Plugin System (TASK-044 — trái tim M8)
-Plugin lifecycle (tái sử dụng **Skills Manager lifecycle 10 states** từ M2/M4, không xây hệ thống lifecycle thứ hai): `DISCOVERED → VALIDATED → INSTALLED → ENABLED → LOADED → RUNNING → DISABLED → UNINSTALLED`.
+Plugin lifecycle phải tái sử dụng **Skills Manager lifecycle 10 states** từ M2/M4, không xây hệ thống lifecycle thứ hai: `RESOLVE → VALIDATE → INSTALL → ENABLE → DISABLE → UNLOAD → RELOAD → UPGRADE → ROLLBACK → REMOVE`. `DISCOVERED`, `LOADED` và `RUNNING` là các trạng thái quan sát/triển khai của plugin, không được tạo một state machine cạnh tranh.
 **Plugin Contract**:
 ```yaml
 plugin:
@@ -939,7 +942,7 @@ Developer mới phải có thể: `aios create plugin github` / `aios create age
 **Plugin Testing** (nối trực tiếp M6 Harness): SDK tự sinh Contract/Security/Permission/Compatibility/Behavior/Harness Tests → `aios plugin test` chạy Harness.
 
 #### 8. E6 — Marketplace / Distribution (TASK-048 — Ecosystem Hub)
-Chỉ làm **sau** Registry + SDK + Certification. Marketplace chứa Plugins/Agents/Skills/Tools/Workflows/Integrations/Models, NHƯNG **không phải source of truth**. Kiến trúc: `Marketplace → Registry → Package → Signature → Compatibility → Install`.
+Chỉ làm **sau** Registry + SDK + Certification. Marketplace chứa Plugins/Agents/Skills/Tools/Workflows/Integrations/Models, NHƯNG **không phải source of truth**. Kiến trúc: `Marketplace → Registry → Package → Signature → Compatibility → Certification → Install`.
 **Trust Model** (điểm M7 ∩ M8): `Download → Manifest validation → Signature verification → Dependency check → Permission analysis → Compatibility check → Security scan → Harness certification → Install`. Mỗi package có `publisher { id, signing_key }` — AIOS biết Publisher/Package/Version/Signature/Certification (không chỉ `pip install xxx`).
 
 #### 9. E7 — Certification (TASK-049 — sức mạnh hệ sinh thái)
@@ -987,8 +990,7 @@ agent:
 | TASK-049 | Certification | Trust ecosystem |
 ```
 043 SDK → ┬─ 044 ─┐
-            └─ 045 ─┘ → 046 Registry → 047 DevKit → ┬─ 048 Marketplace ─┐
-                                                      └─ 049 Certification ┘
+            └─ 045 ─┘ → 046 Registry → 047 DevKit → 049 Certification → 048 Marketplace
 ```
 
 #### 12. Definition of Done cho M8
@@ -1070,6 +1072,7 @@ A2 — Goal Autonomous: "giảm tech debt" → scan → prioritize → tasks →
 A3 — Long-Horizon:   "trong tuần cải thiện độ ổn định" → 7 ngày tự chia việc, không cần 1 conversation
 A4 — Self-Improving: phát hiện "workflow X thường fail ở Y" → hypothesis → experiment → evaluation → candidate → approval → deploy (KHÔNG tự sửa Core production vô điều kiện)
 ```
+A0–A4 là **năng lực của hệ thống**. Không nhầm với `LEVEL 0–5` ở §29, là **mức quyền được policy cấp cho từng môi trường/tenant/goal**; một hệ thống A3 vẫn có thể chỉ được vận hành ở LEVEL 1.
 
 #### 4. TASK-050 — Autonomous Goal Engine
 Nâng `Goal Manager + Task Queue + Goal Reporter` (M2/M4) thành **Autonomous Goal Engine**. Goal không còn `goal = "do X"` mà là contract:
@@ -1323,10 +1326,10 @@ Vì Orchestrator vẫn là Control Plane của AIOS; M9 chỉ bổ sung **Autono
 | TASK-061 | Advanced Stuck Detection | oscillation detect |
 | TASK-062 | Autonomous Scheduler | proactive |
 ```
-050 Goal → 051 Planner → 052 World → 053 Loop → ┬ 054 Governor ┐
-                                                    │             ├ 055 Recovery
-                                                    └ 056 LongHorizon
-057 Memory ┐ 058 Experiment ┐ 059 MultiAgent ┘ → 060 Eval → 061 Stuck → 062 Scheduler
+050 Goal → 051 Planner → 052 World → 053 Loop → 054 Governor
+                                                    ├─ 055 Recovery
+                                                    └─ 056 LongHorizon
+057 Memory → 058 Experiment → 059 MultiAgent → 060 Eval → 061 Stuck → 062 Scheduler
 ```
 
 #### 35. M9 chia 4 Phase
