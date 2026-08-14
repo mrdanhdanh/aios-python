@@ -4,7 +4,7 @@
 > Mọi phiên làm việc: BẮT ĐẦU = đọc file này + `aios/progress/`; KẾT THÚC = cập nhật `aios/progress/` + commit.
 
 ## TL;DR
-Xây AIOS (AI Operating System) chạy local desktop: Runtime gồm các service nội bộ tách rời, Contract-First version hóa, DI container, capability discovery động, skill lifecycle đầy đủ, workflow snapshot/resume, prompt registry + evaluation framework, sandbox pool, AIOS SDK. AIOS Orchestrator dùng **Decision Pipeline 4 tầng offline-first** (Normalizer → Rule Engine → Workflow Matcher → Planner LLM): 70–90% request xử lý deterministic không cần LLM. LangGraph chỉ là một workflow engine có thể thay thế. **Phát triển dự án qua VS Code Custom Agent "AIOS Orchestrator" + hệ thống progress/log bắt buộc** (aios/progress/). Delivery theo 4 milestone, mỗi milestone là sản phẩm hoàn chỉnh dùng được.
+Xây AIOS (AI Operating System) chạy local desktop: Runtime gồm các service nội bộ tách rời, Contract-First version hóa, DI container, capability discovery động, skill lifecycle đầy đủ, workflow snapshot/resume, prompt registry + evaluation framework, sandbox pool, AIOS SDK. AIOS Orchestrator dùng **Decision Pipeline 4 tầng offline-first** (Normalizer → Rule Engine → Workflow Matcher → Planner LLM): 70–90% request xử lý deterministic không cần LLM. LangGraph chỉ là một workflow engine có thể thay thế. **Phát triển dự án qua VS Code Custom Agent "AIOS Orchestrator" + hệ thống progress/log bắt buộc** (aios/progress/). Delivery theo **10 milestone** (M0–M4 core, M5–M10 nâng cao), mỗi milestone là sản phẩm hoàn chỉnh dùng được.
 
 ## Kiến trúc tổng thể
 ```
@@ -149,12 +149,14 @@ Thứ tự ưu tiên: **1. Rule Engine → 2. Workflow Library → 3. Planner LL
 Orchestrator là agent DUY NHẤT truy cập trực tiếp: Runtime Services, Event Bus, Resource Service, Scheduler, Policy Engine, Capability/Agent/Workflow/Tool/Skill/Prompt/Contract/Model Registry, Knowledge Base + Graph, Observability, Health System, System Catalog.
 Mọi agent khác (Worker Plane) chỉ truy cập qua Capability + Runtime — enforced bởi Permission Service + Policy Engine.
 
-**Architecture Invariants (INV-001..010)** — bất biến kiến trúc bắt buộc, vi phạm = FAIL architecture review. Xem [ADR-0004](adr/0004-architecture-invariants.md) + `docs/architecture.md` §7 + enforcement tự động `backend/tests/test_architecture.py`. 4 invariant chốt: Orchestrator không God Object; Agent không chạm Tool; Workflow không biết Engine; Execution không bypass Policy.
+**Architecture Invariants (INV-001..INV-034)** — bất biến kiến trúc bắt buộc, vi phạm = FAIL architecture review. Xem [ADR-0004](adr/0004-architecture-invariants.md) + `docs/architecture.md` §7 + enforcement tự động `backend/tests/test_architecture.py`. 4 invariant chốt cốt lõi (M0–M4): Orchestrator không God Object; Agent không chạm Tool; Workflow không biết Engine; Execution không bypass Policy. 6 invariant bổ sung (M5 — Core Intelligence): INV-011 Memory Isolation; INV-012 Context Budget; INV-013 Model Routing Policy; INV-014 Plan Validation; INV-015 Graph Acyclicity; INV-016 Scheduler Separation. 5 invariant bổ sung (M6 — Harness): INV-017 Harness Isolation; INV-018 Evidence First; INV-019 Verification Before Verdict; INV-020 Evaluation Determinism; INV-021 Release Gate. 8 invariant bổ sung (M7 — Enterprise): INV-022 Identity First; INV-023 Tenant Isolation; INV-024 Credential Isolation; INV-025 Resource Fairness; INV-026 Distributed Execution Safety; INV-027 Audit Completeness; INV-028 Sandbox Boundary; INV-029 Control Plane Isolation. 5 invariant bổ sung (M9 — Autonomous): INV-030 Autonomous Action Boundary; INV-031 Autonomy Bounded; INV-032 Long-running Resumable; INV-033 Self-Improvement via Harness; INV-034 Autonomous Memory No Unverified Promote. **M10 — AIOS 1.0 freeze toàn bộ INV-001..INV-034 (không thêm invariant mới), vi phạm = release blocker**.
 
 ### Vị trí trong milestones
 - **M1 (P0.5–P2)**: Policy Engine core + System Catalog (index/search từ registry) + Knowledge Graph (đồ thị metadata) xây cùng kernel/registry
 - **M2 (P3)**: Orchestrator v1 — Decision Pipeline đầy đủ (Normalizer, Rule Engine, Workflow Matcher, Planner LLM), Workflow Library, Goal Manager + Task Queue v1, Permission Broker, Failure Recovery, System Knowledge, Capability Router
 - **M4 (P8)**: Orchestrator v2 — Improvement Advisor (self-improvement), Execution Supervisor nâng cao, Evaluation Collector đầy đủ, Goal Manager nâng cao (progress tracking + báo cáo)
+- **M5 (P9–P10)**: Core Intelligence — nâng cấp Memory Coordinator (TASK-023) + Context Optimizer (TASK-024) + Model Router (TASK-025) + Planning Engine (TASK-026) + Execution Graph (TASK-027, DAG) + Parallel Scheduler (TASK-028). Bổ sung 6 invariant (INV-011..016: Memory Isolation, Context Budget, Model Routing Policy, Plan Validation, Graph Acyclicity, Scheduler Separation). Các năng lực lõi này được Runtime, Orchestrator và Harness (M6) dùng chung — không tạo hệ thống song song
+- **M6 (P11)**: AIOS Harness — subsystem `aios/harness/` hỗ trợ AIOS kiểm thử/xác minh/quan sát/cải tiến chính nó (5 năng lực H1–H5: Kernel, Execution Verification, Test & Simulation, Evaluation & Benchmark, Doctor & Readiness; TASK-029..034). Bổ sung 5 invariant (INV-017..021: Harness Isolation, Evidence First, Verification Before Verdict, Evaluation Determinism, Release Gate). Không sửa Runtime/Orchestrator, chỉ gọi qua API
 
 ## Runtime Kernel = 9 services
 - **Execution Service**: chạy workflow từ Execution Plan, retry/cancel/timeout, checkpoint/snapshot/resume
@@ -252,7 +254,8 @@ aiagent/
 │   └── agents/          # VS Code custom agents: aios-orchestrator.agent.md (Control Plane),
 │                        # spec-writer.agent.md, critic.agent.md, reviewer.agent.md
 ├── aios/
-│   └── progress/        # PROGRESS.md, LOG.md, STATS.md, tasks/TASK-xxx/ (spec, critique-1/2, tasks, review, implementation, test, evaluation)
+│   ├── progress/        # PROGRESS.md, LOG.md, STATS.md, tasks/TASK-xxx/ (spec, critique-1/2, tasks, review, implementation, test, evaluation)
+│   └── harness/         # M6 AIOS Harness subsystem: contracts/ + kernel/ (H1) + execution/ (H2 Verification) + testing/ (H3) + evaluation/ (H4) + doctor/ (H5) — xem M6
 ├── sdk/python/          # SDK viết agent/tool/skill/workflow
 ├── sdk/typescript/      # SDK TS cho extension/dashboard
 ├── backend/
@@ -321,8 +324,1333 @@ P7 Upgrade pipeline: Compatibility Check (contract version) → Dependency Resol
 P8 Observability & Diagnostics + Orchestrator v2: metrics, audit log, prompt history, simulation mode, system doctor, performance profiler, health score, evaluation framework v2 (gắn vào workflow); Orchestrator v2 — Improvement Advisor (tự đề xuất skill/workflow/prompt mới từ log + evaluation), Execution Supervisor nâng cao, Evaluation Collector đầy đủ, Goal Manager nâng cao (progress tracking + báo cáo)
 → Kết quả: nền tảng tự giám sát + tự nâng cấp an toàn + tự cải thiện
 
-### M5 – Enterprise Edition (tương lai, không làm v1)
-Multi-user, RBAC, marketplace server, distributed runtime, remote agents, cluster GPU
+### M5 – Core Intelligence (P9–P10)
+> M5 nên được xem là **milestone nâng cấp "bộ não vận hành" của AIOS**, KHÔNG phải thêm agent hay thêm UI.
+> Mục tiêu: AIOS phải hiểu tốt hơn request, biết lấy đúng thông tin, chọn đúng model, lập kế hoạch tốt hơn và thực thi được các task có dependency/parallel.
+> Hiện M0–M4 đã xây **execution infrastructure** khá đầy đủ. M5 giải quyết khoảng trống giữa:
+> ```
+> Request → Orchestrator → ExecutionPlan → Runtime
+> ```
+> thành:
+> ```
+> Request → Understand → Retrieve Knowledge/Memory → Optimize Context → Select Model
+>        → Plan → Build Execution Graph → Schedule → Runtime
+> ```
+
+#### 1. M5 KHÔNG nên làm gì? (scope guard — tránh scope creep)
+M5 **không làm**: Multi-tenant · Distributed Runtime · Marketplace · Plugin ecosystem · Autonomous self-modification · Production-grade real Tool execution · UI lớn · Multi-agent conversation framework. Các phần đó để M7–M9. M5 tập trung vào **Intelligence Core**.
+
+#### 2. Năm năng lực chính
+```
+M5 Core Intelligence
+├── Memory Intelligence    → TASK-023 Memory Coordinator
+├── Context Intelligence   → TASK-024 Context Optimizer
+├── Model Intelligence     → TASK-025 Model Router
+├── Planning Intelligence  → TASK-026 Planning Engine
+└── Execution Intelligence → TASK-027 Execution Graph + TASK-028 Parallel Scheduler
+```
+| Năng lực | Trả lời câu hỏi |
+|----------|-----------------|
+| Memory | AIOS cần nhớ gì? |
+| Context | AIOS cần đưa gì vào lần chạy này? |
+| Model Router | Nên dùng model nào? |
+| Planning | Nên làm những bước nào? |
+| Execution Graph | Các bước phụ thuộc nhau thế nào? |
+| Scheduler | Chạy chúng khi nào và song song ra sao? |
+
+#### 3. TASK-023 — Memory Coordinator (quan trọng nhất M5)
+Hiện AIOS có 4 loại Memory (Conversation/Session/Knowledge/Artifact) nhưng thiếu tầng quyết định: *"Trong tất cả những gì AIOS biết, cái gì thực sự cần đưa vào execution hiện tại?"*
+```
+                 Memory Stores
+       ┌──────────────┼──────────────┐
+       ▼              ▼              ▼
+ Conversation      Session       Knowledge
+       │              │              │
+       └──────────────┼──────────────┘
+                      ▼
+              Memory Coordinator
+          ┌───────────┼───────────┐
+          ▼           ▼           ▼
+       Retrieve      Rank      Compress
+                      │
+                      ▼
+               Memory Context → ContextService
+```
+**Trách nhiệm**: Retrieve → Filter → Rank → Deduplicate → Compress → Prioritize → Inject. **Agent KHÔNG được truy cập Memory trực tiếp** — mở rộng nguyên tắc `Agent → Capability → Tool` thành `Memory → Coordinator → Context → Agent`.
+
+**3.1 Retrieval Strategy** — không chỉ semantic: `Exact · Keyword · Semantic · Metadata · Recency · Importance · Hybrid`. VD: "tiếp tục sửa lỗi Oracle hôm qua" → tìm Conversation ("Oracle TIMESTAMP issue") + Session (debugging) + Knowledge (timezone) + Artifact (code patch).
+
+**3.2 Ranking** — không chỉ similarity. `MemoryScore = semantic + relevance + recency + importance + source_priority`. **Ưu tiên deterministic ranking trước**, không nhất thiết dùng LLM.
+
+**3.3 Memory Budget** — VD context 20,000 tokens: System 3K · Task 2K · Knowledge 6K · History 5K · Artifacts 3K · Reserve 1K. Tiền đề cho Context Optimizer.
+
+**3.4 Contract** — tạo `MemoryQuery · MemoryCandidate · MemoryScore · MemorySelection · MemoryContext`. Coordinator không phụ thuộc implementation cụ thể của vector store.
+
+#### 4. TASK-024 — Context Optimizer
+Memory Coordinator trả lời *"Nên lấy memory nào?"*; Context Optimizer trả lời *"Trong những thông tin đó, nên đưa bao nhiêu và dưới dạng nào vào model?"* — hai trách nhiệm khác nhau.
+```
+Memory → Retrieve → Rank → Context Optimizer → Deduplicate → Compress
+       → Prioritize → Token Budget → Final Context
+```
+
+**5. Context Priority** (loại bỏ từ dưới lên nếu thiếu token, không truncate ngẫu nhiên):
+`P0 System/Safety · P1 User Request · P2 Current Execution State · P3 Relevant Knowledge · P4 Relevant Memory · P5 Historical · P6 Optional`.
+
+**6. Context Compression** (3 cấp, giữ triết lý **Deterministic First → LLM Last**):
+- Level 1 Deterministic: loại duplicate, metadata thừa, message cũ, merge fragments
+- Level 2 Extractive: giữ phần liên quan
+- Level 3 LLM compression: chỉ khi cần
+
+#### 7. TASK-025 — Model Router
+Provider Registry trả lời *"Model nào tồn tại?"*; Model Router trả lời *"Request này nên dùng model nào?"*
+```
+                Request
+                   │
+                   ▼
+             Model Router
+       ┌───────────┼───────────┐
+       ▼           ▼           ▼
+     Quality      Cost       Latency
+                   │
+                   ▼
+             Model Selection
+```
+
+**8. Routing Policy** (VD yaml):
+```yaml
+routing:
+  default: balanced
+  policies:
+    cheap:    { max_cost: 0.01 }
+    fast:     { max_latency_ms: 2000 }
+    quality:  { min_quality: 0.9 }
+    local:    { providers: [ollama] }
+```
+
+**8.1 Model Capability** — Registry bổ sung metadata: `model_id, provider, context_window, input_cost, output_cost, latency_class, reasoning, coding, vision, tool_calling, structured_output, availability` → Router deterministic filter được.
+
+**9. Fallback** — `GPT → timeout → DeepSeek → rate limit → Ollama`, NHƯNG phải tuân Policy; không tự ý đổi model nếu policy cấm.
+
+**10. Model Router KHÔNG được thành God Object** — chia: `ModelRouter → ModelSelector · RoutingPolicy · CostEstimator · AvailabilityChecker · FallbackResolver · ModelHealth`. Router chỉ điều phối.
+
+#### 11. TASK-026 — Planning Engine (nâng cấp lớn nhất Orchestrator)
+Hiện `Planner → ExecutionPlan` nên thành:
+```
+Goal → Goal Analyzer → Task Decomposer → Dependency Analyzer
+     → Capability Resolver → Risk Analyzer → Execution Planner → Execution Graph
+```
+
+**12. Task Decomposition** — VD "Review module authentication và viết test" → T1 Analyze → (T2 vuln, T3 missing tests) → T4 Write tests → T5 Run → T6 Report, với dependency T1→{T2,T3}→T4→T5→T6.
+
+**13. Planning KHÔNG nhất thiết dùng LLM** (giữ offline-first): `Known workflow → Template planning → Rule planning → LLM planning`. Workflow Library có sẵn → KHÔNG gọi LLM. Task đơn giản → KHÔNG gọi LLM. Chỉ task phức tạp mới Planner LLM.
+
+**14. Plan Validation** — ExecutionPlan phải validate trước Runtime: `Contract · Capability · Permission · Policy · Dependency · Resource · Cycle · Timeout`. VD T1→T2→T3→T1 → reject (circular dependency).
+
+#### 15. TASK-027 — Execution Graph
+ExecutionService hiện thiên về linear (Node1→2→3); M5 nâng thành DAG:
+```
+        A
+      /   \
+     B     C
+      \   /
+        D
+```
+
+**16. Graph Contract** — `ExecutionGraph · GraphNode · GraphEdge · Dependency · Condition · JoinPolicy · FailurePolicy`. VD nodes [analyze, test_backend, test_frontend, report] + edges analyze→{test_backend,test_frontend}→report.
+
+**17. Graph State** — mở rộng State Service: `PENDING · READY · RUNNING · SUCCEEDED · FAILED · SKIPPED · CANCELLED · BLOCKED` — foundation cho parallel execution.
+
+#### 18. TASK-028 — Parallel Scheduler
+ResourceService: *Có thể chạy không?*; Scheduler: *Khi nào chạy?*; M5 thêm: *Task nào có thể chạy đồng thời?* VD Backend/Frontend test chạy parallel sau Analyze.
+
+**19. Scheduler Architecture** — KHÔNG sửa ResourceService thành God Object:
+```
+Planning → Execution Graph → Graph Scheduler → Resource Service → Execution Service → State Service
+```
+| Thành phần | Trách nhiệm |
+|------------|-------------|
+| Graph Scheduler | dependency |
+| Scheduler Service | thời điểm |
+| Resource Service | resource |
+| Execution Service | execution |
+| State Service | state |
+
+#### 20. M5 Execution Flow hoàn chỉnh
+```
+User → API → Normalizer → Rule Engine → Workflow Matcher → Memory Coordinator
+     → Context Optimizer → Planner → Model Router → Planning Engine
+     → Execution Graph → Policy → Graph Scheduler → Resource Service
+     → Execution Service → Agent → Capability → Tool
+```
+
+#### 21. Tránh Pipeline quá dài (adaptive intelligence)
+- **Request đơn giản**: `Request → Normalizer → Rule → Workflow → Execution`
+- **Request cần knowledge**: `Request → Rule → Memory → Context → Execution`
+- **Request phức tạp**: `Request → Rule → Memory → Context → Planning → Model Router → Graph → Execution`
+
+#### 22. M5 Architecture Invariants (bổ sung INV-011..016)
+| ID | Invariant |
+|----|-----------|
+| INV-011 | Memory Isolation — Agent không truy cập Memory implementation trực tiếp |
+| INV-012 | Context Budget — Context không được vượt budget |
+| INV-013 | Model Routing Policy — Model selection phải qua Routing Policy |
+| INV-014 | Plan Validation — Execution Plan phải validate trước execution |
+| INV-015 | Graph Acyclicity — Execution Graph không được circular dependency |
+| INV-016 | Scheduler Separation — Scheduler không sở hữu Resource/Execution implementation |
+
+#### 23. Test strategy (mỗi task)
+`Unit → Contract → Integration → Architecture → E2E → Regression`.
+- Memory Coordinator: 100 memories → retrieve → rank → budget 4K → expected selection
+- Model Router: cheap policy → expected cheap model; quality policy → expected quality model; timeout → expected fallback
+- Graph: `A→B→C` và `A→B, A→C, B/C→D` → verify execution order
+
+#### 24. Thứ tự triển khai M5 (không máy móc 023→028)
+```
+Phase 1: TASK-023 Memory Coordinator → TASK-024 Context Optimizer   (cặp Memory→Context)
+Phase 2: TASK-025 Model Router                                      (độc lập tương đối)
+Phase 3: TASK-026 Planning Engine → TASK-027 Execution Graph → TASK-028 Parallel Scheduler (chuỗi phụ thuộc)
+```
+
+#### 25. Definition of Done cho M5
+- **Intelligence**: Memory không truy cập trực tiếp từ Agent; Context có budget + priority; Model routing theo policy + có fallback; Planner tạo task graph; Graph hỗ trợ dependency + parallel; Scheduler không sở hữu Resource/Execution
+- **Architecture**: INV-011→INV-016; AST enforcement; Contract purity; không circular dependency; không God Object
+- **Testing**: Unit + Integration + Contract + Architecture + E2E + Regression + Performance benchmark
+- **Observability**: mỗi execution đo được memory retrieval latency, context size, context compression, model selected, model fallback, planning latency, graph execution time, parallelism, queue time, resource usage
+
+#### 26. Kết quả mong muốn sau M5
+Trước M5: `User → Orchestrator → Planner → ExecutionPlan → Runtime`.
+Sau M5: AIOS tách thành **Intelligence** (Memory / Context / Model Router / Planning / Graph) và **Runtime** (Execution), Intelligence điều phối Runtime. **Biến AIOS từ hệ thống "có Orchestrator" thành hệ thống có khả năng reasoning/orchestration thực sự** — mà **KHÔNG thay đổi triết lý**: Runtime-first, Contract-first, Deterministic-first, Policy-first, Event-driven chỉ hoạt động ở mức thông minh và quy mô cao hơn.
+
+→ Kết quả: AIOS tự hiểu request, tự lấy đúng memory/context, tự chọn model theo policy, tự lập kế hoạch dạng task graph DAG và thực thi song song có dependency — dùng chung cho Runtime, Orchestrator và Harness (M6)
+
+### M6 – AIOS Harness (P11)
+> M6 Harness **không phải một tầng mới đứng trên AIOS**, mà là một **subsystem hỗ trợ AIOS kiểm thử, xác minh, quan sát và cải tiến chính nó**. Phù hợp xu hướng "harness engineering": harness là lớp kiểm soát context, tool access, state, verification, permissions, observability và evaluation quanh agent, thay vì chỉ là test runner.
+> Sau M5, AIOS có pipeline `Request → Memory → Context → Model Router → Planning → Execution Graph → Runtime` nhưng thiếu câu hỏi: *"Làm sao AIOS biết execution đó đúng, tốt, an toàn và không làm hệ thống suy giảm sau mỗi thay đổi?"* M6 giải quyết điều đó. Harness **không thay Runtime**.
+
+#### 1. Phạm vi M6 — 5 năng lực chính
+Thay vì 8–10 loại Harness, M6 tập trung 5 năng lực (Experiment/Evolution dùng chung nền tảng này nhưng chưa thành scope lớn của M6):
+```
+M6 Harness
+├── H1 — Harness Kernel
+├── H2 — Execution Verification
+├── H3 — Test & Simulation
+├── H4 — Evaluation & Benchmark
+└── H5 — Doctor & Readiness
+```
+
+#### 2. H1 — Harness Kernel (TASK-029)
+Nền tảng chung — không để mỗi Harness tự tạo logger/trace/result/artifact/config/lifecycle riêng, mà tạo contract chung: `Harness → Context · Run · Event · Result · Artifact · Report`.
+
+**Cấu trúc** `aios/harness/`: `contracts/` (harness, run, result, assertion, report) · `kernel/` (runner, registry, lifecycle, context) · `execution/` · `testing/` · `evaluation/` · `doctor/`.
+
+**Harness Contract lifecycle**: `CREATED → PREPARING → VALIDATING → RUNNING → VERIFYING → COMPLETED`; nếu lỗi: `RUNNING → FAILED → DIAGNOSED`.
+
+**HarnessRun**: mọi lần chạy có `HarnessRun` (run_id, harness, target, version, environment, started_at, status). Quan trọng để truy ngược: `Release → Harness Run → Execution Trace → Evaluation → Failure`.
+
+#### 3. H2 — Execution Verification (TASK-030 — quan trọng nhất M6)
+> Execution thành công ≠ Task thành công. VD: Agent "Đã sửa xong" + exit code 0, nhưng test thực tế fail. Harness phải kiểm tra **post-condition**.
+
+**Verification Contract**: mỗi Execution có `Preconditions · Execution · Postconditions · Invariants · Evidence`. VD task "Viết test cho module config" → PRE: module tồn tại; POST: test file tồn tại + test chạy thành công + coverage ≥ 90%.
+
+**Verification Pipeline**: `Execution → Collect Evidence → Deterministic Checks → Policy Checks → Tests → Evaluation → Verdict`. Verdict: `PASS · PASS_WITH_WARNING · FAIL · INCONCLUSIVE` (không chỉ success=true/false).
+
+**Evidence Package** (audit/replay thay vì chỉ final output):
+```
+Evidence Package
+├── request.json · normalized-request.json · plan.json
+├── execution-graph.json · events.json
+├── tool-results/ · test-results/ · evaluation.json
+├── artifacts/ · verdict.json
+```
+**Replay**: Production Run → Trace → Replay → Simulation → Debug (không cần chạy lại Tool thật). Kết nối với Runtime State/Event/Audit (M1).
+
+#### 4. H3 — Test & Simulation (TASK-031)
+> Kiểm thử AIOS mà không cần thực hiện side effect thật.
+
+**Test levels** (Harness điều phối, không thay pytest/vitest): Unit · Contract · Architecture · Integration · Workflow · Agent · Capability · Tool · Policy · Permission · E2E · Regression.
+```
+AIOS Test Harness → pytest · vitest · architecture tests · workflow simulation · agent evaluation
+```
+
+**Simulation Mode**: tận dụng `simulate` hiện tại — `aiagent harness test workflow.review --simulate` → Request → Orchestrator → Planner → Execution Graph → Fake Runtime → Fake Tool → Expected Result (không side effect).
+
+**Scenario Definition** (không hard-code test):
+```yaml
+scenario:
+  id: coding-review-001
+  input: { request: "review authentication module" }
+  environment: { mode: simulation }
+  expect: { intent: coding, agent: coder, policy: allow,
+            required_capabilities: [filesystem, python] }
+  verification: { tests_pass: true, no_policy_bypass: true }
+```
+→ trở thành **Golden Scenario**.
+
+**Failure Injection** (Chaos nhẹ): `faults: [{target: model, type: timeout}, {target: tool.python, type: failure}, {target: resource, type: exhausted}]` → kiểm tra Retry/Fallback/Recovery/Policy/Final state.
+
+#### 5. H4 — Evaluation & Benchmark (TASK-032)
+Phân biệt **Test** ("Có đúng điều kiện không?") vs **Evaluation** ("Chất lượng tốt đến mức nào?" — VD HTTP 200 vs answer relevance 0.91).
+
+**Evaluation Model** (thứ tự, LLM Judge không mặc định): `Deterministic → Semantic → LLM Judge → Human → Composite`.
+
+**Evaluation Suite**:
+```yaml
+suite:
+  id: coder-v1
+  dataset: coding-golden-v3
+  metrics: [task_completion, correctness, policy_compliance, tool_accuracy, cost, latency]
+  thresholds: { task_completion: 0.90, correctness: 0.85, policy_compliance: 1.0 }
+```
+**Trajectory Evaluation**: không chỉ Input→Output mà đánh giá cả trajectory (Decision → Tool A → Tool B → Recovery → Final Output). VD final đúng nhưng gọi sai tool → bị deny → retry → gọi đúng → đánh dấu `Final Correct / Trajectory Warning`. Thông tin giá trị cho Improvement Advisor.
+
+**TASK-033 — Benchmark**: "AIOS phiên bản mới có tốt hơn cũ không?" — chạy 100 scenarios, theo dõi đồng thời Quality/Cost/Latency/Token/Failure Rate/Policy Violations (không chỉ score).
+
+**Regression Gate**: Before Task success 91% → After 86% → **FAIL**. Quality +2% nhưng Cost +80% → WARNING/FAIL tùy policy. Eval làm quality gate chặn release khi regression vượt threshold.
+
+#### 6. H5 — Doctor & Readiness (TASK-034)
+Nâng cấp `aiagent doctor` + `aiagent arch-health` thành **AIOS Doctor Harness** (không tạo Doctor mới hoàn toàn).
+
+**Doctor Architecture**: Architecture · Runtime · Workflow · Agent · Capability · Tool · Memory · Model · Policy · Registry · Performance. Mỗi Doctor trả về `PASS · WARNING · ERROR · UNKNOWN`.
+
+**Readiness Score** (không chỉ 1 con số, phải có hard gates):
+```
+Architecture 100% · Contracts 98% · Tests 97% · Evaluation 91%
+Security 95% · Performance 88% · Observability 96% · Overall 94.1%
+```
+Hard gate: `Policy violation > 0 → RELEASE BLOCKED` dù overall 99%.
+
+#### 7. M6 Architecture
+```
+                         AIOS
+            ┌──────────────┼──────────────┐
+            ▼              ▼              ▼
+        Runtime      Orchestrator       Harness
+                                            │
+                              ┌─────────────┼─────────────┐
+                              ▼             ▼             ▼
+                           Test          Eval          Doctor
+                                            │
+                                            ▼
+                                        Evidence → Improvement
+```
+Harness **đọc/quan sát và gọi API**, không chui vào implementation của Runtime.
+
+#### 8. Harness API
+```
+POST /api/v1/harness/run
+GET  /api/v1/harness/runs/{id}
+GET  /api/v1/harness/runs/{id}/evidence
+POST /api/v1/harness/test
+POST /api/v1/harness/evaluate
+POST /api/v1/harness/benchmark
+POST /api/v1/harness/doctor
+GET  /api/v1/harness/readiness
+```
+CLI: `aiagent harness run | test | evaluate | benchmark | doctor | readiness | replay`.
+
+#### 9. M6 Architecture Invariants (bổ sung INV-017..021)
+> ⚠️ **Ghi chú đánh số**: M5 đã dùng INV-011..INV-016, nên M6 tiếp tục INV-017..INV-021 (không ghi đè INV-011..015 như bản nháp) để giữ ID invariant toàn cục duy nhất, tránh xung đột với enforcement test.
+| ID | Invariant |
+|----|-----------|
+| INV-017 | Harness Isolation — Harness chỉ qua Runtime API / Orchestrator API, không chui vào RuntimeService implementation |
+| INV-018 | Evidence First — mọi Harness Run phải tạo evidence có thể truy xuất |
+| INV-019 | Verification Before Verdict — không `PASS` chỉ vì execution không exception |
+| INV-020 | Evaluation Determinism — nếu dùng LLM Judge phải lưu model, prompt version, temperature, input, output, score để reproducible |
+| INV-021 | Release Gate — regression nghiêm trọng phải có khả năng block release |
+
+#### 10. M6 Task Breakdown (6 task)
+| Task | Nội dung | Ưu tiên |
+|------|----------|---------|
+| TASK-029 | Harness Kernel + Contract + Registry + Run | ⭐⭐⭐⭐⭐ |
+| TASK-030 | Execution Verification + Evidence + Replay | ⭐⭐⭐⭐⭐ |
+| TASK-031 | Test Harness + Scenario + Simulation | ⭐⭐⭐⭐⭐ |
+| TASK-032 | Evaluation Harness + Metrics | ⭐⭐⭐⭐⭐ |
+| TASK-033 | Benchmark + Regression Gate | ⭐⭐⭐⭐ |
+| TASK-034 | Doctor + Readiness | ⭐⭐⭐⭐⭐ |
+
+#### 11. Thứ tự triển khai
+```
+TASK-029 → TASK-030 → ┬─ TASK-031 ─┐
+                       └─ TASK-032 ─┘ → TASK-033 → TASK-034
+```
+(Kernel trước, rồi Verification song song với Test/Eval, rồi Benchmark, cuối cùng Doctor/Readiness)
+
+#### 12. Definition of Done cho M6
+AIOS thực hiện được `aiagent harness test --suite core` với 10 bước: Load scenarios → Run simulation → Capture trace → Validate execution → Evaluate result → Generate evidence → Compare baseline → Detect regression → Generate report → Return PASS/FAIL. Và `aiagent harness readiness` trả về tất cả PASS + Overall READY.
+
+#### 13. M6 tạo vòng lặp quan trọng
+```
+AIOS Execute → Trace → Harness (Test/Evaluate) → Failure/Score
+            → Advisor → Improvement → AIOS New Version → Harness
+```
+**Harness trở thành hệ thống kiểm chứng của AIOS**, không phải hệ thống đứng trên AIOS. M6 ưu tiên kiểm chứng cả **execution trajectory, tool usage, policy, state, evidence và post-condition** — không chỉ "test agent có trả lời đúng không". Nếu làm đúng, AIOS có thể **tự chứng minh một thay đổi trong chính nó không làm hệ thống tệ đi trước khi cho phép thay đổi đó hợp lệ**.
+
+→ Kết quả: AIOS có subsystem kiểm thử/xác minh/quan sát/cải tiến chính nó (H1–H5), dùng chung Runtime + Core Intelligence (M5), không tạo hệ thống song song, không phá architecture (INV-017..021)
+
+### M7 – Enterprise (P12)
+> M7 **không biến AIOS thành hệ thống cloud/distributed khổng lồ ngay lập tức**. Mục tiêu: đưa AIOS từ **single-instance AIOS mạnh** thành **AIOS vận hành an toàn trong môi trường doanh nghiệp**. Enterprise chủ yếu giải quyết 6 vấn đề: `Identity · Multi-tenancy · Isolation · Distributed Execution · Governance · Operations`.
+
+#### 1. Mục tiêu tiến hóa
+```
+Sau M4: AIOS → Single Runtime
+Sau M5: AIOS → Intelligent Memory/Context/Model Routing/Planning/Execution Graph
+Sau M6: AIOS → Core Intelligence + Harness + Verification/Evaluation
+M7:    AIOS Enterprise = Identity + Tenancy + Governance + Distributed Runtime + Isolation + HA + Audit
+```
+
+#### 2. M7 gồm 7 nhóm (Identity, Tenancy, Distributed Runtime, Distributed Scheduler, Governance, Security, Operations)
+```
+M7 Enterprise
+├── E1 Identity & Access            (bắt buộc)
+├── E2 Multi-Tenancy                (bắt buộc)
+├── E3 Distributed Runtime          (nền tảng scale)
+├── E4 Distributed Scheduler        (lease / failover)
+├── E5 Enterprise Resource Governance (enterprise governance)
+├── E6 Security & Data Isolation   (enterprise governance)
+└── E7 Enterprise Operations        (vận hành production)
+```
+
+#### 3. E1 — Identity & Access (TASK-035 — Identity Foundation)
+Hiện AIOS có Permission/Policy/Permission Broker nhưng permission thiên về `Execution → ask_scopes()`. Enterprise cần biết **"Ai đang yêu cầu?"** → đưa identity vào mọi request: `User → Identity → Tenant → Role → Permission → Policy → Execution`.
+
+**Principal Model** (contract): `Principal = User | Service | Agent | Workflow | System`.
+```yaml
+principal: { id: user-123, type: user, tenant: company-a, roles: [developer] }
+principal: { id: agent-coder, type: agent, tenant: company-a }  # Agent cũng có identity
+```
+Quyền không chỉ thuộc user; agent hành động qua chuỗi delegation → cần **composite principals + capability attenuation** thay vì chỉ kiểm tra request ban đầu.
+
+**RBAC + ABAC** (không chỉ RBAC):
+- RBAC: `Developer → filesystem.read, git.read`
+- ABAC: `user.department == "IT" AND resource.environment == "development" AND action == "write" → allow`
+- Hỗ trợ: Role · Attribute · Resource · Action · Environment · Tenant
+
+#### 4. E2 — Multi-Tenancy (TASK-036 — Tenant Model, quan trọng nhất M7)
+AIOS phải hiểu: `Organization → Tenant → Project → Workspace → Execution`. VD Company A có Project HR/Finance/IT.
+
+**Tenant Boundary**: mọi object quan trọng có ownership: `Execution · Workflow · Agent · Memory · Artifact · Skill · Credential · Evaluation · Harness Run`. Phải enforce boundary ở: `API · Context · Memory · Registry · Runtime · Storage · Tool · Audit` — **không chỉ thêm `tenant_id` vào DB**.
+
+**Memory Isolation** (đặc biệt quan trọng với AIOS): KHÔNG được `Tenant A Memory → Retriever → Tenant B`. Phải: `Tenant A → Memory Namespace A → Retriever A` và `Tenant B → Memory Namespace B → Retriever B`. Isolation phải bao phủ data, compute và credentials.
+
+**Tenant Isolation Levels** (spectrum, không bắt buộc đồng nhất):
+| Tier | Isolation |
+|------|-----------|
+| Development | Shared |
+| Standard | Logical Isolation |
+| Secure | Sandbox |
+| Enterprise | Dedicated Runtime |
+
+#### 5. E3 — Distributed Runtime (TASK-037 — Runtime Node)
+Tách `RuntimeKernel` (1 process) thành `AIOS Control Plane → Runtime Nodes`: `Orchestrator → Runtime Router → Runtime-01 / Runtime-02 / Runtime-03`.
+
+**Runtime Node Contract**: `node_id · capabilities · capacity · health · version · region · tenant_classes`.
+```yaml
+node: { id: runtime-vn-01, region: ap-southeast, capacity: {cpu: 32, memory: 64GB},
+        capabilities: [python, docker, ollama] }
+```
+
+**Runtime Router**: Orchestrator KHÔNG tự chọn server — Router chọn theo `Tenant · Region · Capability · Capacity · Latency · Policy · Cost · Health`.
+
+#### 6. E4 — Distributed Scheduler (TASK-038) + Execution Lease
+M5 có Graph Scheduler + Resource Service; M7 mở rộng: `Graph Scheduler → Distributed Scheduler → Runtime Node`. Xử lý: queue · retry · node failure · lease · heartbeat · stale execution · rescheduling.
+
+**Execution Lease** (nhờ State Service M1): `Execution → Lease Runtime-01`; Runtime-01 chết → `Lease expired → Scheduler → Runtime-02 → Resume Snapshot`.
+
+#### 7. E5 — Enterprise Resource Governance (TASK-039 — Tenant Quota)
+Không để 1 tenant tiêu hết Runtime.
+```yaml
+tenant: { quota: { concurrent_executions: 20, cpu: 8, memory: 16GB,
+                   llm_tokens_per_day: 5M, storage: 100GB } }
+```
+**AI-specific Quota**: LLM calls · Tokens · Model cost · Tool calls · Execution time · Memory retrieval · Storage · Sandbox time.
+
+**Cost Governance**: `Cost Estimator → Budget Policy → Execution → Actual Cost → Billing`. VD estimate $0.20 > budget $0.10 → DENY; hoặc estimate GPT $0.25 vs Ollama $0.01 → Route Ollama (kết hợp M5 Model Router + M7 Governance).
+
+#### 8. E6 — Security & Data Isolation (TASK-040)
+**Credential Manager** (Agent/Tool KHÔNG giữ credential trực tiếp): `Agent → Capability → Credential Broker → Scoped Credential → Tool`. Credential phải: tenant-scoped · project-scoped · capability-scoped · short-lived · audit được.
+
+**Secret Isolation**: Tenant A (GitHub, Oracle) / Tenant B (GitHub, AWS) — Agent A không resolve được credential của B.
+
+**Network Policy**: `Agent→Tool · Tool→Internet · Tool→Internal API · Runtime→DB · Runtime→Model Provider`. Default-deny rồi mở kết nối cần: `network: { deny: [metadata-service], allow: [github.com, api.openai.com] }`.
+
+**Sandbox thật** (M2 chỉ mock): `Policy → Permission → Sandbox → Tool` (không bypass). Sandbox profile: filesystem read/write scoping, network on/off, cpu/memory/timeout.
+
+#### 9. E7 — Enterprise Operations (TASK-041 HA + Audit + Recovery, TASK-042 Enterprise Operations + Dashboard)
+**HA Runtime**: không SPOF (Single Runtime/DB/Queue). Tối thiểu Runtime Pool A/B/C.
+**Health & Failover**: `Heartbeat → Health Monitor → Runtime unhealthy → Drain → Reschedule` (không kill mù quáng execution đang chạy).
+**Control Plane / Data Plane**: chính thức hóa `CONTROL PLANE (API, Orchestrator, Registry, Policy, Scheduler, Tenant, Governance) → EXECUTION PLANE (Runtime Nodes, Worker Agents, Tools, Sandbox)`.
+**Audit Enterprise**: M4 audit SQLite → `Audit Event → Structured Event → Central Audit Store → Immutable/Tamper-evident`. Audit trả lời Who/What/When/Which tenant/agent/workflow/tool/credential scope/policy/result.
+**Enterprise Observability**: M6 Evidence + dimensions `tenant · project · user · agent · workflow · model · runtime · region` → Tenant Dashboard (executions, success rate, token, cost, policy violations, latency).
+**TASK-042** gom HA + audit + metrics + health + backup + recovery + operational dashboard (không tạo quá nhiều service).
+
+#### 10. M7 Architecture hoàn chỉnh
+```
+                    AIOS ENTERPRISE
+            ┌───────────────────┴───────────────────┐
+            │                                       │
+      CONTROL PLANE                            GOVERNANCE
+   ┌────────┼────────┐                    ┌─────────┼─────────┐
+   │        │        │                    │         │         │
+ API   Orchestrator Registry            IAM      Policy     Audit
+   │        │        │                    │         │
+   └────────┼────────┘                    └─────────┘
+            │
+      Runtime Router
+   ┌────────┼────────┐
+   ▼        ▼        ▼
+Runtime-01 Runtime-02 Runtime-03
+   │        │        │
+Worker   Worker    Worker
+   │        │        │
+Capability Capability Capability
+   │        │        │
+ Tools    Tools     Tools
+   │        │        │
+Sandbox  Sandbox   Sandbox
+```
+
+#### 11. M7 Task Breakdown (8 task)
+| Task | Nội dung | Ưu tiên |
+|------|----------|---------|
+| TASK-035 | Identity + Principal + RBAC/ABAC | ⭐⭐⭐⭐⭐ |
+| TASK-036 | Multi-Tenancy + Tenant Boundary | ⭐⭐⭐⭐⭐ |
+| TASK-037 | Distributed Runtime + Runtime Node | ⭐⭐⭐⭐⭐ |
+| TASK-038 | Distributed Scheduler + Lease + Failover | ⭐⭐⭐⭐⭐ |
+| TASK-039 | Quota + Cost + Resource Governance | ⭐⭐⭐⭐ |
+| TASK-040 | Credential + Network + Sandbox Isolation | ⭐⭐⭐⭐⭐ |
+| TASK-041 | HA + Audit + Recovery | ⭐⭐⭐⭐ |
+| TASK-042 | Enterprise Operations + Dashboard | ⭐⭐⭐⭐ |
+
+#### 12. Dependency
+```
+TASK-035 → TASK-036 → ┬─ TASK-037 ─┐
+                       └─ TASK-040 ─┘ → TASK-038 → TASK-039 → TASK-041 → TASK-042
+```
+Identity + Tenant phải trước Distributed Runtime (nếu distributed trước rồi thêm tenancy sẽ phải sửa gần như toàn bộ execution boundary).
+
+#### 13. M7 Architecture Invariants (bổ sung INV-022..INV-029)
+> ⚠️ **Ghi chú đánh số**: M5 dùng INV-011..016, M6 dùng INV-017..021, nên M7 tiếp tục INV-022..INV-029 để giữ ID invariant toàn cục duy nhất, tránh xung đột với enforcement test.
+| ID | Invariant |
+|----|-----------|
+| INV-022 | Identity First — mọi execution phải có Principal |
+| INV-023 | Tenant Isolation — cross-tenant access deny mặc định |
+| INV-024 | Credential Isolation — credential chỉ resolve trong authorized scope |
+| INV-025 | Resource Fairness — tenant không vượt quota nếu không có policy override |
+| INV-026 | Distributed Execution Safety — một execution chỉ một active lease tại một thời điểm |
+| INV-027 | Audit Completeness — security-sensitive action phải có audit evidence |
+| INV-028 | Sandbox Boundary — untrusted tool execution phải qua sandbox policy |
+| INV-029 | Control Plane Isolation — tenant workload không truy cập Control Plane nội bộ ngoài API contract |
+
+#### 14. Definition of Done cho M7
+Identity (user/agent/service, RBAC, ABAC, delegation) · Tenancy (tenant/project/workspace, memory/artifact/workflow/credential isolation) · Distributed (Runtime Node/Registry/Router, lease/heartbeat/failover/resume) · Governance (quota/cost/rate limit/fairness/model policy) · Security (Credential Broker/Network Policy/Sandbox/Secret isolation/Audit) · Operations (HA/backup/recovery/health/metrics/tenant dashboard).
+
+#### 15. Một request Enterprise chạy thế nào?
+VD "Công ty A yêu cầu Agent Coder sửa repo": `User → Identity → Tenant A → Project X → Orchestrator → Policy → Memory Tenant A → Planning → Model Router → Execution Graph → Distributed Scheduler → Runtime Node 02 → Permission Broker → Credential Broker → Sandbox → Git Tool → Artifact → Evaluation → Audit → Tenant Dashboard`. Failover: Runtime-02 chết → Lease expired → Scheduler → Runtime-03 → Snapshot → Resume. Cross-tenant: Agent request memory Tenant B → Tenant boundary → DENY → Audit. Over-budget: Cost estimate > Budget → DENY/downgrade/ask.
+
+#### 16. M7 không nên biến AIOS thành Kubernetes
+AIOS **không tự xây** container orchestrator / VM manager / network overlay / distributed DB / service mesh / object storage / secret vault. AIOS chỉ định nghĩa **contract và governance**: `AIOS → RuntimeNode Contract → Kubernetes/Docker/VM/Bare Metal`; `AIOS Credential Broker → Vault/Cloud Secret Manager`. AIOS vẫn là **AI Operating System**, không thành cloud platform.
+
+#### 17. Ranh giới M6 → M7 → M8
+```
+M5: "AIOS có thông minh không?"
+M6: "AIOS có tự kiểm chứng được không?"
+M7: "AIOS có vận hành an toàn ở quy mô doanh nghiệp không?"
+M8: "AIOS có mở rộng thành hệ sinh thái không?"
+M9: "AIOS có thể tự vận hành theo Goal không?"
+```
+M7 **không làm self-evolution** — governance-by-design, centralized visibility, continuous monitoring phải hoàn thiện trước khi AIOS tự đổi chính nó.
+
+→ Kết quả: AIOS giữ nguyên lõi Runtime → Orchestrator → Workflow → Capability → Tool → Infrastructure, nhưng có thêm **Identity → Tenant → Governance → Distributed Runtime → Isolation → HA → Audit** để thành nền tảng triển khai cho nhiều team/doanh nghiệp mà không phá vỡ Architecture Invariants (INV-022..INV-029)
+
+### M8 – Ecosystem (P13)
+> M8 đưa AIOS từ **"một nền tảng có thể vận hành"** (M7) thành **"một hệ sinh thái có thể mở rộng bởi bên thứ ba"**. **M8 không biến AIOS thành marketplace trước tiên** — Core vẫn là Runtime + Orchestrator; Ecosystem chỉ là **lớp mở rộng bao quanh Core**.
+> Đích cuối: *"Một developer bên ngoài AIOS có thể xây Agent / Skill / Capability / Tool / Workflow / Model Provider / Integration mà không cần sửa AIOS Core."*
+
+#### 1. Mục tiêu chiến lược
+```
+Sau M7: AIOS = Core Runtime + Intelligence + Harness + Enterprise
+M8 thêm:
+                    AIOS
+          ┌──────────┼──────────┐
+       Core     Enterprise    Ecosystem
+          └──────────┼──────────┘
+              ┌───────┼───────┐
+            SDK      Plugin   Extension
+              │        │        │
+           Agent     Tool    Workflow
+           Skill    Model    Integration
+```
+
+#### 2. 7 trụ cột của M8
+```
+M8
+├── E1 Public SDK
+├── E2 Plugin System
+├── E3 Extension Contracts
+├── E4 Ecosystem Registry
+├── E5 Developer Experience
+├── E6 Marketplace / Distribution
+└── E7 Compatibility & Certification
+```
+**E1–E4 = Core Ecosystem** (nền tảng mở rộng). **E5–E7 = hệ sinh thái bên ngoài**.
+
+#### 3. E1 — Public SDK (TASK-043 — quan trọng nhất)
+Biến `AIOS SDK 🔲` thành **public developer interface**. Developer KHÔNG import internal:
+```python
+# ❌ SAI
+from aios_core.internal.runtime.service_x import ...
+# ✅ ĐÚNG
+from aios import Agent, Capability, Tool, Workflow
+```
+**SDK che giấu Core**: `Public SDK → Public Contracts → AIOS Runtime → Internal implementation`. Developer viết `class MyAgent(Agent)` mà không cần biết RuntimeKernel/ExecutionService/ResourceService/EventBus/StateService/PolicyService.
+**SDK Components** (không expose internal service): `Agent · Capability · Tool · Skill · Workflow · Model · Memory · Context · Artifact · Event · Policy · Harness · Client`.
+
+#### 4. E2 — Plugin System (TASK-044 — trái tim M8)
+Plugin lifecycle (tái sử dụng **Skills Manager lifecycle 10 states** từ M2/M4, không xây hệ thống lifecycle thứ hai): `DISCOVERED → VALIDATED → INSTALLED → ENABLED → LOADED → RUNNING → DISABLED → UNINSTALLED`.
+**Plugin Contract**:
+```yaml
+plugin:
+  id: github.integration
+  version: 1.2.0
+  aiOS: { min: 1.8.0, max: 2.x }
+  provides: [capability: github.repository, tool: github.search, tool: github.create_pr]
+  permissions: [repository.read, repository.write]
+```
+Plugin KHÔNG tự ý chạm Runtime/Registry/Database/Filesystem/Network — phải qua contract.
+**Plugin Types**: Agent · Capability · Tool · Skill · Workflow · Model Provider · Memory · UI · Integration Plugin (VD `github.plugin`, `jira.plugin`, `oracle.plugin`, `ollama.plugin`, `openai.plugin`).
+
+#### 5. E3 — Extension Contracts (TASK-045 — bảo vệ Core)
+Phân biệt rõ: `Internal API (aios.core.internal.* ❌) · Public API (aios.sdk.* ✅) · Extension API (aios.extension.* ✅) · Experimental API (aios.experimental.* ⚠️)`.
+**Contract Versioning**: plugin khai báo `requires: { capability_contract: ^2.0 }`; AIOS kiểm tra compatibility trước khi load. **Compatibility Matrix**: `Plugin A 1.2 → compatible · Plugin B 2.0 → compatible · Plugin C 1.0 → deprecated · Plugin D 3.0 → incompatible` — không để plugin crash Runtime lúc startup.
+
+#### 6. E4 — Ecosystem Registry (TASK-046 — Registry v2)
+Mở rộng Registry hiện tại thành `AIOS Ecosystem Registry`: Agents · Capabilities · Tools · Skills · Workflows · Models · Providers · Plugins · Integrations · Extensions. Lưu đủ: `identity · metadata · contract · permissions · dependencies · compatibility · security · capabilities · artifacts · publisher · signature` (không chỉ name/version).
+**Discovery**: `aios search github` / `aios plugin search database` → trả `github.integration, oracle.integration, postgres.integration`. Orchestrator discovery: `User request → System Knowledge → Ecosystem Registry → Capability Discovery → Plugin`.
+**MCP là adapter, không phải Core**:
+```
+AIOS Capability → Native Tool | MCP Adapter | REST API   (đúng)
+AIOS → MCP → Everything                          (sai)
+```
+MCP = ecosystem protocol adapter (resources/prompts/tools), KHÔNG phải abstraction chính.
+
+#### 7. E5 — Developer Experience (TASK-047 — AIOS Developer Kit)
+Developer mới phải có thể: `aios create plugin github` / `aios create agent code-reviewer` / `aios create capability database` → sinh scaffold (`aios.plugin.yaml`, `src/plugin.py`, `src/agent.py`, `src/capability.py`, `tests/`, `README.md`, `pyproject.toml`).
+**Local Development**: `aios dev` chạy plugin hot-reload trên Local Runtime (không cần cài vào production).
+**Plugin Testing** (nối trực tiếp M6 Harness): SDK tự sinh Contract/Security/Permission/Compatibility/Behavior/Harness Tests → `aios plugin test` chạy Harness.
+
+#### 8. E6 — Marketplace / Distribution (TASK-048 — Ecosystem Hub)
+Chỉ làm **sau** Registry + SDK + Certification. Marketplace chứa Plugins/Agents/Skills/Tools/Workflows/Integrations/Models, NHƯNG **không phải source of truth**. Kiến trúc: `Marketplace → Registry → Package → Signature → Compatibility → Install`.
+**Trust Model** (điểm M7 ∩ M8): `Download → Manifest validation → Signature verification → Dependency check → Permission analysis → Compatibility check → Security scan → Harness certification → Install`. Mỗi package có `publisher { id, signing_key }` — AIOS biết Publisher/Package/Version/Signature/Certification (không chỉ `pip install xxx`).
+
+#### 9. E7 — Certification (TASK-049 — sức mạnh hệ sinh thái)
+Plugin states: `COMMUNITY → VERIFIED → CERTIFIED → ENTERPRISE CERTIFIED`. VD `github.plugin ✓ Contract ✓ Security ✓ Permission ✓ Compatibility ✓ Harness ✓ Performance`.
+**Harness là gate của Ecosystem** (M6 không tồn tại độc lập): `Plugin → Harness { Contract, Behavior, Security, Policy, Regression, Performance, Compatibility }` → nếu fail → `CERTIFICATION = FAIL`. Ecosystem càng mở, attack surface càng lớn → guardrails/tracing/evaluation là production component.
+**Agent-to-Agent Ecosystem**: mở rộng Agent Contract. Hai kiểu: **Manager** (`Orchestrator → Agent A/B/C`) và **Handoff** (`Agent A → handoff → Agent B`). Nhưng handoff vẫn phải qua `Policy · Capability · Context · Identity` — không cho Agent tự ý phá Control Plane.
+**Agent Contract**:
+```yaml
+agent:
+  id: code-reviewer
+  version: 2.1
+  accepts: [code_review_request]
+  produces: [review_report]
+  capabilities: [filesystem.read, git.read]
+  permissions: [repository.read]
+```
+**Workflow Ecosystem**: Workflow Library → `Workflow Ecosystem` (code-review, bug-fix, database-migration, release, security-audit, documentation, test-generation); workflow bên ngoài khai báo `requires: [coder, test-runner, git, harness]`, AIOS check dependency rồi mới chạy.
+**UI Ecosystem**: plugin đăng ký `UI Extension Contract` (VD GitHub plugin thêm GitHub tab/panel/PR status) — KHÔNG sửa trực tiếp Dashboard source.
+
+#### 10. Ecosystem Architecture
+```
+                    AIOS CORE
+           ┌───────────┴───────────┐
+     Public Contracts            SDK
+           └───────────┬───────────┘
+                  Extension API
+        ┌──────────┬──────────┬──────────┐
+      Plugins    Adapters   Extensions
+        │          │          ├── UI
+     Agent Tool  MCP        └── CLI
+       Skill
+        │
+  Ecosystem Registry → Certification → Marketplace
+```
+
+#### 11. M8 Task Plan (7 task)
+| Task | Nội dung | Kết quả |
+|------|----------|---------|
+| TASK-043 | Public AIOS SDK | Developer API |
+| TASK-044 | Plugin Runtime | Plugin lifecycle |
+| TASK-045 | Extension Contracts | Stable API |
+| TASK-046 | Ecosystem Registry | Discovery |
+| TASK-047 | Developer Kit | `aios create/dev/test` |
+| TASK-048 | Ecosystem Hub | Distribution |
+| TASK-049 | Certification | Trust ecosystem |
+```
+043 SDK → ┬─ 044 ─┐
+            └─ 045 ─┘ → 046 Registry → 047 DevKit → ┬─ 048 Marketplace ─┐
+                                                      └─ 049 Certification ┘
+```
+
+#### 12. Definition of Done cho M8
+Developer bên ngoài có thể: `aios create plugin jira → aios dev → aios test → aios certify → aios package → aios publish`; rồi trên AIOS khác: `aios install jira` → `Verify → Install → Register → Discover → Policy → Use` **không sửa một dòng code trong AIOS Core**. Đó là tiêu chí quan trọng nhất.
+
+#### 13. Những gì KHÔNG làm trong M8 (scope guard)
+❌ AIOS Cloud · ❌ SaaS billing hoàn chỉnh · ❌ Social network cho Agent · ❌ Public agent marketplace bắt buộc · ❌ Blockchain/package provenance phức tạp · ❌ Tự xây container orchestration · ❌ Tự xây distributed database · ❌ AIOS thay thế Kubernetes. Marketplace chỉ là **một consumer của Ecosystem infrastructure**, không phải mục tiêu cốt lõi.
+
+#### 14. Ranh giới M5→M8 & kiến trúc chồng lớp
+```
+M5 — CORE INTELLIGENCE: "AIOS biết suy nghĩ và lập kế hoạch."
+M6 — HARNESS:           "AIOS biết kiểm tra, đánh giá và chứng minh kết quả."
+M7 — ENTERPRISE:        "AIOS biết vận hành an toàn ở quy mô doanh nghiệp."
+M8 — ECOSYSTEM:         "Người khác có thể xây trên AIOS mà không cần sửa AIOS."
+```
+```
+ECOSYSTEM   (SDK · Plugin · Marketplace · Agents · Tools · Workflows)
+   ↓
+ENTERPRISE  (IAM · Tenant · Security · HA · Governance · Audit)
+   ↓
+HARNESS     (Test · Eval · Verify · Replay · Evidence)
+   ↓
+CORE INTEL  (Planning · Memory · Reasoning · Model Router · Learning)
+   ↓
+AIOS CORE   (Runtime · Workflow · Agent · Capability · Tool · Infra)
+```
+**M8 làm biên AIOS mở hơn nhưng Core ổn định hơn** — không nhét thêm chức năng vào Core. Đặt **TASK-043 Public SDK + TASK-045 Extension Contracts** làm hai task quan trọng nhất; nếu thiết kế sai, toàn bộ Plugin/Marketplace về sau sẽ khóa chặt AIOS vào API nội bộ.
+
+→ Kết quả: AIOS có hệ sinh thái mở rộng (SDK công khai, Plugin System tái dùng lifecycle M2/M4, Extension Contracts ổn định, Ecosystem Registry, Developer Kit, Marketplace, Certification) — developer bên thứ ba xây extension mà **không sửa Core**, Ecosystem kết nối chặt với Harness (M6) và Enterprise (M7)
+
+### M9 – Autonomous (P14)
+> M9 đưa AIOS từ **"nhận task và thực hiện task"** (M0–M8) thành **"tự phát hiện mục tiêu, lập kế hoạch dài hạn, tự thực hiện, tự kiểm chứng, tự phục hồi, tự học và tiếp tục hành động trong giới hạn Policy"**.
+> Nhưng M9 **không** biến AIOS thành "AI tự do làm mọi thứ".
+> ```
+> Autonomous ≠ Uncontrolled
+> Autonomous = Goal-driven + Bounded + Observable + Reversible + Evaluated
+> ```
+> Phù hợp cách các hệ thống agent hiện đại vận hành: agent chạy vòng lặp **plan → act → observe → adjust**, có stopping conditions và human checkpoints khi cần ([Anthropic](https://www.anthropic.com/research/trustworthy-agents?utm_source=chatgpt.com)).
+
+#### 1. Vị trí M9 trong lộ trình
+```
+M0 Foundation → M1 Core Runtime → M2 Orchestrator → M3 Desktop → M4 Platform
+→ M5 Core Intelligence → M6 Harness → M7 Enterprise → M8 Ecosystem → M9 Autonomous
+```
+Kiến trúc (M9 dùng M5–M8, không thay thế):
+```
+              ┌──────────────────────┐
+              │     M9 AUTONOMOUS    │
+              │ Goal → Plan → Act    │
+              │ Observe → Learn      │
+              │ Recover → Continue   │
+              └──────────┬───────────┘
+                         │
+              ┌──────────▼──────────┐
+              │   M5 INTELLIGENCE   │
+              └──────────┬──────────┘
+                         │
+              ┌──────────▼──────────┐
+              │     M6 HARNESS      │
+              └──────────┬──────────┘
+                         │
+              ┌──────────▼──────────┐
+              │    M7 ENTERPRISE    │
+              └──────────┬──────────┘
+                         ▼
+                    AIOS CORE
+```
+
+#### 2. Mục tiêu thực sự của M9
+- M8 trả lời: *"AIOS cho người khác xây thêm cái gì?"*
+- M9 trả lời: **"AIOS có thể tự vận hành đến mức nào?"**
+- VD user: `"Giữ hệ thống này ổn định và cải thiện nó."` → M9 biến thành vòng lặp `Goal → Understand → Observe → Detect → Prioritize → Plan → Execute → Verify → Learn → Next Goal → Continue`.
+
+#### 3. Năm cấp độ Autonomy (A0–A4)
+```
+A0 — Reactive:       User → Request → AIOS → Result
+A1 — Task Autonomous: fix test fail → find → plan → modify → test → retry → verify
+A2 — Goal Autonomous: "giảm tech debt" → scan → prioritize → tasks → execute → evaluate
+A3 — Long-Horizon:   "trong tuần cải thiện độ ổn định" → 7 ngày tự chia việc, không cần 1 conversation
+A4 — Self-Improving: phát hiện "workflow X thường fail ở Y" → hypothesis → experiment → evaluation → candidate → approval → deploy (KHÔNG tự sửa Core production vô điều kiện)
+```
+
+#### 4. TASK-050 — Autonomous Goal Engine
+Nâng `Goal Manager + Task Queue + Goal Reporter` (M2/M4) thành **Autonomous Goal Engine**. Goal không còn `goal = "do X"` mà là contract:
+```yaml
+goal:
+  id: improve-system-reliability
+  objective: "Increase system reliability"
+  success: { availability: ">99.9%", failure_rate: "<1%" }
+  constraints: { max_cost: 100, max_duration: 7d }
+  permissions: { filesystem: read-write, production: approval-required }
+  autonomy: { level: A2 }
+```
+
+#### 5. Goal Lifecycle
+```
+PROPOSED → VALIDATING → APPROVED → PLANNING → EXECUTING → EVALUATING → COMPLETED
+EXECUTING → BLOCKED → RECOVERY → REPLANNING → EXECUTING
+EXECUTING → ESCALATED → HUMAN
+```
+
+#### 6. TASK-051 — Autonomous Planner
+Từ `Request → Execution Plan` thành:
+```
+Goal → World State → Constraints → Available Capabilities → History → Plan
+```
+Plan phải có `assumptions · steps · success_conditions · rollback(enabled)`.
+
+#### 7. Dynamic Replanning
+Autonomous không coi plan ban đầu bất biến:
+```
+A → observe → B → unexpected → replan ┬─ C1
+                                       ├─ C2
+                                       └─ C3
+```
+OpenAI Agents SDK cũng phân biệt orchestration bằng code và model, cho phép hybrid — M9 nên dùng hybrid thay giao toàn quyền cho LLM ([OpenAI GitHub](https://openai.github.io/openai-agents-python/multi_agent/?utm_source=chatgpt.com)).
+
+#### 8. TASK-052 — World Model
+M9 cần abstraction mới **Autonomous World State** kế thừa `System Catalog + Knowledge Graph + System Knowledge + Observability + Memory`:
+```
+WORLD
+├── System (services, agents, workflows, dependencies)
+├── Runtime (active executions, resources, failures)
+├── Goals
+├── Tasks
+├── Environment
+├── Constraints
+└── Historical State
+```
+
+#### 9. World State ≠ Memory
+```
+Memory  = những gì AIOS nhớ
+World State = AIOS tin thế giới hiện tại như thế nào
+```
+Mỗi fact có `source · timestamp · confidence · freshness`:
+```yaml
+fact: { name: migration_status, value: pending,
+        source: database, observed_at: 2026-08-14T20:00, confidence: 1.0 }
+```
+
+#### 10. TASK-053 — Autonomous Loop (trái tim M9)
+```
+┌─────────────────────────────┐
+│       AUTONOMOUS LOOP       │
+│  Observe ↓ Understand ↓    │
+│  Decide ↓ Plan ↓ Policy ↓   │
+│  Act ↓ Verify ↓ Learn ──────┘→ Observe
+└─────────────────────────────┘
+```
+
+#### 11. Autonomy Governor (tham chiếu TASK-054)
+Loop KHÔNG được `while True: agent.run()`. Phải qua **Autonomy Governor** quyết định: `CONTINUE · PAUSE · ASK_HUMAN · REPLAN · ROLLBACK · STOP` (xem §33 INV-030).
+
+#### 12. TASK-054 — Autonomy Governor
+Governor là architecture invariant (INV-030): **không autonomous action nào thực hiện ngoài Governor**.
+```
+Agent → Autonomy Governor → Policy → Permission → Capability → Tool
+❌ Agent → Tool      ❌ Planner → Shell      ❌ Loop → Runtime side effect
+```
+
+#### 13. Autonomy Budget
+```yaml
+autonomy_budget:
+  max_steps: 100
+  max_llm_calls: 50
+  max_cost: 10.00
+  max_duration: 2h
+  max_tool_calls: 200
+  max_retries: 5
+  max_parallel_agents: 4
+```
+Hết budget → `STOP` hoặc `ASK_HUMAN`.
+
+#### 14. Risk Budget
+```
+Read → autonomous
+Edit source → autonomous
+Commit → approval
+Push production → approval
+Delete database → impossible / explicit approval
+```
+
+#### 15. TASK-055 — Autonomous Recovery
+Từ `retry/fallback/report` (M4) thành:
+```
+Detect → Classify → Diagnose → Generate strategies → Score → Policy check → Execute → Verify
+```
+VD: Test failed → dependency issue? → repair dependency → rerun → nếu fail → Strategy B/C → Human escalation.
+
+#### 16. Recovery Limits
+KHÔNG `retry forever`. Phải có: `retry budget · failure fingerprint · circuit breaker · cooldown · escalation`.
+
+#### 17. TASK-056 — Long-Horizon Execution
+AIOS chạy được 30p/2h/8h/24h/nhiều ngày mà không phụ thuộc context window:
+```
+Goal → Execution Session → Checkpoint → Context Compaction → Persisted State → Resume
+```
+Structured persistent notes là kỹ thuật quan trọng cho long-running agents ([Anthropic](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents?utm_source=chatgpt.com)).
+
+#### 18. Autonomous Checkpoint
+```
+Checkpoint #17
+Completed: ✓ analysis ✓ 12 files migrated ✓ tests 1–120
+Current:   → fixing dependency injection
+Pending:   - tests 121–150 - integration - arch review
+```
+Process chết → restart → load checkpoint #17 → continue.
+
+#### 19. TASK-057 — Autonomous Memory
+Nâng Memory Coordinator (M5) thành nhiều loại:
+```
+Working · Episodic · Semantic · Procedural · Failure · Goal Memory
+```
+VD Failure Memory: `When: Oracle migration · Failure: TIMESTAMP mismatch · Cause: timezone · Fix: FROM_TZ(...) · Confidence: 0.92`.
+
+#### 20. Learning Loop
+```
+Execution → Evaluation → Failure/Success → Extract Lesson → Validate → Memory → Future Planning
+```
+Không ghi mọi thứ vào KB — phải `candidate → deduplicate → validate → confidence → promote`.
+
+#### 21. TASK-058 — Autonomous Experimentation (→ A4)
+```
+Hypothesis → Experiment Design → Sandbox → Execute → Evaluate → Compare baseline → Accept/Reject
+```
+VD: `retry=3 insufficient → experiment retry=5 → success 91%→96% → candidate improvement`.
+
+#### 22. Self-Improvement không thẳng Production
+```
+Production → Observation → Hypothesis → Sandbox → Harness → Evaluation → Approval/Auto-policy → Canary → Production
+```
+Đây là nơi M5+M6+M7+M9 kết hợp (INV-033).
+
+#### 23. TASK-059 — Multi-Agent Autonomy
+M9 tận dụng M8 Ecosystem:
+```
+Goal → Autonomous Planner → ┬ Research ┬ Coder ┬ Tester → Evaluator → Decision Maker
+```
+AIOS tự quyết `single vs parallel vs sequential vs hierarchical` — chỉ thêm complexity khi tạo giá trị đo được ([Anthropic Resources](https://resources.anthropic.com/hubfs/Building%20Effective%20AI%20Agents-%20Architecture%20Patterns%20and%20Implementation%20Frameworks.pdf?utm_source=chatgpt.com)).
+
+#### 24. Autonomous Delegation
+```
+Task A → Agent 1 (owner, deadline, budget, output contract)
+Task B → Agent 2
+Task C → Agent 3
+```
+
+#### 25. TASK-060 — Autonomous Evaluation
+M6 Harness đã có Evaluation; M9 biến nó thành **decision mechanism**:
+```
+Evaluation { correctness · quality · cost · risk · progress · confidence } → Decision
+Should I continue / retry / replan / stop / ask human?
+```
+Agent evaluation phải đánh giá cả trajectory và outcome ([Anthropic](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents?utm_source=chatgpt.com)).
+
+#### 26. Progress Estimator
+```
+Goal completion: 73%  Confidence: 0.88  Risk: Medium  Budget remaining: 42%
+```
+Nếu 3 iterations không tăng progress → `STUCK` → replan.
+
+#### 27. TASK-061 — Advanced Stuck Detection
+M4 stuck detection → M9 nâng cấp. STUCK signals: `repeated tool calls · repeated errors · no state change · no progress · oscillation · budget burn · contradictory plans`. VD `A → B → A → B` → oscillation detected → stop/replan.
+
+#### 28. TASK-062 — Autonomous Scheduler
+Từ `WHEN execute?` thành **Autonomous Scheduler** chủ động:
+```
+Every night: inspect failed workflows → evaluate memory quality → detect stale skills → run regression → analyze arch health
+```
+Proactive AIOS: `User ↔ AIOS → System → Observation → Goal → AIOS acts`; nếu risk cao → `Ask Human`.
+
+#### 29. Autonomous Governance (Autonomy Level)
+```
+LEVEL 0 Observe only
+LEVEL 1 Recommend
+LEVEL 2 Execute read-only
+LEVEL 3 Execute reversible changes
+LEVEL 4 Execute bounded production changes
+LEVEL 5 Fully autonomous within policy
+```
+Enterprise: `default_level: 2, production: 1, development: 4`.
+
+#### 30. Human-in-the-loop → Human-on-the-loop
+M7: `AI → Ask → Human → Continue`. M9: `AI → Execute → Monitor → Human observes → Intervene if needed` (human-on-the-loop). Nhưng action nguy hiểm vẫn **human-in-the-loop**.
+
+#### 31. AIOS Architecture sau M9 (Autonomy Layer)
+```
+USER
+ │
+▼ AUTONOMY LAYER (Goal Engine · World Model · Planner · Governor · Recovery · Learning)
+ │
+▼ ORCHESTRATOR (Control Plane)
+ │
+▼ Runtime · Agents · Workflow → Capability → Tools → Infra
+```
+**Autonomy Layer không thay Orchestrator — nó định hướng Orchestrator** (Control Plane vẫn là Orchestrator).
+
+#### 32. Điểm kiến trúc cốt lõi
+```
+❌ Autonomous Agent → Runtime
+✅ Autonomy → Orchestrator → Runtime
+```
+Vì Orchestrator vẫn là Control Plane của AIOS; M9 chỉ bổ sung **Autonomy Control Layer** phía trên.
+
+#### 33. M9 Architecture Invariants (bổ sung INV-030..INV-034)
+> ⚠️ **Ghi chú đánh số**: M5 dùng INV-011..016, M6 INV-017..021, M7 INV-022..029, M8 không thêm. M9 tiếp tục **INV-030..INV-034** (không ghi đè INV-011..015 như bản nháp) để giữ ID invariant toàn cục duy nhất, tránh xung đột với enforcement test `backend/tests/test_architecture.py`.
+| ID | Invariant |
+|----|-----------|
+| INV-030 | Autonomous Action Boundary — mọi autonomous action phải qua Autonomy Governor |
+| INV-031 | Autonomy Bounded — autonomous execution phải có budget/limit (step/cost/duration/risk) |
+| INV-032 | Long-running Resumable — execution dài hạn phải checkpoint/resume được |
+| INV-033 | Self-Improvement via Harness — cải thiện tự thân phải qua Experiment → Harness → Evaluation → Evidence → Decision → Deploy |
+| INV-034 | Autonomous Memory No Unverified Promote — autonomous memory không được tự promote thành Knowledge chưa kiểm chứng |
+
+Đặc biệt **INV-033**: `AIOS: "tôi nghĩ cải thiện này tốt hơn" → ❌ deploy` phải thành `Hypothesis → Experiment → Harness → Evaluation → Evidence → Decision → Deploy`.
+
+#### 34. M9 Task Plan (13 task)
+| Task | Nội dung | Kết quả |
+|------|----------|---------|
+| TASK-050 | Autonomous Goal Engine | Goal contract + lifecycle |
+| TASK-051 | Autonomous Planner | Dynamic plan |
+| TASK-052 | World Model | World State ≠ Memory |
+| TASK-053 | Autonomous Loop | plan→act→observe→learn |
+| TASK-054 | Autonomy Governor | INV-030 gate |
+| TASK-055 | Autonomous Recovery | circuit breaker |
+| TASK-056 | Long-Horizon Execution | checkpoint/resume |
+| TASK-057 | Autonomous Memory | Failure/Goal Memory |
+| TASK-058 | Autonomous Experimentation | A4 self-improve |
+| TASK-059 | Multi-Agent Autonomy | delegation |
+| TASK-060 | Autonomous Evaluation | decision mechanism |
+| TASK-061 | Advanced Stuck Detection | oscillation detect |
+| TASK-062 | Autonomous Scheduler | proactive |
+```
+050 Goal → 051 Planner → 052 World → 053 Loop → ┬ 054 Governor ┐
+                                                    │             ├ 055 Recovery
+                                                    └ 056 LongHorizon
+057 Memory ┐ 058 Experiment ┐ 059 MultiAgent ┘ → 060 Eval → 061 Stuck → 062 Scheduler
+```
+
+#### 35. M9 chia 4 Phase
+- **M9-P1 Autonomous Foundation**: TASK-050/051/052/053/054 → AIOS có Autonomous Loop an toàn
+- **M9-P2 Long-running Autonomy**: TASK-055/056/057/061 → chạy goal dài hạn, recover, resume
+- **M9-P3 Adaptive Autonomy**: TASK-058/060 → thử nghiệm, đánh giá, tự cải thiện có kiểm soát
+- **M9-P4 Autonomous Ecosystem**: TASK-059/062 → tự chọn agent/plugin/workflow, vận hành theo lịch/trigger
+
+#### 36. Definition of Done cho M9
+Không đánh giá bằng "thông minh hơn" mà bằng capability test:
+1. **Autonomous Task**: "Fix toàn bộ test fail" → discover→diagnose→plan→fix→test→recover→verify→report
+2. **Long Horizon**: goal 100+ actions → checkpoint → restart → resume → finish
+3. **Failure Recovery**: tool fail → detect→diagnose→alternative→retry→verify
+4. **Stuck**: `A→B→A→B` → detect→stop→replan
+5. **Budget**: `max_steps=20` → không vượt 20 actions
+6. **Dangerous Action**: production deploy + `approval-required` → AIOS DỪNG
+7. **Self Improvement**: hypothesis→experiment→evaluation→evidence→candidate (KHÔNG LLM-says-better→production)
+
+#### 37. M9 Success Metric
+```
+AUTONOMY SCORE
+Goal Success       91%   Goal Completion    87%   Recovery Rate      82%
+Replan Success     79%   Stuck Avoidance    94%   Policy Compliance 100%
+Budget Compliance 100%   Regression Safety  99%   Human Escalation    8%
+```
+Thêm `pass@1` / `pass^k` cho task autonomous quan trọng ([Anthropic](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents?utm_source=chatgpt.com)).
+
+#### 38. Nguyên tắc giữ nguyên & kết luận
+M9 **không** thành "Claude Code clone". AIOS đã có Runtime/Workflow/Orchestrator/Capability/Tools/Memory/Knowledge/Policy/Scheduler/Resource/State/Artifact/Observability/Harness/Enterprise/Ecosystem — M9 tận dụng toàn bộ để tạo **Autonomy Layer** định hướng Orchestrator theo vòng lặp:
+```
+OBSERVE → THINK → PLAN → ACT → RESULT → VERIFY → EVALUATE → LEARN (→ OBSERVE)
+```
+> M5 = "AIOS có Intelligence"; M6 = "AIOS biết Intelligence có đúng không"; M7 = "AIOS dùng Intelligence an toàn trong Enterprise"; M8 = "người khác mở rộng AIOS"; **M9 = "AIOS tự vận hành theo Goal trong thế giới có trạng thái, giới hạn, chính sách, bằng chứng và khả năng phục hồi"**.
+> 4 thành phần cốt lõi nhất M9: **Autonomy Governor + World Model + Long-Horizon Execution + Evaluation-driven Self-Improvement**.
+
+→ Kết quả: AIOS có Autonomy Layer (Goal Engine, World Model, Planner, Governor, Recovery, Learning) vận hành theo Goal dài hạn, bounded bởi Policy/Budget/Risk,可逆 qua Checkpoint, tự kiểm chứng qua Harness (M6) và Enterprise (M7), mở rộng qua Ecosystem (M8) — enforced bởi 5 invariant mới INV-030..INV-034
+
+### M10 – AIOS 1.0 (P15 — Productization + Stabilization + Certification)
+> M10 **không phải là "thêm nhiều feature cuối cùng"**. M10 = **Productization + Stabilization + Certification**: biến toàn bộ M0–M9 thành một AI Operating System có contract ổn định, runtime đáng tin cậy, autonomous bounded, ecosystem mở và đủ chuẩn để gọi là **AIOS 1.0**.
+> ```
+> M10 = Freeze Architecture, không phải Freeze Innovation.
+> ```
+> Sau M10: `AIOS 1.x` chỉ gồm bug/security/performance fixes, backward-compatible features, ecosystem extensions. Thay đổi fundamental architecture → **AIOS 2.0**. Xu hướng production agent hiện nay: tracing, guardrails, human-in-the-loop, resumable execution, tool-level enforcement phải là runtime component, không chỉ demo ([OpenAI GitHub](https://openai.github.io/openai-agents-js/guides/guardrails/?utm_source=chatgpt.com)).
+```
+M0–M4 nền móng · M5 Intelligence · M6 Harness · M7 Enterprise
+M8 Ecosystem · M9 Autonomous · M10 AIOS 1.0
+```
+AIOS 1.0 phải chứng minh: **Stable · Reliable · Secure · Observable · Autonomous · Extensible · Compatible · Operable** — xây trên Core + Harness + Enterprise + Ecosystem + Autonomous.
+
+#### 1. Mục tiêu & 8 trụ cột
+```
+M10
+├── F1 Architecture Freeze
+├── F2 Contract 1.0
+├── F3 Runtime Hardening
+├── F4 Autonomous Safety
+├── F5 Reliability & Recovery
+├── F6 Security & Governance
+├── F7 Developer / Operator Experience
+└── F8 Certification & Release
+```
+
+#### 2. M10 ≠ M11
+> **M10 = Freeze Architecture, không phải Freeze Innovation.**
+Sau M10: `bug fixes · security fixes · performance · backward-compatible features · ecosystem extensions`. KHÔNG: đổi Runtime contract / Agent model / Capability model / phá Plugin API. Muốn đổi fundamental → **AIOS 2.0**.
+
+#### 3. F1 — Architecture Freeze
+
+#### 4. TASK-063 — AIOS Architecture 1.0
+Chốt kiến trúc 7 layers: `UI/SDK/API · Autonomy Control · Orchestrator Control Plane · Workflow/Agent/Capability · Runtime Kernel · Tools/State/Events · Infra`. Sinh:
+```
+docs/architecture/AIOS-1.0.md
+docs/architecture/layer-model.md
+docs/architecture/control-plane.md
+docs/architecture/execution-plane.md
+docs/architecture/autonomy.md
+```
+Kiến trúc cuối:
+```
+USER/SYSTEM → UI/SDK/API → AUTONOMY CONTROL (Goal/Planner/Governor/World)
+   → ORCHESTRATOR (Control Plane) → Workflow/Agent/Capability
+   → Runtime Kernel → Tools/State/Events → Infra
+```
+
+#### 5. AIOS Architecture Constitution 1.0
+> ⚠️ **Ghi chú quan trọng (bản dựng này)**: bản nháp M10 liệt kê 15 "core invariant". Tuy nhiên tập invariant thực tế được **freeze tại M10 = toàn bộ INV-001..INV-034** (10 core M0–M4 + 6 M5 + 5 M6 + 8 M7 + 5 M9). Nếu chỉ giữ 15 sẽ **làm mất 19 invariant M5/M6/M7** đang được enforcement test (`backend/tests/test_architecture.py`) quản lý. Do đó Constitution 1.0 chính thức = **INV-001..INV-034**.
+> **Vi phạm invariant = release blocker** (không còn warning).
+
+**15 core principle (thematic, theo bản nháp M10) + canonical INV:**
+| Core Principle | Canonical INV |
+|---------------|---------------|
+| Runtime Isolation | INV-001 |
+| Capability Isolation | INV-002 |
+| Workflow Independence | INV-003 |
+| Tool Independence | INV-004 |
+| Control Plane Isolation | INV-005 |
+| Contract First | INV-006 |
+| Policy First | INV-007 |
+| Artifact First | INV-008 |
+| Event Driven | INV-009 |
+| Deterministic First | INV-010 |
+| Autonomous Action Boundary | INV-030 |
+| Bounded Autonomy | INV-031 |
+| Durable Execution | INV-032 |
+| Evaluation Before Improvement | INV-033 |
+| Validated Memory Promotion | INV-034 |
+
+**Các nhóm M5/M6/M7 (cũng thuộc Constitution 1.0, không được bỏ):**
+- M5: INV-011 Memory Isolation · INV-012 Context Budget · INV-013 Model Routing Policy · INV-014 Plan Validation · INV-015 Graph Acyclicity · INV-016 Scheduler Separation
+- M6: INV-017 Harness Isolation · INV-018 Evidence First · INV-019 Verification Before Verdict · INV-020 Evaluation Determinism · INV-021 Release Gate
+- M7: INV-022 Identity First · INV-023 Tenant Isolation · INV-024 Credential Isolation · INV-025 Resource Fairness · INV-026 Distributed Execution Safety · INV-027 Audit Completeness · INV-028 Sandbox Boundary · INV-029 Control Plane Isolation
+
+> Renumber 34 → 15 ID sạch (INV-001..INV-015) là breaking change (cần update `test_architecture.py` + mọi milestone + ADR-0004) → **deferred to AIOS 2.0** nếu cần.
+
+#### 6. F2 — Contract 1.0
+
+#### 7. TASK-064 — Public Contract Freeze (task quan trọng nhất M10)
+AIOS freeze 10 contracts: `Agent · Capability · Tool · Workflow · Runtime · Event · Artifact · Plugin · Model · Memory`. Mỗi contract có: `name · version · schema · compatibility · lifecycle · deprecation · migration`.
+
+#### 8. Semantic Versioning thật
+```
+Capability v1.2.0
+ Patch  = bug fix
+ Minor  = backward compatible
+ Major  = breaking change
+```
+AIOS có: `compatibility checker · migration checker · deprecated API detector`.
+
+#### 9. Contract Compatibility Matrix
+```
+aiagent contract-check
+→ Runtime ✓ · Agent ✓ · Capability ✓ · Tool ✓ · Workflow ✓
+  Plugin ⚠ deprecated v1 · Event ✓
+Breaking changes: 0 · Warnings: 2
+```
+
+#### 10. F3 — Runtime Hardening
+
+#### 11. TASK-065 — Runtime Production Hardening
+9 services (State/Event/Execution/Resource/Scheduler/Policy/Permission/Context/Artifact) phải chứng minh **hoạt động đúng khi gặp lỗi thật**.
+
+#### 12. Failure Matrix
+Phải test: `Model chết · Tool chết · Agent chết · Process chết · Network mất · Database mất · Plugin lỗi · Worker timeout · Resource hết · Memory corruption · Checkpoint lỗi · Event consumer chết`.
+Mục tiêu: `failure → detect → contain → recover → resume` (KHÔNG `entire execution lost`). Durable/resumable execution đặc biệt quan trọng vì restart từ đầu vừa tốn chi phí vừa mất trạng thái ([TechRadar](https://www.techradar.com/pro/trustworthy-ai-starts-with-surviving-production-failures?utm_source=chatgpt.com)).
+
+#### 13. TASK-066 — Durable Execution 1.0
+M9 có checkpoint/snapshot/resume → M10 biến thành **production-grade guarantee**:
+```
+Execution #A123: Node1✓ Node2✓ Node3✓ Node4 ← crash
+Restart: load checkpoint → verify → resume Node4 (KHÔNG chạy lại 1–3 trừ khi policy yêu cầu)
+```
+
+#### 14. Exactly-once / At-least-once
+```
+Read operation        → safe retry
+Idempotent write      → retry
+Non-idempotent write  → approval / transaction / compensation
+```
+Phân loại này cực quan trọng cho Autonomous AIOS.
+
+#### 15. F4 — Autonomous Safety
+
+#### 16. TASK-067 — Autonomy Safety 1.0
+M9 có Governor/Budget/Risk/Policy/Approval → M10 biến thành **mandatory runtime enforcement**:
+```
+Autonomous Agent → Action Proposal → Risk Classifier → Autonomy Governor
+ → Policy Engine → Permission Broker → Capability → Tool   (không shortcut)
+```
+
+#### 17. Stop Anywhere
+> **Mọi autonomous side effect phải có khả năng bị chặn tại boundary trước khi thực thi.**
+```
+Agent → Tool request → STOP   (phải được)
+❌ Agent → tool → side effect
+```
+Guardrails ở cấp tool (pre/post mỗi invocation) bảo vệ tốt hơn chỉ check input/output đầu/cuối ([OpenAI GitHub](https://openai.github.io/openai-agents-js/guides/guardrails/?utm_source=chatgpt.com)).
+
+#### 18. TASK-068 — Kill Switch
+```
+aiagent stop execution <id>
+aiagent stop goal <id>
+aiagent emergency-stop   # Autonomous loops STOP · New tasks STOP · New tool calls BLOCK · Pending approvals CANCEL · Running reversible ROLLBACK
+```
+
+#### 19. F5 — Reliability
+
+#### 20. TASK-069 — Reliability Engineering
+SLO: `Runtime availability · Execution success · Recovery success · Checkpoint durability · Policy enforcement · Event delivery · API availability`. Target: `Policy bypass = 0 · Lost execution = 0 · Checkpoint corruption = 0 · Unauthorized tool call = 0 · Contract-breaking release = 0` — những metric **không được phép trung bình hóa**.
+
+#### 21. AIOS Reliability Score vs Release Gate
+```
+Runtime 99.98% · Execution 98.7% · Recovery 96.2% · Policy 100% · Architecture 100%
+Contract 100% · Autonomy 94% · Harness 97% · Security 99%
+```
+Health 98% nhưng `Policy bypass = 1` → **Release FAIL**.
+
+#### 22. F6 — Security & Governance
+
+#### 23. TASK-070 — AIOS Security Baseline
+Security baseline 1.0: `Identity · Authentication · Authorization · Secrets · Encryption · Audit · Plugin signing · Supply chain · Sandbox · Network policy · Data boundary`.
+
+#### 24. Agent Identity & Delegation Chain
+Agent = **principal có identity** (không chỉ object Python): `Agent → Identity → Delegation → Capabilities → Permissions`. Delegation chain: `User → Orchestrator → Coder → Test`, quyền con **≤ parent** (capability attenuation). Nghiên cứu governance runtime nhấn mạnh composite principals + attenuation + structured audit ([arXiv](https://arxiv.org/abs/2606.12320?utm_source=chatgpt.com)).
+
+#### 25. Tamper-Evident Audit
+`audit SQLite` → `Structured Evidence Ledger`: mỗi action `{who, what, when, why, policy, permission, input, output, artifact, decision, result}` + `previous_hash → current_hash` để phát hiện sửa audit history.
+
+#### 26. F7 — Developer / Operator Experience
+
+#### 27. TASK-071 — AIOS 1.0 Developer Experience
+Gom CLI/Dashboard/Extension/REST/WebSocket/SDK thành UX thống nhất. Command tree:
+```
+aiagent run · chat · goal {create,list,pause,resume,stop} · agent · workflow · plugin
+        · skill · capability · execution · harness · doctor · health · arch-health · upgrade · system
+```
+
+#### 28. `aiagent doctor` first-class
+Kiểm tra Runtime/Contracts/Registry/Models/Memory/Knowledge/Filesystem/Sandbox/Tools/Plugins/Policies/Permissions/DB/Events/Scheduler/Autonomy/Harness/Enterprise → output `✓/⚠/✗ + Health: 94/100`.
+
+#### 29. TASK-072 — AIOS Dashboard 1.0
+Tổ chức tab: `Overview · Operations · Autonomy · Agents · Workflows · Knowledge · Memory · Harness · Enterprise · Ecosystem · System`. Đặc biệt **Execution Timeline** (Goal→Plan→Agent→Capability→Tool→Result→Evaluation) — tracing là thành phần quan trọng của agent runtimes hiện đại ([GitHub](https://github.com/openai/openai-agents-python/blob/main/docs/tracing.md?utm_source=chatgpt.com)).
+
+#### 30. F8 — AIOS Test & Certification
+
+#### 31. TASK-073 — AIOS 1.0 Certification Suite (task lớn nhất M10)
+13 categories: `Unit · Integration · Contract · Architecture · Security · Policy · Harness · Autonomous · Recovery · Performance · Compatibility · Upgrade · Ecosystem`.
+
+#### 32. Golden Scenarios (GS-001..GS-020)
+`GS-001 simple chat … GS-020 emergency stop` (bao phủ chat/coding/workflow/tool fail/agent fail/policy deny/human approval/checkpoint-resume/autonomous goal/long-horizon/multi-agent/plugin install/incompat/upgrade/rollback/security violation/arch violation/memory learning/self-improvement/emergency stop). Mỗi release phải pass.
+
+#### 33. AIOS Conformance
+```
+aiagent conformance → Architecture PASS · Contracts PASS · Runtime PASS
+  Policy PASS · Security PASS · Autonomy PASS · Harness PASS · Enterprise PASS · Ecosystem PASS
+→ Result: AIOS 1.0 READY
+```
+
+#### 34. TASK-074 — Upgrade & Migration 1.0
+Hỗ trợ `0.x→1.0 · 1.0→1.1 · plugin v0→v1 · contract v0→v1 · workflow v0→v1` với `migration plan · backup · dry-run · validation · rollback`. Biến Upgrade Pipeline (M4) thành **release-grade migration engine**.
+
+#### 35. TASK-075 — Performance & Cost + Model Independence
+Đo `latency · throughput · LLM cost · tool cost · memory cost · storage · concurrency` + dashboard `Cost/Goal · Cost/Workflow · Cost/Agent · Cost/Tool · Cost/Success`. Model Provider Contract độc lập:
+```
+AIOS → OpenAI | Ollama | Mock | Other   (KHÔNG thành OpenAI wrapper)
+```
+
+#### 36. AIOS 1.0 Release Gates (5 gates)
+```
+Gate A Architecture: INV violations = 0
+Gate B Security:     critical = 0, high = 0
+Gate C Contract:     breaking compatibility = 0
+Gate D Reliability:  critical scenario failures = 0
+Gate E Autonomous:   policy bypass = 0, budget bypass = 0, kill-switch bypass = 0
+```
+Chỉ 1 gate fail → **AIOS 1.0 = NOT READY**.
+
+#### 37. M10 chia 5 Phase
+- **M10-P1 Freeze**: TASK-063 + TASK-064 → AIOS Architecture 1.0 + Contracts 1.0
+- **M10-P2 Harden**: TASK-065 + TASK-066 + TASK-069 → Production-grade Runtime
+- **M10-P3 Secure**: TASK-067 + TASK-068 + TASK-070 → Bounded Autonomous AIOS
+- **M10-P4 Productize**: TASK-071 + TASK-072 + TASK-075 → Developer/Operator Edition
+- **M10-P5 Certify**: TASK-073 + TASK-074 → AIOS 1.0 RC → Certification → AIOS 1.0
+
+#### 38. Tổng hợp task M10 (13 task)
+| Task | Nội dung | Vai trò |
+|------|----------|---------|
+| TASK-063 | Architecture Freeze | Kiến trúc |
+| TASK-064 | Contract 1.0 | API stability |
+| TASK-065 | Runtime Hardening | Reliability |
+| TASK-066 | Durable Execution 1.0 | Recovery |
+| TASK-067 | Autonomy Safety | Safety |
+| TASK-068 | Kill Switch | Emergency |
+| TASK-069 | Reliability Engineering | SLO |
+| TASK-070 | Security Baseline | Security |
+| TASK-071 | Developer Experience | DX |
+| TASK-072 | Dashboard 1.0 | Operations |
+| TASK-073 | Certification Suite | Quality |
+| TASK-074 | Migration 1.0 | Upgrade |
+| TASK-075 | Performance & Cost | Efficiency |
+
+#### 39. AIOS 1.0 Reference Implementation
+`examples/`: `simple-agent · coding-agent · autonomous-agent · enterprise-agent · plugin · workflow · multi-agent · long-running-goal` — mỗi cái chạy được `aiagent run examples/coding-agent`.
+
+#### 40. AIOS 1.0 Golden Demo
+User: *"Phân tích module X, tìm vấn đề, tạo kế hoạch sửa, thực hiện, chạy test, tự recover nếu fail, đánh giá và báo cáo."* → toàn bộ pipeline `Request→Normalizer→Rule→Workflow→Goal→Planner→Policy→Governor→Coder→Capability→Tools→Tests→Failure→Recovery→Replan→Verify→Evaluation→Evidence→Goal Complete`, Dashboard hiển thị execution trace. **Đây là AIOS 1.0 moment.**
+
+#### 41. 10 năng lực checklist
+```
+1. Execute? 2. Orchestrate? 3. Reason/Plan? 4. Recover? 5. Resume?
+6. Autonomous bounded? 7. Prove result? 8. Extensible? 9. Enterprise? 10. Stable under change?
+```
+Cả 10 = YES → AIOS vượt mức "agent framework", thực sự là **AI Operating System**.
+
+#### 42. Nguyên tắc cứng: Không thêm Core feature
+```
+M10: BUILD NOTHING ── PROVE EVERYTHING → AIOS 1.0 CERTIFIED
+```
+M10 = milestone khó nhất về engineering nhưng ít feature mới nhất.
+
+#### 43. Definition of Done cuối cùng
+```
+Architecture=FROZEN · Contracts=STABLE · Runtime=DURABLE · Policy=ENFORCED
+Security=CERTIFIED · Autonomy=BOUNDED · Harness=PASS · Recovery=PASS
+Ecosystem=COMPATIBLE · Upgrade=SAFE · Observability=COMPLETE · Documentation=COMPLETE
+Golden Scenarios=PASS · Critical Bugs=0 · Architecture Viol.=0 · Policy Bypass=0
+```
+Và quan trọng nhất: `Core Runtime + Orchestrator + Intelligence + Harness + Enterprise + Ecosystem + Autonomous → ONE COHERENT SYSTEM`.
+Sau M10: **không tạo M11 = thêm feature**; thay vào đó `AIOS 1.1 Compatibility · 1.2 Performance · 1.3 Ecosystem · 1.x Enterprise · 2.0 Architecture Evolution`.
+
+→ Kết quả: AIOS 1.0 — một AI Operating System hoàn chỉnh, có kiến trúc bị freeze (INV-001..INV-034), contract ổn định (semantic versioning), runtime durable, autonomous bounded (Governor/Kill-Switch), secure (Identity/Audit/Tamper-evident), observable, có Certification Suite + Golden Scenarios + Conformance + Migration engine, chứng minh qua 10 năng lực và Golden Demo — đủ chuẩn gọi là **AIOS 1.0**
+
+### Tỷ trọng toàn dự án (theo thành phần)
+| Thành phần | Tỷ trọng |
+|-----------|----------|
+| Runtime | 25% |
+| Orchestrator | 20% |
+| Workflow | 10% |
+| Capability + Tool | 15% |
+| Infrastructure | 10% |
+| Observability | 8% |
+| **Harness** | **7%** |
+| SDK + Ecosystem | 5% |
+
+> Harness chỉ khoảng **7%** tổng hệ thống — phản ánh đúng vai trò là **năng lực hỗ trợ (capability)** chứ không phải trung tâm. Khuyến nghị: hoàn thiện **Core Intelligence (M5)** trước khi làm M6 Harness, vì M5 cung cấp các năng lực chung mà Harness sẽ tận dụng (Memory Coordinator, Model Router, Planning Engine, Execution Graph) thay vì tự cài đặt logic riêng — giữ đúng triết lý "mọi subsystem dùng chung dịch vụ lõi".
 
 ## Verification (theo milestone)
 - M0: **agent picker hiển thị AIOS Orchestrator** — chọn được, mọi request đi qua nó; **hard gate**: yêu cầu implement task chưa có spec+critique → agent từ chối; **bypass**: fix nhỏ → thực hiện nhưng LOG.md có entry `[bypass]` kèm lý do; **progress**: sau mỗi bước PROGRESS.md/LOG.md được cập nhật, TASK-xxx có đủ 8 file (spec, critique-1, critique-2, tasks, review, implementation, test, evaluation); **critique ×2**: task không thể hoàn thành khi chỉ có 1 critique
@@ -330,8 +1658,14 @@ Multi-user, RBAC, marketplace server, distributed runtime, remote agents, cluste
 - M2: capability swap (execute_code: docker→mock) không đổi agent code; skill lifecycle test đủ 10 trạng thái; sandbox pool reuse + warm-start; **Offline-first**: tắt LLM (mock model 0 lần gọi) → 70–90% request vẫn routing đúng qua Rule Engine ("Generate API"→Coder, "medical question"→Doctor, "system status"→System Doctor); **Planner LLM chỉ gọi khi thật sự cần** (nhiệm vụ mở); **Orchestrator chỉ chọn capability không chọn tool trực tiếp**; **Permission Broker**: workflow cần network/shell → gom permission → user approve → mới chạy; **Failure Recovery**: agent lỗi → retry → fallback agent → report; **Isolation**: agent Worker không truy cập được registry trực tiếp (bị Permission Service + Policy Engine chặn); **Goal Manager**: goal "Xây AIOS" → tasks → progress persist qua phiên; **Task Queue**: pause/resume/reorder/priority hoạt động
 - M3: event timeline realtime qua WebSocket; 9 lệnh extension end-to-end; artifact browser hiển thị đủ loại
 - M4: upgrade giả lập fail → rollback; evaluator ghi score vào knowledge; resource manager reject workflow vượt budget; **Improvement Advisor** sinh đề xuất từ log/evaluation
+- M5: Memory Coordinator inject context trong token budget; Model Router chọn model đúng policy (cost/latency/quality); Planning Engine sinh task graph; Execution Graph chạy DAG với join node; Parallel Scheduler thực thi song song có dependency
+- **M6**: Harness Kernel (contract + registry + run) gọi Runtime API không sửa Runtime; Execution Verification kiểm tra post-condition + tạo Evidence Package + replay; Test Harness + Scenario + Simulation (--simulate, không side effect); Evaluation Harness + Benchmark (100 scenarios, regression gate chặn release); Doctor Harness + Readiness Score (hard gate policy violation); mọi Harness Run tạo evidence truy xuất được (INV-017..021)
+- **M7**: Identity/Principal + RBAC/ABAC (TASK-035); Multi-Tenancy + Tenant Boundary + Memory Isolation (TASK-036); Distributed Runtime + Runtime Node/Router (TASK-037); Distributed Scheduler + Lease/Failover (TASK-038); Quota/Cost/Resource Governance (TASK-039); Credential/Network/Sandbox Isolation (TASK-040); HA/Audit/Recovery (TASK-041); Enterprise Operations + Dashboard (TASK-042); 8 invariant INV-022..029 enforced (tenant isolation, identity first, audit completeness)
+- **M8**: Public SDK (TASK-043) che giấu Core (`from aios import Agent`); Plugin Runtime (TASK-044) lifecycle tái dùng 10-state M2/M4; Extension Contracts (TASK-045) stable API (Internal/Public/Extension/Experimental) + Compatibility Matrix; Ecosystem Registry (TASK-046) discovery (`aios search`) + MCP làm adapter; Developer Kit (TASK-047) `aios create/dev/test`; Ecosystem Hub (TASK-048) distribution tuân Trust Model; Certification (TASK-049) Harness gate + COMMUNITY→VERIFIED→CERTIFIED; **M8 KHÔNG thêm architecture invariant (tập invariant giữ nguyên tại M8 — M9 bổ sung INV-030..034)**
+- **M9**: Autonomous Goal Engine (TASK-050) định nghĩa goal có success/constraints/permissions/autonomy level; Autonomous Planner (TASK-051) + Dynamic Replanning; World Model (TASK-052) tách World State khỏi Memory; Autonomous Loop (TASK-053) plan→act→observe→learn; Autonomy Governor (TASK-054) + Budget/Risk gate (INV-030); Autonomous Recovery (TASK-055) có circuit breaker; Long-Horizon (TASK-056) checkpoint/resume; Autonomous Memory (TASK-057) + Learning Loop; Experimentation (TASK-058) qua Sandbox/Harness (INV-033); Multi-Agent (TASK-059); Evaluation-driven (TASK-060); Stuck Detection (TASK-061); Scheduler (TASK-062); enforced INV-030..INV-034
+- **M10**: Architecture Freeze (TASK-063) sinh `docs/architecture/*` + Constitution 1.0 (INV-001..INV-034 frozen, vi phạm = release blocker); Contract 1.0 (TASK-064) freeze 10 contracts + semantic versioning + `aiagent contract-check`; Runtime Hardening (TASK-065) + Durable Execution 1.0 (TASK-066) failure matrix + checkpoint/resume + idempotency; Autonomy Safety (TASK-067) + Kill Switch (TASK-068) mandatory enforcement + `emergency-stop`; Reliability (TASK-069) SLO + non-averaged gates; Security Baseline (TASK-070) + Agent Identity + tamper-evident audit; Developer Experience (TASK-071) + Dashboard 1.0 (TASK-072); Certification Suite (TASK-073) + Golden Scenarios GS-001..020 + `aiagent conformance`; Migration 1.0 (TASK-074); Performance & Cost (TASK-075); 5 release gates (Arch/Sec/Contract/Reliability/Autonomous) đều PASS → AIOS 1.0 READY
 - Xuyên suốt: pytest + contract tests CI; permission enforcement test (ask→deny); rule engine unit test với kết quả xác định trước
 
 ## Scope
-- In: M0 (development foundation: VS Code agent + progress/log system) + 4 milestone (M1–M4), AIOS Orchestrator v1+v2 (Decision Pipeline 4 tầng offline-first, 22 module) + 3 assistant + system doctor, 6 tool types, skill 3 nguồn + lifecycle 10 trạng thái, SDK python + typescript, upgrade pipeline, evaluation framework, sandbox pool, policy engine, goal manager + task queue, system catalog, knowledge graph
-- Excluded (M5 tương lai): multi-user, RBAC, marketplace server, distributed runtime, remote agents, fine-tune
+- In: M0 (development foundation: VS Code agent + progress/log system) + 10 milestone (M1–M10), AIOS Orchestrator v1+v2 (Decision Pipeline 4 tầng offline-first, 22 module) + 3 assistant + system doctor, 6 tool types, skill 3 nguồn + lifecycle 10 trạng thái, SDK python + typescript, upgrade pipeline, evaluation framework, sandbox pool, policy engine, goal manager + task queue, system catalog, knowledge graph, **M5 Core Intelligence** (Memory Coordinator, Context Optimizer, Model Router, Planning Engine, Execution Graph, Parallel Scheduler), **M6 AIOS Harness** (5 năng lực H1–H5: Kernel, Execution Verification, Test & Simulation, Evaluation & Benchmark, Doctor & Readiness — subsystem dưới `aios/harness/`, không sửa Runtime/Orchestrator, không phá architecture INV-017..021), M7 Enterprise (Identity/Principal/RBAC-ABAC, Multi-Tenancy + isolation levels, Distributed Runtime + Runtime Node/Router, Distributed Scheduler + Lease/Failover, Quota/Cost/Resource Governance, Credential/Network/Sandbox Isolation, HA/Audit/Recovery, Enterprise Operations + Dashboard — INV-022..029), M8 Ecosystem (Public AIOS SDK + Plugin Runtime + Extension Contracts + Ecosystem Registry + Developer Kit + Ecosystem Hub + Certification — TASK-043..049, không thêm invariant), M9 Autonomous (Goal Engine/Planner/World Model/Loop/Governor/Recovery/Long-Horizon/Memory/Experimentation/Multi-Agent/Evaluation/Stuck/Scheduler — TASK-050..062, 5 invariant INV-030..034), M10 AIOS 1.0 (Architecture Freeze/Contract 1.0/Runtime Hardening/Durable Execution/Autonomy Safety/Kill Switch/Reliability/Security Baseline/Developer Experience/Dashboard/Certification/Migration/Performance — TASK-063..075, freeze INV-001..INV-034, không thêm invariant mới)
+- Excluded (sau M10, không thuộc v1): fine-tune model riêng, non-Local (cloud-only) deployment

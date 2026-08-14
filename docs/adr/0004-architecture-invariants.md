@@ -40,3 +40,34 @@ Four invariants are the hard core:
   is deferred; INV-007 covers scope/token/internet pre-check only until then.
 - INV-008 (Artifact First) and Architecture Health (M4) are recorded, not yet
   enforced.
+- **M5 extension (planned, see PLAN.md M5 §22)**: 6 additional invariants
+  INV-011..INV-016 (Memory Isolation, Context Budget, Model Routing Policy,
+  Plan Validation, Graph Acyclicity, Scheduler Separation) are defined in the
+  PLAN.md M5 — Core Intelligence milestone and will be enforced when M5 lands.
+- **M6 extension (planned, see PLAN.md M6 §9)**: 5 additional invariants
+  INV-017..INV-021 (Harness Isolation, Evidence First, Verification Before
+  Verdict, Evaluation Determinism, Release Gate) are defined in the PLAN.md M6
+  — AIOS Harness milestone and will be enforced when M6 lands.
+- **M7 extension (planned, see PLAN.md M7 §13)**: 8 additional invariants
+  INV-022..INV-029 (Identity First, Tenant Isolation, Credential Isolation,
+  Resource Fairness, Distributed Execution Safety, Audit Completeness,
+  Sandbox Boundary, Control Plane Isolation) are defined in the PLAN.md M7
+  — Enterprise milestone and will be enforced when M7 lands.
+- **M9 extension (planned, see PLAN.md M9 §33)**: 5 additional invariants
+  INV-030..INV-034 (Autonomous Action Boundary, Autonomy Bounded,
+  Long-running Resumable, Self-Improvement via Harness, Autonomous Memory No
+  Unverified Promote) are defined in the PLAN.md M9 — Autonomous milestone and
+  will be enforced when M9 lands. Note the user's draft reused INV-011..INV-015
+  (already owned by M5); they were renumbered to INV-030..INV-034 to keep IDs
+  globally unique for the AST enforcement test.
+  This ADR remains the canonical source for INV-001..INV-010; the full set
+  INV-001..INV-034 is tracked in PLAN.md.
+- **M10 (AIOS 1.0 — Freeze, see PLAN.md M10)**: M10 does NOT add new invariants.
+  It **freezes the entire set INV-001..INV-034** as the "AIOS Architecture
+  Constitution 1.0" and promotes every violation from warning to **release
+  blocker** (see PLAN.md M10 §5). The 15-item "core principle" list in the
+  M10 draft is a thematic consolidation of the 34 canonical IDs; the M5/M6/M7
+  invariants (INV-011..INV-029) are part of the Constitution and must NOT be
+  dropped. Renumbering the 34 canonical IDs down to a clean INV-001..INV-015
+  would be a breaking change (requires updating `test_architecture.py`, all
+  milestone sections, and this ADR) and is deferred to AIOS 2.0 if ever needed.
