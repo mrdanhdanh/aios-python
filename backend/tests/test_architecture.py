@@ -633,7 +633,8 @@ _HARNESS_ALLOWED_AIOS = {
 }
 _HARNESS_ALLOWED_EXTERNAL = {
     "pydantic", "typing", "datetime", "enum", "re", "json", "threading",
-    "time", "abc", "collections",  # B7: top-level (collections.abc -> collections)
+    "time", "abc", "collections", "pathlib",  # pathlib: TASK-030 FILE_EXISTS/
+    # CONTAINS checks (R2-1 review) — B7: top-level (collections.abc -> collections)
 }
 
 
@@ -696,6 +697,94 @@ def test_inv018_runner_builds_evidence():
     runner_src = (AIOS / "harness" / "runner.py").read_text(encoding="utf-8")
     assert "HarnessArtifact(" in runner_src
     assert "finally" in runner_src  # evidence trong finally (C1-03)
+
+
+# -- harness/execution/ (TASK-030 — Execution Verification, INV-019) ----------
+
+@pytest.mark.skipif(not (AIOS / "harness" / "execution").is_dir(),
+                    reason="harness/execution chưa tồn tại (TASK-030)")
+def test_inv019_execution_no_kernel_impl():
+    """INV-019: harness/execution/ không import kernel.services.events|execution|
+    |graph|planning (duck-typed EvidenceServices — P1-02 v2)."""
+    hits = dir_imports(AIOS / "harness" / "execution", [
+        "aios_core.kernel.services.events",
+        "aios_core.kernel.services.execution",
+        "aios_core.kernel.graph",
+        "aios_core.orchestrator.planning",
+        "aios_core.kernel.services.resource",
+        "aios_core.kernel.services.scheduler",
+    ])
+    assert hits == [], f"INV-019 vi phạm: {hits}"
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "execution").is_dir(),
+                    reason="harness/execution chưa tồn tại (TASK-030)")
+def test_inv019_verification_uses_duck_typing():
+    """EvidenceServices phải khai báo attribute (state/events/artifacts),
+    KHÔNG import type thật từ kernel.services."""
+    contracts_src = (AIOS / "harness" / "execution" / "contracts.py").read_text(
+        encoding="utf-8")
+    assert "class EvidenceServices" in contracts_src
+    assert "Callable" in contracts_src or "state:" in contracts_src
+    tree = ast.parse(contracts_src)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            mod = node.module or ""
+            assert not mod.startswith("aios_core.kernel"), \
+                f"contracts.py không được import kernel: {mod}"
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "execution").is_dir(),
+                    reason="harness/execution chưa tồn tại (TASK-030)")
+def test_inv019_verdict_fail_raises():
+    """INV-019 (behavioral): verification.py phải raise VerificationError khi
+    verdict FAIL — literal `VerificationError(` cạnh `result.verdict ==
+    Verdict.FAIL`."""
+    src = (AIOS / "harness" / "execution" / "verification.py").read_text(
+        encoding="utf-8")
+    assert "VerificationError(" in src
+    assert "Verdict.FAIL" in src
+    assert "raise" in src
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "execution").is_dir(),
+                    reason="harness/execution chưa tồn tại (TASK-030)")
+def test_inv019_verdict_order_fail_first():
+    """compute_verdict: FAIL (check-derived) xét TRƯỚC evidence/skip (C2-06)."""
+    src = (AIOS / "harness" / "execution" / "pipeline.py").read_text(
+        encoding="utf-8")
+    assert "failures" in src
+    fail_pos = src.index("Verdict.FAIL")
+    inconclusive_pos = src.index("Verdict.INCONCLUSIVE")
+    assert fail_pos < inconclusive_pos
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "execution").is_dir(),
+                    reason="harness/execution chưa tồn tại (TASK-030)")
+def test_inv019_persist_before_verify_raise():
+    """AC5: verification.py persist (update_state/ArtifactContract) TRƯỚC
+    raise VerificationError trong cùng hook verify."""
+    src = (AIOS / "harness" / "execution" / "verification.py").read_text(
+        encoding="utf-8")
+    persist_pos = src.find("_persist_verification")
+    fail_check_pos = src.find("Verdict.FAIL")
+    assert persist_pos != -1 and fail_check_pos != -1
+    # trong verify(): persist gọi trước raise
+    verify_block = src[src.find("def verify"):src.find("def _persist_verification")]
+    assert "_persist_verification" in verify_block
+    assert verify_block.index("_persist_verification") < \
+        verify_block.index("raise VerificationError(")
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "execution").is_dir(),
+                    reason="harness/execution chưa tồn tại (TASK-030)")
+def test_inv019_verdict_artifact_convention():
+    """P2-05: verdict.json convention — id `harness:{run_id}:verdict` +
+    metadata kind='verdict' (khớp _evidence_contract H1 — get_evidence fallback)."""
+    src = (AIOS / "harness" / "execution" / "verification.py").read_text(
+        encoding="utf-8")
+    assert "harness:{ctx.run_id}:verdict" in src
+    assert '"kind": "verdict"' in src
 
 
 def test_inv017_no_harness_in_kernel():

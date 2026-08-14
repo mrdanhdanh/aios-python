@@ -193,6 +193,15 @@ class HarnessSettings(BaseModel):
     diagnose_on_failure: bool = True
 
 
+class ExecutionSettings(BaseModel):
+    """TASK-030: execution verification tuning (M6-H2)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    event_window: int = 10_000  # P2-01: query_audit limit (truncation heuristic)
+    persist_verdict_artifact: bool = True  # AC5: verdict.json convention P2-05
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -217,6 +226,7 @@ class Settings(BaseSettings):
     graph: GraphSettings = GraphSettings()
     scheduler: SchedulerSettings = SchedulerSettings()
     harness: HarnessSettings = HarnessSettings()
+    execution: ExecutionSettings = ExecutionSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

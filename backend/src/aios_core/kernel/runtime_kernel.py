@@ -183,4 +183,26 @@ class RuntimeKernel:
         container.register_instance(HarnessRegistry, harness_registry)
         container.register_instance(HarnessRunner, harness_runner)
 
+        # Execution verification (TASK-030, M6-H2): VerificationHarness over
+        # H1 runner; EvidenceServices duck-typed (P1-02 v2 — KHÔNG import
+        # kernel.services.events trong harness/execution).
+        from types import SimpleNamespace
+
+        from ..harness.execution import (
+            EvidenceServices, VerificationHarness,
+        )
+
+        execution_services = EvidenceServices(
+            state=container.resolve(StateService),  # shared
+            events=container.resolve(EventService),  # top-level import (M1)
+            artifacts=container.resolve(ArtifactService),  # shared (M1)
+        )
+        verification_harness = VerificationHarness(
+            execution_services,
+            state_service=container.resolve(StateService),
+            artifact_service=container.resolve(ArtifactService),
+        )
+        harness_registry.register(verification_harness)  # id="verification"
+        container.register_instance(VerificationHarness, verification_harness)
+
         return cls(container, bus)

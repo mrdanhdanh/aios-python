@@ -60,3 +60,7 @@ scheduler:
 
 harness:
   diagnose_on_failure: true
+
+execution:
+  event_window: 10000
+  persist_verdict_artifact: true
