@@ -6,6 +6,7 @@
 
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
+| 2026-08-14 | docs | [bypass] | Thêm §3.4 "Hành trình một lệnh — theo code thật" vào `docs/architecture.md`: flowchart kênh nhập + sequence diagram 12 bước + bảng module thật + ví dụ CLI — lý do: tài liệu tham chiếu, không đổi hành vi hệ thống | done | `docs/architecture.md` |
 | 2026-08-14 | docs | [bypass] | Cập nhật `docs/architecture.md` theo trạng thái 2026-08-14: M3 done (REST+WS API, Dashboard SPA, VS Code Extension), M4 done (Upgrade, Observability, Orchestrator v2), LEARN modules ✅, §8 Architecture Health hiện thực hóa — lý do: tài liệu tham chiếu, không đổi hành vi hệ thống | done | `docs/architecture.md` |
 | 2026-08-13 | TASK-022 | T4-T11 | Implement orchestrator v2: advisor.py (ImprovementAdvisor 5 rules deterministic + dedup), supervisor.py (ExecutionSupervisor — clock float, stuck, FAILED+CANCELLED), evaluation_collector.py (evaluator + KeyError swallow + aggregate), goals/reporting.py (GoalReporter 5 status); metrics.py +duration_by_workflow; api router orchestrator_v2 (4 GET); wiring (TaskQueue wire + collector trigger subscribe); CLI advisor/supervisor; .gitignore +backend/aios/, *.db.* | 809 pass, coverage 94.92% (30 test mới) | `orchestrator/*`, `reporting.py`, `api/`, `cli.py`, 5 test files |
 | 2026-08-13 | TASK-022 | [bypass] | Fix `_metrics()` CLI đọc raw db_path thay vì suffix ".metrics" (bug TASK-021 — reviewer R2-1 phát hiện) | done — đọc đúng DB wiring | `workflow/cli.py` |

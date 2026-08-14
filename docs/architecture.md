@@ -195,6 +195,106 @@ Knowledge
 | Resource Manager | CÓ THỂ chạy không? (grant/queue/reject) | ResourceService ✅ (FIFO + acquire_slot_wait) |
 | Execution Service | CHẠY như thế nào? (plan → nodes → snapshot) | ExecutionService ✅ |
 
+### 3.4 Hành trình một lệnh — theo code thật (M0–M4 đã build)
+
+Khi người dùng ra lệnh, toàn bộ hành trình diễn ra qua các module đã có code thật:
+
+```mermaid
+flowchart LR
+    U["👤 Người dùng ra lệnh"] --> CH["Kênh nhập lệnh"]
+    CH -->|"CLI: aiagent ..."| CLI
+    CH -->|"Dashboard SPA"| DASH
+    CH -->|"VS Code Extension (9 lệnh)"| EXT
+    CH -->|"REST/WS: aiagent serve"| API
+
+    CLI --> API2["FastAPI /api/v1 (9 routers)"]
+    DASH --> API2
+    EXT --> API2
+    API2 --> ORCH["AIOS Orchestrator<br/>(Decision Pipeline)"]
+    ORCH --> RT["Runtime Kernel (9 services)"]
+    RT --> WP["Worker Agents"]
+    WP --> CAP["Capability → Tools"]
+    CAP --> INF["Infra: Model · Memory · KB · Sandbox"]
+    INF --> RES["Kết quả"]
+    RES --> OB["Observability<br/>metrics · evaluation · advisor"]
+    OB --> U
+```
+
+Sequence chi tiết — từng bước có module thật:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant UI as Kênh (CLI/Dashboard/Extension)
+    participant API as FastAPI (api/routers/*)
+    participant ORCH as Orchestrator<br/>(orchestrator/)
+    participant KERNEL as Runtime Kernel<br/>(9 services)
+    participant AGENT as Worker Agent<br/>(agents/)
+    participant TOOL as Tools<br/>(tools/ + capabilities/)
+    participant INFRA as Infra<br/>(models/memory/knowledge/sandbox)
+
+    User->>UI: ra lệnh (VD: "aiagent chat 'review dự án'")
+    UI->>API: HTTP request (3-envelope)
+    API->>API: router dispatch (chat/router/...)
+    API->>ORCH: Orchestrator.process()
+    ORCH->>ORCH: 1️⃣ Normalizer — chuẩn hóa tham số → NormalizedRequest
+    ORCH->>ORCH: 2️⃣ Rule Engine — intent rõ ràng? (chat/coding/doctor/skill/system)
+    alt Có rule (70–90%)
+        ORCH->>ORCH: 3️⃣ Workflow Matcher — tìm workflow trong Library
+    else Không
+        ORCH->>ORCH: 4️⃣ Planner (LLM) — sinh/kết hợp workflow
+    end
+    ORCH->>KERNEL: 5️⃣ PolicyService.evaluate() — pre-check<br/>(allow/deny/ask — INV-007 bắt buộc)
+    alt Cần approve
+        ORCH->>KERNEL: PermissionBroker.ask_scopes()
+        KERNEL-->>User: xin xác nhận (default-deny nếu không approver)
+        User-->>KERNEL: ✅ approve
+    end
+    ORCH->>KERNEL: 6️⃣ ResourceService — grant/queue/reject (FIFO)
+    ORCH->>KERNEL: 7️⃣ ExecutionService — chạy ExecutionPlan<br/>(snapshot mỗi node · checkpoint · resume)
+    KERNEL->>AGENT: AgentSelector → resolve agent theo intent
+    AGENT->>TOOL: CapabilityRouter — yêu cầu capability<br/>(KHÔNG gọi tool trực tiếp — INV-002)
+    TOOL->>INFRA: tool chạy (Python/Docker/REST/MCP/Shell/Git)
+    INFRA-->>TOOL: kết quả
+    TOOL-->>AGENT: output
+    AGENT-->>KERNEL: kết quả + events
+    KERNEL-->>API: response (3-envelope)
+    API-->>UI: 📄 trả về cho người dùng
+    Note over KERNEL,ORCH: EventBus phát mọi lifecycle event<br/>→ Observability (metrics, prompt_history,<br/>evaluation_store, advisor) + audit SQLite
+```
+
+| # | Bước | Module thật (đã build) | Trạng thái |
+|---|------|------------------------|------------|
+| 1 | **Normalizer** | `orchestrator/normalizer.py` — chuẩn hóa, không LLM | ✅ TASK-010 |
+| 2 | **Rule Engine** | `orchestrator/rule_engine.py` — deterministic, 70–90% dừng tại đây, 0 token | ✅ TASK-010 |
+| 3 | **Workflow Matcher** | `orchestrator/workflow_matcher.py` + Workflow Library (TASK-008) | ✅ TASK-010 |
+| 4 | **Planner LLM** | `orchestrator/planner.py` — chỉ khi cần, đếm `llm_calls` | ✅ TASK-010 |
+| 5 | **Policy pre-check** | `PolicyService` + `ask_scopes` (Permission Broker) — **bất khả bypass** (INV-007, AST-enforced) | ✅ TASK-004/012 |
+| 6 | **Resource** | `ResourceService` — Grant/Queue/Reject + `acquire_slot_wait` | ✅ TASK-005/011 |
+| 7 | **Execution** | `ExecutionService` — ExecutionPlan → nodes → snapshot/resume, emit `TOOL_STARTED/FINISHED`, `SNAPSHOT_SAVED`, `WORKFLOW_FAILED/CANCELLED` | ✅ TASK-005/021 |
+| 8 | **Agent Selector** | `agents/registry.py` — resolve intent → General/Coder/Doctor/System Doctor (Worker Plane) | ✅ TASK-010/013 |
+| 9 | **Capability Router** | `tools/registry.py` + `capabilities/` — agent không chạm tool trực tiếp | ✅ TASK-014 |
+| 10 | **Tools** | 6 loại: Python (ast.parse, no-exec), Docker mock, REST validate, MCP, Shell (no-exec), Git mock | ✅ TASK-014 |
+| 11 | **Infra** | Models (Mock/OpenAI/Ollama) · Memory 4 loại · KB · Sandbox Pool · Skills | ✅ TASK-006/007/015 |
+| 12 | **Observability** | `metrics.py` (workflow/tool duration, failures) · `evaluation_store` · `profiler` · `arch_health` · `advisor` (5 rules đề xuất cải tiến) | ✅ TASK-021/022 |
+
+**Ví dụ cụ thể — CLI:**
+
+```
+aiagent chat "viết test cho module config"
+```
+
+1. **CLI** gọi API `POST /api/v1/chat` (hoặc xử lý trực tiếp)
+2. **Orchestrator**: Normalizer → intent = `coding` → Rule Engine khớp → Coder agent
+3. **Policy**: kiểm tra quyền truy cập filesystem/shell → allow (hoặc ask)
+4. **Resource**: đủ slot → Grant
+5. **ExecutionService**: chạy plan; Coder agent qua **Capability Router** → tool `Python`/`Git`
+6. Mỗi node: **snapshot** (State Service) + **event** (Event Bus → audit SQLite + metrics)
+7. Kết quả trả về UI; **EvaluationCollector** ghi score; **ImprovementAdvisor** phân tích để đề xuất cải tiến lần sau
+
+> **⚠️ Lưu ý thực tế:** Tools hiện ở mức **stub an toàn** (Python `ast.parse` không exec, Shell no-exec, Docker/Git mock) — đúng thiết kế v1: ưu tiên kiến trúc + test; phần thực thi thật sẽ đến khi policy/sandbox chín muồi.
+
 ## 4. Tiến độ milestone
 
 ```mermaid
