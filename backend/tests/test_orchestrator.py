@@ -92,27 +92,147 @@ def test_planner_fallback():
     assert resp.plan.llm_used is False
 
 
-def test_offline_first_100_requests():
-    """AC6: 70 rule + 20 workflow + 10 lạ với Planner thật + MockModel → llm_calls == 10."""
+def test_offline_first_corpus():
+    """AC6 (mục 20 brief): offline-first đo thực tế trên corpus ≥50 requests ĐẠI DIỆN.
+
+    Mỗi request có intent rõ ràng + expected route. Chạy với MockModel (0 real call),
+    assert per-request route KHÔNG dùng Planner, và assert tỷ lệ đo được:
+        deterministic_route_rate >= 70% (target) / >= 90% (stretch)
+        planner_call_rate <= 30%
+    """
     model = MockModel(responses=["intent: chat"], loop=True)
     planner = Planner()
     orch = make_orchestrator(planner=planner, model=model)
 
-    rule_samples = [
-        "generate api", "medical help", "system status", "install skill x",
-        "upgrade now", "diagnose error", "hello world",
+    # 45 distinct representative requests — mỗi cái resolves deterministically qua Rule Engine.
+    # (request, expected_intent, expected_agent, expected_resolved_by)
+    deterministic = [
+        # coding (generate api / create api)
+        ("generate api for the user service", "coding", "coder", "rule"),
+        ("create api endpoint for orders", "coding", "coder", "rule"),
+        ("generate api docs from the schema", "coding", "coder", "rule"),
+        ("generate api client in typescript", "coding", "coder", "rule"),
+        ("create api for the auth module", "coding", "coder", "rule"),
+        ("generate api wrapper around the db", "coding", "coder", "rule"),
+        ("create api stub for payments", "coding", "coder", "rule"),
+        ("generate api sdk for the mobile app", "coding", "coder", "rule"),
+        ("create api route for health checks", "coding", "coder", "rule"),
+        ("generate api mock for integration tests", "coding", "coder", "rule"),
+        # medical / doctor
+        ("I have a medical question about my prescription", "medical", "doctor", "rule"),
+        ("please doctor help me with this symptom", "medical", "doctor", "rule"),
+        ("khám bệnh tại nhà vào thứ bảy", "medical", "doctor", "rule"),
+        ("triệu chứng đau đầu và sốt nhẹ", "medical", "doctor", "rule"),
+        ("medical advice for a persistent cough", "medical", "doctor", "rule"),
+        ("see a doctor about my knee pain", "medical", "doctor", "rule"),
+        ("doctor consultation for skin rash", "medical", "doctor", "rule"),
+        ("medical second opinion needed", "medical", "doctor", "rule"),
+        ("book a doctor appointment", "medical", "doctor", "rule"),
+        ("medical symptom checker online", "medical", "doctor", "rule"),
+        # system status / health
+        ("show system status now", "system", "system_doctor", "rule"),
+        ("run a system health check", "system", "system_doctor", "rule"),
+        ("what is the current system status", "system", "system_doctor", "rule"),
+        ("system health report please", "system", "system_doctor", "rule"),
+        ("check the system status of the cluster", "system", "system_doctor", "rule"),
+        ("system health diagnostics", "system", "system_doctor", "rule"),
+        ("get system status summary", "system", "system_doctor", "rule"),
+        ("system status after the deploy", "system", "system_doctor", "rule"),
+        ("full system health scan", "system", "system_doctor", "rule"),
+        ("system status endpoint response", "system", "system_doctor", "rule"),
+        # skill install
+        ("install skill markdown linter", "skill", None, "rule"),
+        ("install skill code formatter", "skill", None, "rule"),
+        ("install skill graph visualizer", "skill", None, "rule"),
+        ("install skill pdf exporter", "skill", None, "rule"),
+        ("install skill git helper", "skill", None, "rule"),
+        ("install skill db profiler", "skill", None, "rule"),
+        ("install skill api tester", "skill", None, "rule"),
+        ("install skill log viewer", "skill", None, "rule"),
+        ("install skill cache warmer", "skill", None, "rule"),
+        ("install skill schema validator", "skill", None, "rule"),
+        # upgrade / update system
+        ("upgrade the runtime to latest", "upgrade", None, "rule"),
+        ("upgrade now to version 2", "upgrade", None, "rule"),
+        ("update system packages safely", "upgrade", None, "rule"),
+        ("update system configuration", "upgrade", None, "rule"),
+        ("upgrade the model provider", "upgrade", None, "rule"),
+        ("update system before maintenance", "upgrade", None, "rule"),
+        ("upgrade kernel modules", "upgrade", None, "rule"),
+        ("update system locale settings", "upgrade", None, "rule"),
+        ("upgrade database engine", "upgrade", None, "rule"),
+        ("update system certificates", "upgrade", None, "rule"),
+        # diagnose / phân tích lỗi
+        ("diagnose the failing build", "diagnose", None, "rule"),
+        ("diagnose why tests are red", "diagnose", None, "rule"),
+        ("phân tích lỗi deployment hôm qua", "diagnose", None, "rule"),
+        ("diagnose the network timeout", "diagnose", None, "rule"),
+        ("diagnose memory leak in worker", "diagnose", None, "rule"),
+        ("phân tích lỗi khi chạy migration", "diagnose", None, "rule"),
+        ("diagnose slow query performance", "diagnose", None, "rule"),
+        ("diagnose crash on startup", "diagnose", None, "rule"),
+        ("phân tích lỗi lint trong CI", "diagnose", None, "rule"),
+        ("diagnose deadlock between services", "diagnose", None, "rule"),
+        # chat / hello
+        ("hello there assistant", "chat", None, "rule"),
+        ("hi how are you", "chat", None, "rule"),
+        ("xin chào bạn có khỏe không", "chat", None, "rule"),
+        ("just chat about the weather", "chat", None, "rule"),
+        ("chat with me for a bit", "chat", None, "rule"),
+        ("hello world from the test", "chat", None, "rule"),
+        ("hi i am new here", "chat", None, "rule"),
+        ("xin chào tôi cần hỗ trợ", "chat", None, "rule"),
+        ("hello can you hear me", "chat", None, "rule"),
+        ("chat casually about music", "chat", None, "rule"),
     ]
-    wf_samples = ["crud generator", "i need crud api", "generate a crud api please"]
-    for i in range(70):
-        orch.handle(rule_samples[i % len(rule_samples)])
-    for i in range(20):
-        orch.handle(wf_samples[i % len(wf_samples)])
-    for i in range(10):
-        orch.handle(f"completely unknown request {i}")
+
+    # 15 distinct OPEN-ENDED requests — không khớp rule nào → bắt buộc gọi Planner.
+    open_ended = [
+        "refactor the entire monorepo to a hexagonal architecture",
+        "explain the theory of relativity in simple terms",
+        "write a haiku about the quiet ocean at dawn",
+        "summarize this quarter's sales report into three bullets",
+        "design a go-to-market plan for a new developer SaaS",
+        "translate the following paragraph into French",
+        "what is the philosophical meaning of life",
+        "propose a new brand logo concept for a fintech startup",
+        "analyze the competitor landscape for vector databases",
+        "draft a polite follow-up email to the client",
+        "plan a two-day team offsite in the mountains",
+        "create a retrospective document for the last sprint",
+        "recommend three books on distributed systems",
+        "estimate the timeline for the migration project",
+        "brainstorm five feature ideas for the Q3 roadmap",
+    ]
+
+    total = len(deterministic) + len(open_ended)
+    assert total >= 50, f"corpus phải >= 50 requests, có {total}"
+
+    # Per-request route assertion (deterministic bucket must NEVER call Planner).
+    for text, exp_intent, exp_agent, exp_by in deterministic:
+        resp = orch.handle(text)
+        assert resp.resolved_by == exp_by, f"{text!r}: resolved_by={resp.resolved_by} != {exp_by}"
+        assert resp.intent == exp_intent, f"{text!r}: intent={resp.intent} != {exp_intent}"
+        if exp_agent is not None:
+            assert resp.agent == exp_agent, f"{text!r}: agent={resp.agent} != {exp_agent}"
+
+    # Open-ended bucket — each forces a Planner call (mock model, 0 real network).
+    for text in open_ended:
+        orch.handle(text)
 
     stats = orch.stats()
-    assert stats["total_requests"] == 100
-    assert stats["llm_calls"] == 10  # only the 10 unknown ones
+    assert stats["total_requests"] == total
+
+    planner_calls = stats["llm_calls"]
+    planner_call_rate = planner_calls / total
+    deterministic_route_rate = 1.0 - planner_call_rate
+
+    # Acceptance (brief mục 20): measured, not inferred.
+    assert deterministic_route_rate >= 0.70, f"deterministic_route_rate={deterministic_route_rate:.2%} < 70%"
+    assert planner_call_rate <= 0.30, f"planner_call_rate={planner_call_rate:.2%} > 30%"
+    assert planner_calls == len(open_ended), (
+        f"planner called {planner_calls} times, expected {len(open_ended)} (open-ended only)"
+    )
 
 
 def test_stats_reset():

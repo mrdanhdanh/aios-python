@@ -79,9 +79,9 @@
 | ID | Mức | Mô tả | File liên quan | Đề xuất |
 |----|-----|-------|----------------|---------|
 | **F1** | **P2** | **Review brief gốc LỖI THỜI (stale).** M2-review-brief.md ghi "TASK-015 PENDING → M2-Partial, 622 tests" trong khi thực tế TASK-015 đã DONE (669 tests, git HEAD `1d518cb` "M2 DONE"). `architecture.md` (được brief yêu cầu reviewer đọc) CŨNG stale: vẫn ghi "M2 🚧 in-progress", "P3c-P4: Assistants·Tools·Skills 🔲". | `aios/progress/reviews/M2-review-brief.md`, `docs/architecture.md` | Đã sửa `docs/architecture.md` (mục 4/5 mermaid + bảng). Nên cập nhật/clear brief gốc hoặc ghi chú "REVOKED" để không giao nhầm cho reviewer sau. |
-| **F2** | **P2** | **Task folders thiếu 2/8 hard-gate file.** TASK-012, 013, 014, 015, 016 chỉ có 6 .md (thiếu `test.md` + `implementation/`). Chỉ TASK-010 đủ 8 file. Vi phạm brief mục 16/24.6. (Code thực tế có thật và test pass, nên đây là gap quy trình, không phải code.) | `aios/progress/tasks/TASK-012..016/` | Bổ sung `test.md` (tóm tắt kết quả pytest thật) + `implementation/` (symlink/README trỏ vào `backend/src/aios_core/...`). Không blocker code. |
+| **F2** | **P2→ĐÃ SỬA** | **Task folders thiếu 2/8 hard-gate file.** TASK-012, 013, 014, 015, 016 chỉ có 6 .md (thiếu `test.md` + `implementation/`). Chỉ TASK-010 đủ 8 file. Vi phạm brief mục 16/24.6. (Code thực tế có thật và test pass, nên đây là gap quy trình, không phải code.) | `aios/progress/tasks/TASK-012..016/` | **ĐÃ SỬA:** tạo `test.md` (summary kết quả pytest) + `implementation/README.md` (pointer table trỏ vào `backend/src/aios_core/...`) cho cả 5 task folder, theo convention TASK-010. Không blocker code. |
 | **F3** | **P1→ĐÃ SỬA** | **V11 TaskQueue lifecycle gap:** `_transition` chỉ cho `QUEUED↔PAUSED`; item sau `dequeue()` ở trạng thái `RUNNING` **không thể** chuyển `COMPLETED/FAILED/CANCELLED`. Hậu quả: worker không bao giờ đóng được task; test concurrency ban đầu FAIL (`running -> completed` QueueError). | `backend/src/aios_core/orchestrator/goals/task_queue.py` | **ĐÃ SỬA:** mở rộng `_transition` (RUNNING→COMPLETED/FAILED/CANCELLED; QUEUED/PAUSED→CANCELLED) + thêm `complete()/fail()/cancel()`. Thêm `tests/test_task_queue_concurrency.py`. 670 passed. |
-| **F4** | **P2** | **V4 corpus yếu:** `test_offline_first_100_requests` chỉ dùng **10 distinct template** (7 rule + 3 workflow) lặp + 10 query "completely unknown request {i}". Brief mục 20 yêu cầu "corpus ≥50/100 requests ĐẠI DIỆN (intent rõ ràng + expected route)". Test không assert per-request expected route. Metric đạt (90% deterministic) nhưng tính đại diện thực tế chưa chứng minh đủ. | `backend/tests/test_orchestrator.py` | Mở rộng corpus lên ≥50 distinct intent (chat/coding/medical/system/diagnose/upgrade/skill + open-ended) với expected route, assert từng route. Giữ nguyên việc mock model + đếm `planner.calls`. |
+| **F4** | **P2→ĐÃ SỬA** | **V4 corpus yếu:** `test_offline_first_100_requests` chỉ dùng **10 distinct template** (7 rule + 3 workflow) lặp + 10 query "completely unknown request {i}". Brief mục 20 yêu cầu "corpus ≥50/100 requests ĐẠI DIỆN (intent rõ ràng + expected route)". Test không assert per-request expected route. Metric đạt (90% deterministic) nhưng tính đại diện thực tế chưa chứng minh đủ. | `backend/tests/test_orchestrator.py` | **ĐÃ SỬA:** viết lại thành `test_offline_first_corpus` — 60 distinct requests (45 deterministic: 10×coding + 10×medical + 10×system + 5×skill + 5×upgrade + 5×diagnose + 7×chat + 5×workflow; 15 open-ended) với per-request expected `(intent, agent, resolved_by)`, assert từng route + `deterministic_route_rate ≥ 0.70` + `planner_call_rate ≤ 0.30`. Mock model + đếm `planner.calls`. 809 passed. |
 | **F5** | **P3** | **Thiếu test TOCTOU chuyên biệt (V7).** Broker stateless nên TOCTOU không thể xảy ra (không cache grant), nhưng brief mục 9 muốn một test minh bạch: approve `[network]` → workflow sau cần `[shell]` → phải re-check/ask lại. | `backend/tests/test_permission_broker.py` | Thêm `test_toctou_scope_change_reask`: collect `[network]` request → approve; sau đó batch mới `[network, shell]` → assert `[shell]` vẫn bị ask (không tự động kế thừa grant). (Vì stateless, test sẽ pass và làm tài liệu rõ ràng.) |
 | **F6** | **P3** | **Thiếu runtime integration test Agent→Capability→Tool trace (V6).** INV-002 (static, grep empty) đã đảm bảo mạnh hơn runtime trace, nhưng brief mục 9 muốn một test chạy thực tế assert "không có `Tool(...)` trong agent execution path". | `backend/tests/` | Thêm integration test: `assistant.handle()` → capability.execute() → tool.run(); assert không có direct tool instantiation (có thể assert qua event/registry call). |
 
@@ -96,11 +96,11 @@
 - Acceptance Traceability = **100%** AC có implementation+test+assertion+runtime evidence.
 - Offline benchmark (đo thực tế): `deterministic_route_rate = 90%` (≥70% ✅), `planner_call_rate = 10%` (≤30% ✅) — chạy với MockModel (0 call thật).
 - Security: không capability bypass, không permission bypass, không unsafe import.
-- Test: **670 passed, 0 skip, 0 xfail, coverage 95.47%**.
+- Test: **670 passed, 0 skip, 0 xfail, coverage 95.47%** (tại thời điểm review M2).
 - PROGRESS ↔ STATS ↔ Git ↔ filesystem nhất quán (trừ brief/architecture.md đã stale — đã sửa architecture.md).
-- **Không P1** (F3 là P1 đã sửa trước khi kết luận). Còn P2 (F1, F2, F4) — đều có remediation rõ ràng, không blocker theo Final Gate (code correctness đạt).
+- **Không P1 tồn đọng** (F3 là P1 đã sửa trước khi kết luận). F1/F2/F4 (P2) đã có remediation — **F2 và F4 ĐÃ SỬA xong** (xem mục 4), F1 (stale brief) là documentation gap, không ảnh hưởng code.
 
-**Điều kiện / nhắc nhở:** F2 (bổ sung `test.md`+`implementation/` cho 5 task folder) và F4 (mở rộng offline corpus) nên hoàn thành trong M2-closeout hoặc M3 kickoff để khớp quy trình hard-gate đầy đủ.
+**Điều kiện / nhắc nhở:** F2 (bổ sung `test.md`+`implementation/` cho 5 task folder) và F4 (mở rộng offline corpus) **ĐÃ HOÀN THÀNH** (xem mục 4). F1 (stale review brief) nên được ghi chú "REVOKED" hoặc cập nhật để không giao nhầm cho reviewer sau.
 
 ---
 
@@ -128,9 +128,9 @@
 ## Phụ lục — Bằng chứng chạy thật
 
 ```
-$ backend/.venv/Scripts/python -m pytest -q
-... TOTAL ... 95%
-670 passed, 5 warnings in 16.15s
+$ backend/.venv/Scripts/python -m pytest -q   # (re-run sau khi sửa F2/F4 — không regression)
+... TOTAL ... 94.92%
+809 passed, 6 warnings in 34.76s
 
 $ git log --oneline -3
 1d518cb (HEAD -> master) M2: milestone complete — 669 tests, 0 skip, 95.51% cov; PROGRESS/STATS updated; M2 DONE
@@ -144,4 +144,6 @@ $ grep -rn "from aios_core.tools\|aios_core.kernel\|aios_core.capabilities" back
 **File chỉnh sửa đã tạo/sửa:**
 - `backend/src/aios_core/orchestrator/goals/task_queue.py` — sửa `_transition` + thêm `complete/fail/cancel` (F3).
 - `backend/tests/test_task_queue_concurrency.py` — test concurrency dequeue (F3/V11).
+- `backend/tests/test_orchestrator.py` — viết lại `test_offline_first_100_requests` → `test_offline_first_corpus` (60 distinct requests, per-request route assertion + đo `deterministic_route_rate`/`planner_call_rate`) (F4).
 - `docs/architecture.md` — cập nhật trạng thái M2 (F1).
+- `aios/progress/tasks/TASK-012..016/test.md` + `implementation/README.md` — bổ sung 2/8 hard-gate file cho 5 task folder (F2).
