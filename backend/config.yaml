@@ -69,3 +69,8 @@ testing:
   default_retries: 1
   strict: true
   simulation_timeout_s: 30.0
+
+evaluation:
+  default_threshold: 0.8
+  strict: true
+  max_items: 1000

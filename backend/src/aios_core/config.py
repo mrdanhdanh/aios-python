@@ -212,6 +212,16 @@ class TestingSettings(BaseModel):
     simulation_timeout_s: float = 30.0  # reserved (runner không block v1)
 
 
+class EvaluationSettings(BaseModel):
+    """TASK-032: evaluation tuning (M6-H4)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    default_threshold: float = 0.8  # C1-03: threshold mặc định
+    strict: bool = True  # EvaluationHarness: passed_all False → raise
+    max_items: int = 1000  # C2-06: cap dataset (deterministic)
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -238,6 +248,7 @@ class Settings(BaseSettings):
     harness: HarnessSettings = HarnessSettings()
     execution: ExecutionSettings = ExecutionSettings()
     testing: TestingSettings = TestingSettings()
+    evaluation: EvaluationSettings = EvaluationSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

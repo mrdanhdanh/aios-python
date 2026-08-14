@@ -846,6 +846,59 @@ def test_inv020_loader_safe_load():
     assert "full_load" not in src
 
 
+# -- harness/evaluation/ (TASK-032 — Evaluation, INV-020) ---------------------
+
+@pytest.mark.skipif(not (AIOS / "harness" / "evaluation").is_dir(),
+                    reason="harness/evaluation chưa tồn tại (TASK-032)")
+def test_inv020_evaluation_no_kernel_or_models():
+    """INV-020e: evaluation/ không import kernel.services.execution|events +
+    kernel.graph|orchestrator.planning + aios_core.models* (LLM judge stub
+    offline — deterministic). StateService hợp lệ (allow-list H1)."""
+    hits = dir_imports(AIOS / "harness" / "evaluation", [
+        "aios_core.kernel.services.execution",
+        "aios_core.kernel.services.events",
+        "aios_core.kernel.graph",
+        "aios_core.orchestrator.planning",
+    ])
+    assert hits == [], f"INV-020 vi phạm: {hits}"
+    models_hits = dir_imports(AIOS / "harness" / "evaluation",
+                              ["aios_core.models"])
+    assert models_hits == [], f"INV-020 vi phạm (models): {models_hits}"
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "evaluation").is_dir(),
+                    reason="harness/evaluation chưa tồn tại (TASK-032)")
+def test_inv020_llm_judge_reproducible():
+    """INV-020f: llm judge phải lưu model/prompt_version/temperature để
+    reproducible — literal trong evaluators.py."""
+    src = (AIOS / "harness" / "evaluation" / "evaluators.py").read_text(
+        encoding="utf-8")
+    assert "reproducible" in src
+    assert "prompt_version" in src
+    assert "temperature" in src
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "evaluation").is_dir(),
+                    reason="harness/evaluation chưa tồn tại (TASK-032)")
+def test_inv020_evaluation_engine_raises():
+    """INV-020g (behavioral): evaluation.py chứa literal `Engine(` +
+    `EvaluationError(` — đánh giá qua engine, fail → raise."""
+    src = (AIOS / "harness" / "evaluation" / "evaluation.py").read_text(
+        encoding="utf-8")
+    assert "Engine(" in src
+    assert "EvaluationError(" in src
+    assert "raise" in src
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "evaluation").is_dir(),
+                    reason="harness/evaluation chưa tồn tại (TASK-032)")
+def test_inv020_suite_loader_safe_load():
+    """INV-020h: suites.py dùng yaml.safe_load (pattern C2-07)."""
+    src = (AIOS / "harness" / "evaluation" / "suites.py").read_text(encoding="utf-8")
+    assert "yaml.safe_load" in src
+    assert "full_load" not in src
+
+
 def test_inv017_no_harness_in_kernel():
     """kernel/services không import harness (đảo chiều)."""
     hits = dir_imports(AIOS / "kernel" / "services", ["aios_core.harness"])

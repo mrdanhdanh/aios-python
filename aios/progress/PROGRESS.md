@@ -217,7 +217,7 @@
 | TASK-029 | H1 Harness Kernel — contracts chung + lifecycle 8-state + registry + runner + evidence (INV-018); INV-017 isolation | `done` ✅ | 1124 pass, coverage 95.20%, 10/10 AC (2026-08-15) |
 | TASK-030 | H2 Execution Verification — Preconditions/Postconditions/Verdict + Evidence Package + Replay; INV-019 | `done` ✅ | 1210 pass, coverage 95.26%, 10/10 AC (2026-08-15) |
 | TASK-031 | H3 Test & Simulation — Scenario + Simulation Mode; không side effect | `done` ✅ | 1299 pass, coverage 95.26%, 12/12 AC (2026-08-15) |
-| TASK-032 | H4 Evaluation Harness — Evaluation Model + Suite + Trajectory; INV-020 | `todo` | |
+| TASK-032 | H4 Evaluation Harness — Evaluation Model + Suite + Trajectory; INV-020 | `done` ✅ | 1387 pass, coverage 95.27%, 12/12 AC (2026-08-15) |
 | TASK-033 | H4 Benchmark + Regression Gate — INV-021 | `todo` | sau 032 |
 | TASK-034 | H5 Doctor & Readiness — Doctor architecture + Readiness Score | `todo` | |
 | INV-011..016 | Enforcement tests (AST) trong `tests/test_architecture.py` + observability metrics M5 | `todo` | tích hợp trong các task |

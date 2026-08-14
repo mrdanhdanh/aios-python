@@ -216,4 +216,16 @@ class RuntimeKernel:
         harness_registry.register(test_harness)  # id="test"
         container.register_instance(TestHarness, test_harness)
 
+        # Evaluation (TASK-032, M6-H4): EvaluationHarness qua H1 runner —
+        # deterministic evaluators, LLM judge stub offline (INV-020).
+        from ..harness.evaluation import Engine, EvaluationHarness
+
+        evaluation_harness = EvaluationHarness(
+            Engine(default_threshold=settings.evaluation.default_threshold),
+            state_service=container.resolve(StateService),  # shared
+            max_items=settings.evaluation.max_items,
+        )
+        harness_registry.register(evaluation_harness)  # id="evaluation"
+        container.register_instance(EvaluationHarness, evaluation_harness)
+
         return cls(container, bus)
