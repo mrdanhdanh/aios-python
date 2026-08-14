@@ -202,6 +202,16 @@ class ExecutionSettings(BaseModel):
     persist_verdict_artifact: bool = True  # AC5: verdict.json convention P2-05
 
 
+class TestingSettings(BaseModel):
+    """TASK-031: test & simulation tuning (M6-H3)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    default_retries: int = 1  # P3-02: fault retries mặc định
+    strict: bool = True  # TestHarness: MISMATCH/ERROR → raise
+    simulation_timeout_s: float = 30.0  # reserved (runner không block v1)
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -227,6 +237,7 @@ class Settings(BaseSettings):
     scheduler: SchedulerSettings = SchedulerSettings()
     harness: HarnessSettings = HarnessSettings()
     execution: ExecutionSettings = ExecutionSettings()
+    testing: TestingSettings = TestingSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

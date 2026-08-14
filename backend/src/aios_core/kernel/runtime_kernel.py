@@ -205,4 +205,15 @@ class RuntimeKernel:
         harness_registry.register(verification_harness)  # id="verification"
         container.register_instance(VerificationHarness, verification_harness)
 
+        # Test & Simulation (TASK-031, M6-H3): TestHarness qua H1 runner —
+        # Fake Runtime/Tool, deterministic, không side effect (INV-020).
+        from ..harness.testing import FakeRuntime, SimulationRunner, TestHarness
+
+        test_harness = TestHarness(
+            SimulationRunner(FakeRuntime()),
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(test_harness)  # id="test"
+        container.register_instance(TestHarness, test_harness)
+
         return cls(container, bus)

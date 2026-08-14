@@ -64,3 +64,8 @@ harness:
 execution:
   event_window: 10000
   persist_verdict_artifact: true
+
+testing:
+  default_retries: 1
+  strict: true
+  simulation_timeout_s: 30.0

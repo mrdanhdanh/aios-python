@@ -635,6 +635,7 @@ _HARNESS_ALLOWED_EXTERNAL = {
     "pydantic", "typing", "datetime", "enum", "re", "json", "threading",
     "time", "abc", "collections", "pathlib",  # pathlib: TASK-030 FILE_EXISTS/
     # CONTAINS checks (R2-1 review) — B7: top-level (collections.abc -> collections)
+    "yaml",  # TASK-031: scenarios loader (safe_load — C2-07)
 }
 
 
@@ -785,6 +786,64 @@ def test_inv019_verdict_artifact_convention():
         encoding="utf-8")
     assert "harness:{ctx.run_id}:verdict" in src
     assert '"kind": "verdict"' in src
+
+
+# -- harness/testing/ (TASK-031 — Test & Simulation, INV-020) -----------------
+
+@pytest.mark.skipif(not (AIOS / "harness" / "testing").is_dir(),
+                    reason="harness/testing chưa tồn tại (TASK-031)")
+def test_inv020_testing_no_kernel_impl():
+    """INV-020a: testing/ không import kernel.services.execution|events|resource
+    |scheduler + kernel.graph|orchestrator.planning (simulation dùng fake)."""
+    hits = dir_imports(AIOS / "harness" / "testing", [
+        "aios_core.kernel.services.execution",
+        "aios_core.kernel.services.events",
+        "aios_core.kernel.services.resource",
+        "aios_core.kernel.services.scheduler",
+        "aios_core.kernel.graph",
+        "aios_core.orchestrator.planning",
+    ])
+    assert hits == [], f"INV-020 vi phạm: {hits}"
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "testing").is_dir(),
+                    reason="harness/testing chưa tồn tại (TASK-031)")
+def test_inv020_simulation_no_side_effects():
+    """INV-020b: simulation/testing không side effect — AST literal: không
+    import sqlite3/httpx/socket/requests/os trong 2 module chạy."""
+    forbidden = ("sqlite3", "httpx", "socket", "requests", "os")
+    for name in ("simulation.py", "testing.py"):
+        src = (AIOS / "harness" / "testing" / name).read_text(encoding="utf-8")
+        tree = ast.parse(src)
+        imports: list[str] = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imports.extend(a.name for a in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                imports.append(node.module or "")
+        for mod in imports:
+            assert mod.split(".")[0] not in forbidden, \
+                f"{name} side-effect import: {mod}"
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "testing").is_dir(),
+                    reason="harness/testing chưa tồn tại (TASK-031)")
+def test_inv020_testharness_uses_runner_and_raises():
+    """INV-020c (behavioral): testing.py chứa literal `SimulationRunner(` +
+    `TestError(` — test chạy qua runner, fail → raise."""
+    src = (AIOS / "harness" / "testing" / "testing.py").read_text(encoding="utf-8")
+    assert "SimulationRunner(" in src
+    assert "TestError(" in src
+    assert "raise" in src
+
+
+@pytest.mark.skipif(not (AIOS / "harness" / "testing").is_dir(),
+                    reason="harness/testing chưa tồn tại (TASK-031)")
+def test_inv020_loader_safe_load():
+    """scenarios.py phải dùng yaml.safe_load (C2-07 — không full_load)."""
+    src = (AIOS / "harness" / "testing" / "scenarios.py").read_text(encoding="utf-8")
+    assert "yaml.safe_load" in src
+    assert "full_load" not in src
 
 
 def test_inv017_no_harness_in_kernel():
