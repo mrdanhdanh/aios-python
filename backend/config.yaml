@@ -54,3 +54,6 @@ planning:
 graph:
   max_parallel: 1
   default_failure_policy: fail_fast
+
+scheduler:
+  resource_wait_timeout_s: null

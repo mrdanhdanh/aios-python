@@ -186,3 +186,17 @@ def test_graph_settings_invalid(tmp_path, monkeypatch):
         GraphSettings(default_failure_policy="bogus")
     with pytest.raises(ValidationError):
         GraphSettings(max_parallel=0)
+
+
+def test_scheduler_settings(tmp_path, monkeypatch):
+    """TASK-028: scheduler block defaults + env override + invalid."""
+    from aios_core.config import SchedulerSettings
+
+    monkeypatch.delenv(CONFIG_PATH_ENV, raising=False)
+    monkeypatch.chdir(tmp_path)
+    settings = load_settings()
+    assert settings.scheduler.resource_wait_timeout_s is None
+    monkeypatch.setenv("AIOS_SCHEDULER__RESOURCE_WAIT_TIMEOUT_S", "0.5")
+    assert load_settings().scheduler.resource_wait_timeout_s == 0.5
+    with pytest.raises(ValidationError):
+        SchedulerSettings(resource_wait_timeout_s=-1)

@@ -532,6 +532,96 @@ def test_inv015_contracts_leaf():
     assert "state_machine" not in src
 
 
+# -- kernel/scheduler/ import allow-list + INV-016 (TASK-028) ------------------
+
+_SCHEDULER_ALLOWED_AIOS = {
+    "aios_core.kernel.graph",
+    "aios_core.kernel.graph.contracts",
+    "aios_core.kernel.graph.errors",
+    "aios_core.kernel.graph.state_machine",
+    "aios_core.kernel.graph.executor",
+    "aios_core.kernel.graph.converter",
+    "aios_core.kernel.services.state",
+    "aios_core.kernel.services.resource",
+    "aios_core.kernel.execution_plan",  # C2-06 v2: contracts thuần, toàn dir
+    "aios_core.config",
+    "aios_core.logging",
+}
+_SCHEDULER_ALLOWED_EXTERNAL = {
+    "pydantic", "typing", "threading", "time", "logging",
+}
+
+
+@pytest.mark.skipif(not (AIOS / "kernel" / "scheduler").is_dir(),
+                    reason="kernel/scheduler/ chưa tồn tại (TASK-028)")
+def test_inv016_scheduler_import_allowlist():
+    """kernel/scheduler/ chỉ import allow-list; services.execution CHỈ trong
+    execution_runner.py (INV-016 — R1-1: exclude DOTTED)."""
+    scheduler_dir = AIOS / "kernel" / "scheduler"
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    runner_mods: set[str] = set()
+    for py in sorted(scheduler_dir.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        clean = {m for m in mods if not m.startswith("aios_core.kernel.scheduler")}
+        aios_mods |= clean
+        if rel == "aios_core.kernel.scheduler.execution_runner":
+            runner_mods |= clean
+    bad_aios = aios_mods - _SCHEDULER_ALLOWED_AIOS
+    bad_external = external - _SCHEDULER_ALLOWED_EXTERNAL
+    assert not bad_aios, f"scheduler/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"scheduler/ import ngoài allow-list (external): {bad_external}"
+    # services.execution chỉ hợp lệ trong execution_runner.py
+    for mod in aios_mods - runner_mods:
+        assert "kernel.services.execution" not in mod, (
+            f"INV-016: {mod} chạm ExecutionService (chỉ execution_runner.py)")
+
+
+def test_inv016_scheduler_call_sites():
+    """INV-016: call-sites literal — acquire/release trong scheduler.py,
+    execution_service.execute trong execution_runner.py."""
+    scheduler_src = (AIOS / "kernel" / "scheduler" / "scheduler.py").read_text(encoding="utf-8")
+    runner_src = (AIOS / "kernel" / "scheduler" / "execution_runner.py").read_text(encoding="utf-8")
+    assert "acquire_slot_wait(" in scheduler_src
+    assert "release_slot(" in scheduler_src
+    assert "execution_service.execute(" in runner_src
+
+
+def test_inv016_scheduler_no_god_object():
+    """scheduler/ không God Object: không ThreadPoolExecutor, không def execute("""
+    for name in ("scheduler.py", "execution_runner.py", "contracts.py", "errors.py"):
+        src = (AIOS / "kernel" / "scheduler" / name).read_text(encoding="utf-8")
+        assert "ThreadPoolExecutor" not in src, f"{name} không được dùng ThreadPool"
+        assert "def execute(" not in src, f"{name} không được định nghĩa execute"
+
+
+def test_inv016_scheduler_no_private_access():
+    """INV-016: scheduler/ không chạm private attrs của Resource/Execution
+    (giới hạn v1: chỉ bắt Name._attr — P3-03)."""
+    for name in ("scheduler.py", "execution_runner.py"):
+        src = (AIOS / "kernel" / "scheduler" / name).read_text(encoding="utf-8")
+        tree = ast.parse(src)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and node.attr.startswith("_"):
+                value = node.value
+                if isinstance(value, ast.Name) and value.id != "self":
+                    assert False, f"INV-016: {name} truy cập private {node.attr}"
+
+
+def test_inv016_graph_no_scheduler():
+    """kernel/graph/ không import scheduler (đảo chiều)."""
+    hits = dir_imports(AIOS / "kernel" / "graph", ["aios_core.kernel.scheduler"])
+    assert hits == [], f"INV-016 vi phạm: {hits}"
+
+
+def test_inv016_planning_no_scheduler():
+    """planning/ (intelligence) không import scheduler."""
+    hits = dir_imports(AIOS / "orchestrator" / "planning", ["aios_core.kernel.scheduler"])
+    assert hits == [], f"INV-016 vi phạm: {hits}"
+
+
 # -- models/router/ import allow-list (TASK-025 — Model Router) ---------------
 
 _ROUTER_ALLOWED_AIOS = {

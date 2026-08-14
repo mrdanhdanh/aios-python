@@ -139,6 +139,28 @@ def test_graph_executor_wired(tmp_path):
     assert result.execution_order == ["A", "B"]
 
 
+def test_graph_scheduler_wired(tmp_path):
+    """TASK-028: scheduler resolvable + shared instances + graph_settings."""
+    from aios_core.kernel.graph import GraphExecutor
+    from aios_core.kernel.scheduler import GraphScheduler
+
+    kernel = RuntimeKernel.create(make_settings(tmp_path))
+    scheduler = kernel.container.resolve(GraphScheduler)
+    assert scheduler._resources is kernel.container.resolve(ResourceService)
+    assert scheduler._state is kernel.container.resolve(StateService)
+    assert scheduler._graph_settings is kernel.container.resolve(GraphExecutor)._settings
+    plan = ExecutionPlanBuilder.from_dict({
+        "id": "p", "request_ref": "r",
+        "nodes": [
+            {"id": "A", "type": "task", "name": "a"},
+            {"id": "B", "type": "task", "name": "b", "depends_on": ["A"]},
+        ],
+    })
+    result = scheduler.schedule_plan(plan, lambda n, ctx: n.id)
+    assert result.graph.status.value == "succeeded"
+    assert result.graph.execution_order == ["A", "B"]
+
+
 def test_model_router_wired(tmp_path):
     """TASK-025: router resolvable; offline select works (no chat calls)."""
     from aios_core.models import ModelRouter, RouteRequest

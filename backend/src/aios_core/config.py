@@ -167,6 +167,24 @@ class GraphSettings(BaseModel):
         return value
 
 
+class SchedulerSettings(BaseModel):
+    """TASK-028: graph scheduler tuning (INV-016 bounds).
+
+    ``resource_wait_timeout_s=None`` = wait forever (FIFO fair — F-003).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    resource_wait_timeout_s: float | None = None
+
+    @field_validator("resource_wait_timeout_s")
+    @classmethod
+    def _validate_timeout(cls, value: float | None) -> float | None:
+        if value is not None and value < 0:
+            raise ValueError("resource_wait_timeout_s must be >= 0 (or None)")
+        return value
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -189,6 +207,7 @@ class Settings(BaseSettings):
     observability: ObservabilitySettings = ObservabilitySettings()
     planning: PlanningSettings = PlanningSettings()
     graph: GraphSettings = GraphSettings()
+    scheduler: SchedulerSettings = SchedulerSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

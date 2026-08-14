@@ -158,4 +158,17 @@ class RuntimeKernel:
         )
         container.register_instance(GraphExecutor, graph_executor)
 
+        # Graph scheduler (TASK-028): resource-aware scheduling via
+        # ResourceService public API (INV-016 — không sở hữu implementation).
+        from ..kernel.scheduler import GraphScheduler
+
+        graph_scheduler = GraphScheduler(
+            resource_service=container.resolve(ResourceService),  # shared
+            state_service=container.resolve(StateService),  # shared
+            executor=container.resolve(GraphExecutor),  # shared (027)
+            settings=settings.scheduler,
+            graph_settings=settings.graph,  # schedule_plan consumes default_failure_policy
+        )
+        container.register_instance(GraphScheduler, graph_scheduler)
+
         return cls(container, bus)
