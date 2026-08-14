@@ -2,7 +2,7 @@
 
 > Tài liệu tham chiếu: kiến trúc 7 tầng + Orchestrator + tiến độ triển khai theo trạng thái hiện tại.
 > Nguồn gốc: `docs/PLAN.md` (master plan v6) + `aios/progress/PROGRESS.md` (trạng thái build thực tế).
-> Cập nhật lần cuối: 2026-08-14.
+> Cập nhật lần cuối: 2026-08-15.
 
 ## 1. Kiến trúc tổng thể 7 tầng — theo trạng thái build
 
@@ -46,6 +46,15 @@ graph TB
         WPLANE["Worker Plane agents ✅ (TASK-013)<br/>General · Coder · Doctor · System Doctor"]
     end
 
+    subgraph T45["Tầng 4.5 — Core Intelligence (M5) 🚧"]
+        MC["Memory Coordinator ✅ (TASK-023)<br/>Retrieve→Filter→Rank→Dedup→Compress→Prioritize→Inject"]
+        CO["Context Optimizer ✅ (TASK-024)<br/>Dedup→Compress→Priority→Token Budget"]
+        MR["Model Router ✅ (TASK-025)<br/>policy-driven select + fallback (INV-013)"]
+        PE2["Planning Engine 🔲 (TASK-026)<br/>decompose→dependency→execution graph"]
+        EG["Execution Graph 🔲 (TASK-027)"]
+        PS["Parallel Scheduler 🔲 (TASK-028)<br/>không sở hữu Resource/Execution"]
+    end
+
     subgraph T5["Tầng 5 — Capability ✅ (M1: TASK-009)"]
         CR["Capability Registry + Prompt Registry + System Catalog + Knowledge Graph"]
     end
@@ -55,8 +64,8 @@ graph TB
     end
 
     subgraph T7["Tầng 7 — Infra ✅ (M1 + M2 + M4)"]
-        I1["Model Providers ✅ (TASK-006)<br/>Mock/OpenAI/Ollama + Registry"]
-        I2["Memory 4 loại ✅ (TASK-007)<br/>Conversation · Session · Knowledge · Artifact"]
+        I1["Model Providers ✅ (TASK-006)<br/>Mock/OpenAI/Ollama + Registry — qua Model Router ✅ (TASK-025)"]
+        I2["Memory 4 loại ✅ (TASK-007)<br/>Conversation · Session · Knowledge · Artifact — qua Memory Coordinator ✅ (TASK-023)"]
         I3["Knowledge pipeline ✅<br/>Indexer → Chunks → Vectors → Retriever"]
         I4["Sandbox Pool ✅ (TASK-015) · Skills Manager ✅ (lifecycle 10 states)"]
         I5["Filesystem ✅ · Upgrade Pipeline ✅ (TASK-020)<br/>Observability ✅ (TASK-021)"]
@@ -65,7 +74,8 @@ graph TB
     T1 -.-> T2
     T2 -.-> T3
     T2 -.-> ORCH
-    ORCH --> T5
+    ORCH --> T45
+    T45 --> T5
     T5 --> T6 --> T7
 ```
 
@@ -108,14 +118,15 @@ flowchart TD
     R -.-> EP
 
     subgraph COORD["Điều phối & Thực thi"]
-        TP["Task Planner 🔲 (qua Task Planner của Orchestrator)"]
+        TP["Task Planner 🔲 (TASK-026 Planning Engine)"]
         AS["Agent Selector ✅ (TASK-010)"]
         CR2["Capability Router ✅ (TASK-014 — tool registry + capability binding)"]
         RS["Resource Scheduler ✅ (TASK-005)"]
         ES["Execution Supervisor ✅ v2 (TASK-022 — stuck detect, queue hook)"]
         FR["Failure Recovery ✅ (TASK-012 — retry→fallback→report)"]
-        CC["Context Coordinator ✅ (TASK-004)"]
-        MC["Memory Coordinator 🔲 (chưa có task riêng)"]
+        CC["Context Coordinator ✅ (TASK-004) + Context Optimizer ✅ (TASK-024, budget/priority)"]
+        MC2["Memory Coordinator ✅ (TASK-023 — agent KHÔNG truy cập Memory trực tiếp, INV-011)"]
+        MR2["Model Router ✅ (TASK-025 — policy select + fallback, INV-013)"]
     end
 
     subgraph ADMIN["Quản trị & Policy"]
@@ -325,7 +336,14 @@ graph LR
         E3["TASK-022 Orchestrator v2 ✅<br/>809 tests · 94.92%"]
     end
 
-    M0 --> M1 --> M2 --> M3 --> M4
+    subgraph M5["M5 — Core Intelligence 🚧 in-progress"]
+        F1["TASK-023 Memory Coordinator ✅<br/>855 pass · 95.16% · 10/10 AC"]
+        F2["TASK-024 Context Optimizer ✅<br/>896 pass · 95.21% · 11/11 AC"]
+        F3["TASK-025 Model Router ✅<br/>949 pass · 95.13% · 11/11 AC"]
+        F4["TASK-026 Planning Engine 🔲<br/>TASK-027 Execution Graph 🔲<br/>TASK-028 Parallel Scheduler 🔲"]
+    end
+
+    M0 --> M1 --> M2 --> M3 --> M4 --> M5
 ```
 
 ## 5. Bảng tổng hợp trạng thái
@@ -337,7 +355,8 @@ graph LR
 | M2 — Orchestrator | ✅ done | TASK-010 ✅ (402); TASK-012 ✅ (490 tests, 95.96%, 12/12 AC); TASK-016 ✅ (INV + AST tests); TASK-013 ✅ Assistants; TASK-014 ✅ Tools; TASK-015 ✅ Skills+Sandbox · **669 tests, 95.51%** |
 | M3 — Desktop Edition | ✅ done | TASK-017 REST+WS API · TASK-018 Dashboard SPA · TASK-019 VS Code Extension — **689 pytest + 19 vitest** |
 | M4 — Platform Edition | ✅ done | TASK-020 Upgrade · TASK-021 Observability · TASK-022 Orchestrator v2 — **809 tests, 94.92%** |
-| M5 — Enterprise Edition | 🔲 todo | tương lai — không làm v1 |
+| M5 — Core Intelligence | 🚧 in-progress | TASK-023 Memory Coordinator ✅ · TASK-024 Context Optimizer ✅ · TASK-025 Model Router ✅ (949 tests) · TASK-026/027/028 🔲 (Planning/Graph/Scheduler) |
+| M6+ — Enterprise/Evolution | 🔲 todo | M6–M10 theo `docs/PLAN.md` (tương lai — không làm v1) |
 | Deliverable M1 | ✅ | `aiagent run workflow.yaml --simulate` |
 | Deliverable M3/M4 | ✅ | `aiagent serve` + Dashboard + Extension + `aiagent arch-health` |
 
@@ -366,6 +385,12 @@ graph LR
 | TASK-020 | M4-P7 Upgrade Pipeline (resolve/backup/migrate/pipeline, `aiagent upgrade`) | 730 | 95.00% |
 | TASK-021 | M4-P8 Observability (metrics/prompt_history/profiler/doctor/arch_health/evaluation + API) | 779 | 95.11% |
 | TASK-022 | M4-P8 Orchestrator v2 (advisor/supervisor/collector/goal_reporter + API v2) | **809** | **94.92%** |
+| TASK-023 | M5-P9a Memory Coordinator (Retrieve→Filter→Rank→Dedup→Compress→Prioritize→Inject, INV-011) | 855 | 95.16% |
+| TASK-024 | M5-P9b Context Optimizer (Dedup→Compress→Priority→Token Budget, INV-012) | 896 | 95.21% |
+| TASK-025 | M5-P9c Model Router (Selector/Policy/Cost/Availability/Fallback/Health, INV-013) | **949** | **95.13%** |
+| TASK-026 | M5-P9d Planning Engine (Goal→Decompose→Dependency→Capability→Execution Graph, INV-014) | 🔲 | — |
+| TASK-027 | M5-P9e Execution Graph (Node/Edge/Dependency/Join/Failure, INV-015) | 🔲 | — |
+| TASK-028 | M5-P9f Parallel Scheduler (Graph→Resource→Execution, không sở hữu, INV-016) | 🔲 | — |
 
 ## 6. Nguyên tắc xuyên suốt
 
@@ -391,6 +416,12 @@ graph LR
 | INV-008 | Artifact First | Output giữa boundary tham chiếu Artifact | future (M4) |
 | INV-009 | Event Driven | Lifecycle quan trọng phát Event | test một phần ⚠️ (4/8 business; 4 future) |
 | INV-010 | Deterministic First | Rule/Registry/Workflow ưu tiên trước LLM | test ✅ |
+| INV-011 | Memory Isolation | Agent KHÔNG truy cập Memory trực tiếp — qua Memory Coordinator | test ✅ (TASK-023) |
+| INV-012 | Context Budget | Context có token budget + priority (P0–P6), compression 3 cấp | test ✅ (TASK-024) |
+| INV-013 | Model Routing | Model chọn theo policy + fallback, availability flag tĩnh | test ✅ (TASK-025, 3 arch tests) |
+| INV-014 | Planning Separation | Planner tạo task graph, tách khỏi execution | test 🔲 (TASK-026) |
+| INV-015 | Graph Dependency | Execution Graph hỗ trợ dependency + parallel + join/failure policy | test 🔲 (TASK-027) |
+| INV-016 | Scheduler Non-Ownership | Scheduler KHÔNG sở hữu Resource/Execution | test 🔲 (TASK-028) |
 
 **4 invariant chốt (ADR-0004):**
 1. **Orchestrator không phải God Object** — điều phối qua Runtime API, không sở hữu service (INV-005).
@@ -398,7 +429,7 @@ graph LR
 3. **Workflow không biết Engine** — definition thuần declarative (INV-003).
 4. **Execution không được bypass Policy** — policy pre-check trước side effect (INV-007).
 
-**Ghi chú gap hiện tại**: `sandbox_required` từ policy chưa được enforce trong ExecutionService v1 (chỉ `logger.warning` — xem ADR-0004); INV-009 chưa phủ context/state/resource/scheduler; INV-001/002 có hiệu lực khi TASK-013 (agents) + TASK-014 (tools) ra đời.
+**Ghi chú gap hiện tại**: `sandbox_required` từ policy chưa được enforce trong ExecutionService v1 (chỉ `logger.warning` — xem ADR-0004); INV-009 chưa phủ context/state/resource/scheduler; INV-001/002 có hiệu lực khi TASK-013 (agents) + TASK-014 (tools) ra đời; INV-014..016 sẽ enforced cùng TASK-026..028 (Phase 3 M5).
 
 ## 8. Architecture Health ✅ (hiện thực hóa M4 — TASK-021)
 
