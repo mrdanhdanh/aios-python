@@ -342,6 +342,42 @@ def test_inv011_memory_isolation():
     hits = dir_imports(AGENTS_DIR, ["aios_core.memory", "aios_core.knowledge"])
     assert hits == [], f"INV-011 vi phạm: {hits}"
 
+# -- context/ import allow-list (TASK-024 — Context Optimizer) ----------------
+
+_CONTEXT_ALLOWED_AIOS = {
+    "aios_core.kernel.services",
+    "aios_core.memory",
+    "aios_core.memory.contracts",
+    "aios_core.memory.coordinator",
+}
+_CONTEXT_ALLOWED_EXTERNAL = {
+    "pydantic",
+    "typing",
+    "datetime",
+    "enum",
+    "re",
+    "hashlib",
+    "math",
+    "json",  # C2-01 (vòng 2): _serialize_value dùng json.dumps
+}
+
+
+@pytest.mark.skipif(not (AIOS / "context").is_dir(), reason="context/ chưa tồn tại (TASK-024)")
+def test_inv_context_import_allowlist():
+    """context/ (intelligence) chỉ import kernel.services + memory — CẤM
+    models/knowledge/orchestrator/contracts kể cả TYPE_CHECKING (C2-01)."""
+    context_dir = AIOS / "context"
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(context_dir.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.context")}
+    bad_aios = aios_mods - _CONTEXT_ALLOWED_AIOS
+    bad_external = external - _CONTEXT_ALLOWED_EXTERNAL
+    assert not bad_aios, f"context/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"context/ import ngoài allow-list (external): {bad_external}"
 
 # -- upgrade/ import allow-list (TASK-020 — control plane, hook-injected) -------
 

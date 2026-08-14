@@ -92,6 +92,18 @@ def test_memory_coordinator_wired(tmp_path):
     assert stored is not None and stored.session_id == "s1"
 
 
+def test_context_optimizer_wired(tmp_path):
+    """TASK-024: optimizer resolvable + optimize runs end-to-end (tmp settings)."""
+    from aios_core.context import ContextOptimizer
+
+    kernel = RuntimeKernel.create(make_settings(tmp_path))
+    optimizer = kernel.container.resolve(ContextOptimizer)
+    final = optimizer.optimize("hello")
+    assert final.total_tokens >= 1
+    assert final.usable_budget == 19000  # default budget: 20000 - reserve 1000
+    assert "[User Request]" in final.render()
+
+
 def test_start_stop_idempotent(tmp_path):
     kernel = RuntimeKernel.create(make_settings(tmp_path))
     kernel.start()

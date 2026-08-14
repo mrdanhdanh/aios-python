@@ -95,6 +95,17 @@ class RuntimeKernel:
         )
         container.register_instance(MemoryCoordinator, memory_coordinator)
 
+        # Context optimizer (TASK-024): priority-ordered budgeted context.
+        from ..context.optimizer import ContextOptimizer, ContextOptimizerConfig
+
+        context_optimizer = ContextOptimizer(
+            context=context_service,
+            config=ContextOptimizerConfig(
+                budget=MemoryBudget(**settings.memory.budget.model_dump())
+            ),
+        )
+        container.register_instance(ContextOptimizer, context_optimizer)
+
         # Remaining services are constructed via the container (type-only hints).
         container.register(PermissionService, PermissionService)
         container.register(PolicyService, PolicyService)
