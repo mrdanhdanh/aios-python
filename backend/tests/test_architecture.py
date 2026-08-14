@@ -379,6 +379,103 @@ def test_inv_context_import_allowlist():
     assert not bad_aios, f"context/ import ngoài allow-list (aios): {bad_aios}"
     assert not bad_external, f"context/ import ngoài allow-list (external): {bad_external}"
 
+
+# -- models/router/ import allow-list (TASK-025 — Model Router) ---------------
+
+_ROUTER_ALLOWED_AIOS = {
+    "aios_core.models.base",
+    "aios_core.models.errors",
+    "aios_core.models.registry",
+    "aios_core.models.capability",
+}
+_ROUTER_ALLOWED_EXTERNAL = {
+    "pydantic",
+    "typing",
+    "datetime",
+    "enum",
+    "abc",
+    "dataclasses",
+    "threading",  # R2-1: health/router RLock
+}
+
+
+@pytest.mark.skipif(not (AIOS / "models" / "router").is_dir(), reason="models/router/ chưa tồn tại (TASK-025)")
+def test_inv_router_import_allowlist():
+    """models/router/ (routing intelligence) chỉ import models.{base,errors,registry,capability}
+    + intra — CẤM kernel/orchestrator/context/memory/contracts kể cả TYPE_CHECKING."""
+    router_dir = AIOS / "models" / "router"
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(router_dir.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.models.router")}
+    bad_aios = aios_mods - _ROUTER_ALLOWED_AIOS
+    bad_external = external - _ROUTER_ALLOWED_EXTERNAL
+    assert not bad_aios, f"models/router/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"models/router/ import ngoài allow-list (external): {bad_external}"
+
+
+# -- INV-013: no God Object (TASK-025 §5.4) -----------------------------------
+
+@pytest.mark.skipif(not (AIOS / "models" / "router").is_dir(), reason="models/router/ chưa tồn tại (TASK-025)")
+def test_inv013_no_god_object():
+    """ModelRouter chỉ điều phối: import đủ 6 module; không logic cost;
+    không đảo chiều import."""
+    router_dir = AIOS / "models" / "router"
+    _, router_mods = collect_imports(SRC_ROOT, "aios_core/models/router/router")
+    policy_sources = {"aios_core.models.router.policy", "aios_core.models.router.contracts"}
+    for needed in ("selector", "cost", "availability", "health", "fallback"):
+        assert f"aios_core.models.router.{needed}" in router_mods, (
+            f"router.py thiếu import {needed}"
+        )
+    assert router_mods & policy_sources, "router.py thiếu nguồn policy"
+    # cost logic không nằm trong router.py
+    src = (router_dir / "router.py").read_text(encoding="utf-8")
+    for forbidden in ("estimate_cost", "quality_score", "latency_ms", "balanced_score"):
+        # only as a function definition/import — not implemented here
+        assert f"def {forbidden}" not in src, f"router.py không được định nghĩa {forbidden}"
+    # không đảo chiều: selector/fallback không import router
+    for sub in ("selector", "fallback"):
+        _, mods = collect_imports(SRC_ROOT, f"aios_core/models/router/{sub}")
+        assert not any(m == "aios_core.models.router.router" for m in mods), (
+            f"{sub}.py không được import router"
+        )
+
+
+# -- INV-013: selection via router only (TASK-025 §5.1) ------------------------
+
+_INV013_EXEMPTIONS = {
+    "aios_core.kernel.runtime_kernel",  # composition root (wiring)
+    "aios_core.api.wiring",  # composition root (orchestrator default)
+    "aios_core",  # root __init__ re-export (C2-01 v2)
+}
+
+
+@pytest.mark.skipif(not (AIOS / "models" / "router").is_dir(), reason="models/router/ chưa tồn tại (TASK-025)")
+def test_inv013_selection_via_router_only():
+    """INV-013: model selection phải qua ModelRouter. Mọi module ngoài models/
+    import ModelRegistry (hoặc aios_core.models trần — collect_imports match
+    2 chiều) đều bị chặn, trừ composition roots (wiring/re-export).
+    Lưu ý: AST đếm MỌI Import node kể cả TYPE_CHECKING (bài học TASK-023 C2-01)."""
+    violations: list[str] = []
+    for py in sorted(SRC_ROOT.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        if not rel.startswith("aios_core"):
+            continue
+        if rel in _INV013_EXEMPTIONS:
+            continue
+        if rel.startswith("aios_core.models"):
+            continue
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        hits = [m for m in mods if m == "aios_core.models.registry"
+                or m.startswith("aios_core.models.registry.")
+                or m == "aios_core.models"]
+        if hits:
+            violations.append(f"{rel} -> {hits}")
+    assert not violations, f"INV-013 vi phạm (phải qua ModelRouter): {violations}"
+
 # -- upgrade/ import allow-list (TASK-020 — control plane, hook-injected) -------
 
 _UPGRADE_ALLOWED_AIOS = {

@@ -1,4 +1,4 @@
-﻿"""Knowledge memory: index text → chunks → vectors; semantic search."""
+"""Knowledge memory: index text → chunks → vectors; semantic search."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-﻿"""Chunk store: keeps chunk text for retrieval (same DB file as vectors)."""
+"""Chunk store: keeps chunk text for retrieval (same DB file as vectors)."""
 
 from __future__ import annotations
 

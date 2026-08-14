@@ -23,6 +23,13 @@ resources:
 
 models:
   default: "mock"
+  routing:
+    default: "balanced"
+    policies:
+      cheap:   { max_cost: 0.01 }
+      fast:    { max_latency_ms: 2000 }
+      quality: { min_quality: 0.9 }
+      local:   { providers: ["ollama"] }
 
 memory:
   conversation_db_path: "aios/data/conversations.db"

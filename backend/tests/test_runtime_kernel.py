@@ -104,6 +104,17 @@ def test_context_optimizer_wired(tmp_path):
     assert "[User Request]" in final.render()
 
 
+def test_model_router_wired(tmp_path):
+    """TASK-025: router resolvable; offline select works (no chat calls)."""
+    from aios_core.models import ModelRouter, RouteRequest
+
+    kernel = RuntimeKernel.create(make_settings(tmp_path))
+    router = kernel.container.resolve(ModelRouter)
+    decision = router.select(RouteRequest())
+    assert decision.model_name == "mock"
+    assert decision.policy_used == "balanced"
+
+
 def test_start_stop_idempotent(tmp_path):
     kernel = RuntimeKernel.create(make_settings(tmp_path))
     kernel.start()

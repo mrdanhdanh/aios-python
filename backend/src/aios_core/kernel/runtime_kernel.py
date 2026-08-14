@@ -66,6 +66,19 @@ class RuntimeKernel:
         model_registry.register("mock", MockModel())
         container.register_instance(ModelRegistry, model_registry)
 
+        # Model router (TASK-025): policy-driven selection + fallback.
+        # Note: register("mock", MockModel()) already attached a default
+        # capability (availability=True — no is_available() call).
+        from ..models.router import ModelRouter, RoutingPolicy
+
+        model_router = ModelRouter(
+            registry=model_registry,
+            policy=RoutingPolicy.from_settings(
+                settings.models.routing.model_dump()
+            ),
+        )
+        container.register_instance(ModelRouter, model_router)
+
         # Memory coordinator (TASK-023): the only gateway to memory stores.
         # Lazy imports avoid the aios_core/__init__ → knowledge → memory cycle.
         from ..knowledge.knowledge import KnowledgeMemory

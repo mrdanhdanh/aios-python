@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Self
 
 import yaml
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_PREFIX = "AIOS_"
@@ -51,8 +51,42 @@ class ResourcesSettings(BaseModel):
     max_concurrent: int | None = None
 
 
+class RoutingRuleSettings(BaseModel):
+    """Mirror of PolicyRule (config-local, no import from models)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_cost: float | None = None
+    max_latency_ms: int | None = None
+    min_quality: float | None = None
+    providers: list[str] | None = None
+
+
+class RoutingSettings(BaseModel):
+    """Routing policy config (PLAN §8): default balanced + named policies."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    default: str = "balanced"
+    policies: dict[str, RoutingRuleSettings] = Field(default_factory=dict)
+
+
 class ModelsSettings(BaseModel):
+    """TASK-025: +routing policy (extra=forbid — typo nested bị chặn, C2-04)."""
+
+    model_config = ConfigDict(extra="forbid")
+
     default: str = "mock"
+    routing: RoutingSettings = RoutingSettings()
+
+
+class RoutingSettings(BaseModel):
+    """Routing policy config (PLAN §8): default balanced + named policies."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    default: str = "balanced"
+    policies: dict[str, RoutingRuleSettings] = Field(default_factory=dict)
 
 
 class MemoryBudgetSettings(BaseModel):

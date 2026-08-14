@@ -203,7 +203,7 @@
 |------|----------|------------|---------|
 | TASK-023 | Memory Coordinator — Retrieve → Filter → Rank → Deduplicate → Compress → Prioritize → Inject; contract MemoryQuery/Candidate/Score/Selection/Context; budget; INV-011 | `done` ✅ | 855 pass, coverage 95.16%, 10/10 AC (2026-08-14) |
 | TASK-024 | Context Optimizer — Deduplicate → Compress → Prioritize → Token Budget → Final Context; priority P0–P6; compression 3 cấp; INV-012 | `done` ✅ | 896 pass, coverage 95.21%, 11/11 AC (2026-08-14) |
-| TASK-025 | Model Router — ModelSelector/RoutingPolicy/CostEstimator/AvailabilityChecker/FallbackResolver/ModelHealth; metadata model; policy yaml; fallback theo Policy; INV-013 | `todo` | Phase 2 |
+| TASK-025 | Model Router — ModelSelector/RoutingPolicy/CostEstimator/AvailabilityChecker/FallbackResolver/ModelHealth; metadata model; policy yaml; fallback theo Policy; INV-013 | `done` ✅ | 949 pass, coverage 95.13%, 11/11 AC (2026-08-14) |
 | TASK-026 | Planning Engine — Goal Analyzer → Task Decomposer → Dependency Analyzer → Capability Resolver → Risk Analyzer → Execution Planner → Execution Graph; plan validation 8 hạng mục; INV-014 | `todo` | Phase 3 |
 | TASK-027 | Execution Graph — ExecutionGraph/GraphNode/GraphEdge/Dependency/Condition/JoinPolicy/FailurePolicy; graph state 8 trạng thái; INV-015 | `todo` | Phase 3 |
 | TASK-028 | Parallel Scheduler — Graph Scheduler → Resource → Execution → State; không sở hữu Resource/Execution; INV-016 | `todo` | Phase 3 |
