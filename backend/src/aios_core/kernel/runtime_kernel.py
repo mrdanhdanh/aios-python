@@ -66,6 +66,35 @@ class RuntimeKernel:
         model_registry.register("mock", MockModel())
         container.register_instance(ModelRegistry, model_registry)
 
+        # Memory coordinator (TASK-023): the only gateway to memory stores.
+        # Lazy imports avoid the aios_core/__init__ → knowledge → memory cycle.
+        from ..knowledge.knowledge import KnowledgeMemory
+        from ..memory import ConversationMemory
+        from ..memory.contracts import MemoryBudget
+        from ..memory.coordinator import MemoryCoordinator, MemoryCoordinatorConfig
+        from ..memory.sources import (
+            ArtifactSource,
+            ConversationSource,
+            KnowledgeSource,
+            SessionSource,
+        )
+
+        conversation_memory = ConversationMemory(settings.memory.conversation_db_path)
+        knowledge_memory = KnowledgeMemory(settings.memory.knowledge_db_path)
+        memory_coordinator = MemoryCoordinator(
+            sources=[
+                ConversationSource(conversation_memory),
+                SessionSource(context_service),
+                KnowledgeSource(knowledge_memory),  # embedder=None (offline)
+                ArtifactSource(artifact_service),
+            ],
+            context=context_service,
+            config=MemoryCoordinatorConfig(
+                budget=MemoryBudget(**settings.memory.budget.model_dump())
+            ),
+        )
+        container.register_instance(MemoryCoordinator, memory_coordinator)
+
         # Remaining services are constructed via the container (type-only hints).
         container.register(PermissionService, PermissionService)
         container.register(PolicyService, PolicyService)

@@ -1,4 +1,4 @@
-﻿"""Conversation memory: SQLite-backed chat history."""
+"""Conversation memory: SQLite-backed chat history."""
 
 from __future__ import annotations
 

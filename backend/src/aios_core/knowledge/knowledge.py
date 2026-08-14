@@ -25,6 +25,16 @@ class ChunkResult:
     score: float
 
 
+@dataclass
+class ChunkRecord:
+    """Read-only chunk listing entry (TASK-023 additive)."""
+
+    id: str
+    source_id: str
+    chunk_index: int
+    text: str
+
+
 class KnowledgeMemory:
     """Offline knowledge base: same SQLite file for vectors + chunks.
 
@@ -88,6 +98,25 @@ class KnowledgeMemory:
         for chunk_id in ids:
             self._vectors.delete(chunk_id)
         self._chunks.delete_by_source(source_id)
+
+    def list_chunks(self, source_id: str | None = None) -> list[ChunkRecord]:
+        """List all chunks (optionally filtered by source), deterministic order.
+
+        Additive read-only method (TASK-023): queries the chunks table
+        directly (like ``search``) without touching ChunksStore internals.
+        """
+        query = "SELECT id, source_id, chunk_index, text FROM chunks"
+        params: tuple[Any, ...] = ()
+        if source_id is not None:
+            query += " WHERE source_id = ?"
+            params = (source_id,)
+        query += " ORDER BY source_id ASC, chunk_index ASC"
+        with sqlite3.connect(self._db_path) as conn:
+            rows = conn.execute(query, params).fetchall()
+        return [
+            ChunkRecord(id=r[0], source_id=r[1], chunk_index=r[2], text=r[3])
+            for r in rows
+        ]
 
     def count(self) -> int:
         return self._vectors.count()

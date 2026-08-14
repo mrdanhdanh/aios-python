@@ -1,4 +1,4 @@
-﻿"""Vector store: SQLite-backed cosine similarity search (pure Python)."""
+"""Vector store: SQLite-backed cosine similarity search (pure Python)."""
 
 from __future__ import annotations
 

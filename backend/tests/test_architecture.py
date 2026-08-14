@@ -21,6 +21,7 @@ SKILLS_DIR = AIOS / "skills"  # TASK-015
 SANDBOX_DIR = AIOS / "sandbox"  # TASK-015
 UPGRADE_DIR = AIOS / "upgrade"  # TASK-020 (M4-P7)
 OBSERVABILITY_DIR = AIOS / "observability"  # TASK-021 (M4-P8)
+MEMORY_DIR = AIOS / "memory"  # TASK-023 (M5-P9)
 
 
 # -- INV-003: workflow must not know the engine ---------------------------------
@@ -288,6 +289,58 @@ def test_inv_sandbox_import_allowlist():
     assert not aios_mods, f"sandbox/ import aios_core ngoài allow-list: {aios_mods}"
     bad_external = external - _SANDBOX_ALLOWED_EXTERNAL
     assert not bad_external, f"sandbox/ import ngoài allow-list (external): {bad_external}"
+
+
+# -- memory/ import allow-list + INV-011 (TASK-023 — Memory Isolation) -----------
+
+_MEMORY_ALLOWED_AIOS = {"aios_core.kernel.services"}
+_MEMORY_ALLOWED_EXTERNAL = {
+    "pydantic",
+    "typing",
+    "datetime",
+    "time",
+    "enum",
+    "math",
+    "hashlib",
+    "re",
+    "json",
+    # File M1 có sẵn (conversation/vector/session): sqlite3, uuid, pathlib,
+    # contextlib, abc — giữ nguyên, không đổi hành vi (additive only).
+    "sqlite3",
+    "uuid",
+    "pathlib",
+    "contextlib",
+    "abc",
+}
+
+
+@pytest.mark.skipif(not MEMORY_DIR.is_dir(), reason="memory/ chưa tồn tại (TASK-023)")
+def test_inv_memory_import_allowlist():
+    """memory/ chỉ import allow-list; CẤM aios_core.knowledge kể cả TYPE_CHECKING
+    (collect_imports đếm mọi Import node — C2-01). KnowledgeSource duck-typed.
+    """
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(MEMORY_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.memory")}
+    bad_aios = aios_mods - _MEMORY_ALLOWED_AIOS
+    bad_external = external - _MEMORY_ALLOWED_EXTERNAL
+    assert not bad_aios, f"memory/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"memory/ import ngoài allow-list (external): {bad_external}"
+
+
+@pytest.mark.skipif(not AGENTS_DIR.is_dir(), reason="agents/ chưa tồn tại (TASK-013)")
+def test_inv011_memory_isolation():
+    """INV-011: Agent KHÔNG được import memory/knowledge trực tiếp.
+
+    Đã được allow-list agents bao phủ (chỉ {models.base, models.errors}) —
+    test này tường minh hóa invariant (C3-02).
+    """
+    hits = dir_imports(AGENTS_DIR, ["aios_core.memory", "aios_core.knowledge"])
+    assert hits == [], f"INV-011 vi phạm: {hits}"
 
 
 # -- upgrade/ import allow-list (TASK-020 — control plane, hook-injected) -------

@@ -14,6 +14,7 @@ def client(tmp_path, monkeypatch):
     settings.goals.db_path = str(tmp_path / "goals.db")
     settings.skills.db_path = str(tmp_path / "skills.db")
     settings.memory.conversation_db_path = str(tmp_path / "conv.db")
+    settings.memory.knowledge_db_path = str(tmp_path / "knowledge.db")  # TASK-023
     settings.audit.db_path = str(tmp_path / "audit.db")
     monkeypatch.setenv("AIOS_CONFIG_PATH", str(tmp_path / "nonexistent.yaml"))
     return TestClient(create_app(settings))

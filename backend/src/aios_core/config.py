@@ -55,9 +55,25 @@ class ModelsSettings(BaseModel):
     default: str = "mock"
 
 
+class MemoryBudgetSettings(BaseModel):
+    """TASK-023: token budget caps per category (PLAN §3.3, total 20K).
+
+    ``system``/``reserve`` are reserved for TASK-024 Context Optimizer.
+    Mirrors memory.contracts.MemoryBudget (same schema, local to config).
+    """
+
+    system: int = 3000
+    task: int = 2000
+    knowledge: int = 6000
+    history: int = 5000
+    artifacts: int = 3000
+    reserve: int = 1000
+
+
 class MemorySettings(BaseModel):
     conversation_db_path: str = "aios/data/conversations.db"
     knowledge_db_path: str = "aios/data/knowledge.db"
+    budget: MemoryBudgetSettings = MemoryBudgetSettings()
 
 
 class GoalsSettings(BaseModel):

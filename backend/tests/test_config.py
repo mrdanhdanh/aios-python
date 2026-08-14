@@ -139,3 +139,29 @@ def test_memory_settings(tmp_path, monkeypatch):
     settings = load_settings()
     assert settings.memory.conversation_db_path == "aios/data/conversations.db"
     assert settings.memory.knowledge_db_path == "aios/data/knowledge.db"
+
+
+def test_memory_budget_defaults(tmp_path, monkeypatch):
+    """TASK-023 YC-10: budget 6 field default (PLAN §3.3 — total 20K)."""
+    monkeypatch.delenv(CONFIG_PATH_ENV, raising=False)
+    monkeypatch.chdir(tmp_path)
+    settings = load_settings()
+    budget = settings.memory.budget
+    assert budget.system == 3000
+    assert budget.task == 2000
+    assert budget.knowledge == 6000
+    assert budget.history == 5000
+    assert budget.artifacts == 3000
+    assert budget.reserve == 1000
+    assert sum(
+        (budget.system, budget.task, budget.knowledge,
+         budget.history, budget.artifacts, budget.reserve)
+    ) == 20000
+
+
+def test_memory_budget_env_override(tmp_path, monkeypatch):
+    monkeypatch.delenv(CONFIG_PATH_ENV, raising=False)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("AIOS_MEMORY__BUDGET__KNOWLEDGE", "8000")
+    settings = load_settings()
+    assert settings.memory.budget.knowledge == 8000

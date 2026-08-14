@@ -12,7 +12,7 @@
 | M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `done` ✅ (669 tests, 95.51%) |
 | M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `done` ✅ (689 pytest + 19 vitest) |
 | M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `done` ✅ (809 tests, 94.92%) |
-| M5 | Enterprise Edition (tương lai — không làm v1) | `todo` |
+| M5 | Core Intelligence (P9–P10: memory/context/model/planning/graph/scheduler) | `in-progress` 🔄 |
 
 ## Hạ tầng bổ sung (bypass)
 
@@ -192,6 +192,22 @@
 - API `/api/v1/orchestrator-v2/` (4 GET); wiring regs["orchestrator_v2"] + TaskQueue wire; CLI `aiagent advisor`/`supervisor`; metrics.py +duration_by_workflow
 - Critic ×2: 24 vấn đề (7 P1) resolved; Review: APPROVED có điều kiện → 1 R2 + 3 R3 resolved (+1 bypass fix `_metrics` suffix)
 - **809 passed + 0 skipped, coverage 94.92%, 8/8 AC — P8 HOÀN TẤT → M4 HOÀN TẤT**
+
+## M5 — Core Intelligence (in-progress) — 2026-08-14
+
+> PLAN.md §M5: nâng cấp "bộ não vận hành" — không thêm agent/UI. Trả lời: Memory (nhớ gì?), Context (đưa gì vào?), Model Router (dùng model nào?), Planning (làm bước nào?), Execution Graph (phụ thuộc thế nào?), Scheduler (chạy khi nào/song song?).
+> Thứ tự: Phase 1 (023→024) → Phase 2 (025) → Phase 3 (026→027→028). Mỗi task qua hard gate đầy đủ (spec → critique ×2 → tasks → review → implement → test → evaluate).
+> DoD M5: Memory không truy cập trực tiếp từ Agent; Context có budget + priority; Model routing theo policy + fallback; Planner tạo task graph; Graph hỗ trợ dependency + parallel; Scheduler không sở hữu Resource/Execution; INV-011..016 enforced bằng AST tests; observability đầy đủ.
+
+| Task | Nội dung | Trạng thái | Ghi chú |
+|------|----------|------------|---------|
+| TASK-023 | Memory Coordinator — Retrieve → Filter → Rank → Deduplicate → Compress → Prioritize → Inject; contract MemoryQuery/Candidate/Score/Selection/Context; budget; INV-011 | `done` ✅ | 855 pass, coverage 95.16%, 10/10 AC (2026-08-14) |
+| TASK-024 | Context Optimizer — Deduplicate → Compress → Prioritize → Token Budget → Final Context; priority P0–P6; compression 3 cấp; INV-012 | `todo` | Phase 1 |
+| TASK-025 | Model Router — ModelSelector/RoutingPolicy/CostEstimator/AvailabilityChecker/FallbackResolver/ModelHealth; metadata model; policy yaml; fallback theo Policy; INV-013 | `todo` | Phase 2 |
+| TASK-026 | Planning Engine — Goal Analyzer → Task Decomposer → Dependency Analyzer → Capability Resolver → Risk Analyzer → Execution Planner → Execution Graph; plan validation 8 hạng mục; INV-014 | `todo` | Phase 3 |
+| TASK-027 | Execution Graph — ExecutionGraph/GraphNode/GraphEdge/Dependency/Condition/JoinPolicy/FailurePolicy; graph state 8 trạng thái; INV-015 | `todo` | Phase 3 |
+| TASK-028 | Parallel Scheduler — Graph Scheduler → Resource → Execution → State; không sở hữu Resource/Execution; INV-016 | `todo` | Phase 3 |
+| INV-011..016 | Enforcement tests (AST) trong `tests/test_architecture.py` + observability metrics M5 | `todo` | tích hợp trong các task |
 
 ## Log gần nhất
 

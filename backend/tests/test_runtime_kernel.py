@@ -1,11 +1,18 @@
 """RuntimeKernel tests: wiring, lifecycle, end-to-end."""
 
-from aios_core.config import AuditSettings, ArtifactsSettings, ResourcesSettings, Settings
+from aios_core.config import (
+    AuditSettings,
+    ArtifactsSettings,
+    MemorySettings,
+    ResourcesSettings,
+    Settings,
+)
 from aios_core.kernel import RuntimeKernel
 from aios_core.kernel.events import EventBus
 from aios_core.kernel.execution_plan import ExecutionPlanBuilder
 from aios_core.kernel.services import (
     ArtifactService,
+    ContextScope,
     ContextService,
     EventService,
     ExecutionService,
@@ -16,6 +23,7 @@ from aios_core.kernel.services import (
     SchedulerService,
     StateService,
 )
+from aios_core.memory import MemoryCoordinator, MemoryKind, MemoryQuery
 
 
 def make_settings(tmp_path):
@@ -23,6 +31,10 @@ def make_settings(tmp_path):
         audit=AuditSettings(db_path=str(tmp_path / "audit.db")),
         artifacts=ArtifactsSettings(dir=str(tmp_path / "artifacts")),
         resources=ResourcesSettings(max_tokens=1000, max_concurrent=2),
+        memory=MemorySettings(
+            conversation_db_path=str(tmp_path / "conv.db"),
+            knowledge_db_path=str(tmp_path / "knowledge.db"),
+        ),
     )
 
 
@@ -59,8 +71,25 @@ def test_resolve_all_no_raise(tmp_path):
         StateService,
         ResourceService,
         ExecutionService,
+        MemoryCoordinator,
     ):
         assert c.resolve(interface) is not None
+
+
+def test_memory_coordinator_wired(tmp_path):
+    """TASK-023: coordinator resolvable; empty query returns empty selection
+    and injection writes into EXECUTION scope (no store data needed)."""
+    kernel = RuntimeKernel.create(make_settings(tmp_path))
+    coordinator = kernel.container.resolve(MemoryCoordinator)
+    query = MemoryQuery(text="", session_id="s1")
+    selection = coordinator.retrieve(query)
+    assert selection.items == []
+    assert selection.total_tokens == 0
+    ctx = coordinator.inject(query)
+    assert ctx.session_id == "s1"
+    context_service = kernel.container.resolve(ContextService)
+    stored = context_service.get(ContextScope.EXECUTION, "memory.context", inherit=False)
+    assert stored is not None and stored.session_id == "s1"
 
 
 def test_start_stop_idempotent(tmp_path):
