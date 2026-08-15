@@ -46,6 +46,10 @@ plugins:
   db_path: "aios/data/plugins.db"
   strict: true
 
+ecosystem:
+  enabled: true
+  db_path: "aios/data/ecosystem.db"
+
 observability:
   db_path: "aios/data/observability.db"
 

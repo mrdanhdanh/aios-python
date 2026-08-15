@@ -1420,6 +1420,121 @@ def test_m8_plugins_provides_active_only():
     assert "def provides(" in manager_src
 
 
+# -- extension/ import allow-list (M8 — TASK-045) ------------------------------
+
+EXTENSION_DIR = AIOS / "extension"
+
+_EXTENSION_ALLOWED_AIOS = {"aios_core.semver"}
+_EXTENSION_ALLOWED_EXTERNAL = {
+    "pydantic", "typing", "enum", "dataclasses", "datetime", "time",
+    "uuid", "hashlib", "json", "collections", "abc", "threading",
+    "functools", "re", "copy", "math",
+}
+
+
+@pytest.mark.skipif(not EXTENSION_DIR.is_dir(), reason="extension/ chưa tồn tại (M8)")
+def test_m8_extension_import_allowlist():
+    """extension/ (TASK-045) chỉ import semver + pydantic/stdlib — pure
+    namespace + matrix, không chạm kernel/plugins/ecosystem."""
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(EXTENSION_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.extension")}
+    assert not (aios_mods - _EXTENSION_ALLOWED_AIOS), f"extension/ import ngoài allow-list: {aios_mods - _EXTENSION_ALLOWED_AIOS}"
+    assert not (external - _EXTENSION_ALLOWED_EXTERNAL), f"extension/ import ngoài allow-list: {external - _EXTENSION_ALLOWED_EXTERNAL}"
+
+
+@pytest.mark.skipif(not EXTENSION_DIR.is_dir(), reason="extension/ chưa tồn tại (M8)")
+def test_m8_extension_namespace_gate():
+    """M8-E3: 4 namespace + gate allowed_namespaces fail-closed."""
+    contracts_src = (EXTENSION_DIR / "contracts.py").read_text(encoding="utf-8")
+    for value in ("internal", "public", "extension", "experimental"):
+        assert value in contracts_src
+    matrix_src = (EXTENSION_DIR / "matrix.py").read_text(encoding="utf-8")
+    assert "def assert_namespace_allowed" in matrix_src
+    assert "raise CompatibilityViolation" in matrix_src
+
+
+@pytest.mark.skipif(not EXTENSION_DIR.is_dir(), reason="extension/ chưa tồn tại (M8)")
+def test_m8_extension_matrix_fail_closed():
+    """M8-E3: missing runtime contract → error (fail-closed)."""
+    matrix_src = (EXTENSION_DIR / "matrix.py").read_text(encoding="utf-8")
+    assert "missing runtime contract" in matrix_src
+    assert "ok=not errors" in matrix_src
+
+
+# -- ecosystem/ import allow-list (M8 — TASK-046..049) --------------------------
+
+ECOSYSTEM_DIR = AIOS / "ecosystem"
+
+_ECOSYSTEM_ALLOWED_AIOS = {"aios_core.semver", "aios_core.metadata"}
+_ECOSYSTEM_ALLOWED_EXTERNAL = {
+    "pydantic", "typing", "enum", "dataclasses", "datetime", "time",
+    "uuid", "hashlib", "json", "collections", "abc", "threading",
+    "functools", "re", "copy", "math", "pathlib", "sqlite3", "contextlib", "hmac",
+}
+
+
+@pytest.mark.skipif(not ECOSYSTEM_DIR.is_dir(), reason="ecosystem/ chưa tồn tại (M8)")
+def test_m8_ecosystem_import_allowlist():
+    """ecosystem/ (TASK-046..049) chỉ import semver/metadata + pydantic/stdlib
+    (+ hmac cho marketplace) — độc lập kernel/plugins/extension/harness."""
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(ECOSYSTEM_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.ecosystem")}
+    assert not (aios_mods - _ECOSYSTEM_ALLOWED_AIOS), f"ecosystem/ import ngoài allow-list: {aios_mods - _ECOSYSTEM_ALLOWED_AIOS}"
+    assert not (external - _ECOSYSTEM_ALLOWED_EXTERNAL), f"ecosystem/ import ngoài allow-list: {external - _ECOSYSTEM_ALLOWED_EXTERNAL}"
+
+
+@pytest.mark.skipif(not ECOSYSTEM_DIR.is_dir(), reason="ecosystem/ chưa tồn tại (M8)")
+def test_m8_ecosystem_registry_pure_index():
+    """M8-E4: registry chỉ index/search — không nhúng certification/marketplace."""
+    registry_src = (ECOSYSTEM_DIR / "registry.py").read_text(encoding="utf-8")
+    assert "class EcosystemRegistry" in registry_src
+    assert "from .certification" not in registry_src
+    assert "from .marketplace" not in registry_src
+
+
+@pytest.mark.skipif(not ECOSYSTEM_DIR.is_dir(), reason="ecosystem/ chưa tồn tại (M8)")
+def test_m8_ecosystem_certification_harness_gate():
+    """M8-E7: certification = Harness gate — fail check → COMMUNITY; security
+    fail hard-block CERTIFIED+; evidence bắt buộc."""
+    cert_src = (ECOSYSTEM_DIR / "certification.py").read_text(encoding="utf-8")
+    assert "CertLevel.COMMUNITY" in cert_src
+    assert "CertLevel.VERIFIED" in cert_src
+    assert "CertLevel.CERTIFIED" in cert_src
+    assert "CertLevel.ENTERPRISE_CERTIFIED" in cert_src
+    assert "security_failed" in cert_src
+    assert "evidence" in cert_src
+
+
+@pytest.mark.skipif(not ECOSYSTEM_DIR.is_dir(), reason="ecosystem/ chưa tồn tại (M8)")
+def test_m8_ecosystem_marketplace_trust_chain():
+    """M8-E6: 9 bước trust chain + raw key không serialize."""
+    mp_src = (ECOSYSTEM_DIR / "marketplace.py").read_text(encoding="utf-8")
+    for step in ("download", "manifest_validation", "signature_verification",
+                 "dependency_check", "permission_analysis", "compatibility_check",
+                 "security_scan", "harness_certification", "install"):
+        assert step in mp_src, f"thiếu bước trust chain: {step}"
+    contracts_src = (ECOSYSTEM_DIR / "contracts.py").read_text(encoding="utf-8")
+    assert "signing_key: str" not in contracts_src  # chỉ lưu fingerprint
+
+
+@pytest.mark.skipif(not ECOSYSTEM_DIR.is_dir(), reason="ecosystem/ chưa tồn tại (M8)")
+def test_m8_ecosystem_devkit_deterministic_no_overwrite():
+    """M8-E5: scaffold deterministic + no-overwrite + name regex."""
+    devkit_src = (ECOSYSTEM_DIR / "devkit.py").read_text(encoding="utf-8")
+    assert "refusing to overwrite" in devkit_src
+    assert "_NAME_RE" in devkit_src
+
+
 def test_arch_scan_ignores_future():
     _, aios_mods = collect_imports(SRC_ROOT, "aios_core/orchestrator/planner")
     assert "__future__" not in aios_mods

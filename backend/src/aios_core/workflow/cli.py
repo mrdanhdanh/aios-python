@@ -67,6 +67,26 @@ def main(argv: list[str] | None = None) -> int:
         help="Run compatibility + dependency checks only (no changes)",
     )
 
+    ecosystem = sub.add_parser("ecosystem", help="Ecosystem registry commands (M8-E4)")
+    ecosystem_sub = ecosystem.add_subparsers(dest="ecosystem_command", required=True)
+    eco_search = ecosystem_sub.add_parser("search", help="Search the ecosystem registry")
+    eco_search.add_argument("query", nargs="?", default="", help="Keyword (id/name/description/publisher)")
+    eco_search.add_argument("--kind", default=None, help="Filter by entry kind (agent/tool/plugin/...)")
+
+    plugin = sub.add_parser("plugin", help="Plugin commands (M8-E5)")
+    plugin_sub = plugin.add_subparsers(dest="plugin_command", required=True)
+    plugin_create = plugin_sub.add_parser("create", help="Scaffold a new plugin/agent/capability/tool/workflow")
+    plugin_create.add_argument("kind", help="plugin|agent|capability|tool|workflow")
+    plugin_create.add_argument("name", help="Component name ([a-z][a-z0-9_]*)")
+    plugin_create.add_argument("--dir", default=".", help="Output directory (default: current)")
+
+    marketplace = sub.add_parser("marketplace", help="Marketplace commands (M8-E6)")
+    marketplace_sub = marketplace.add_subparsers(dest="marketplace_command", required=True)
+    mp_publish = marketplace_sub.add_parser("publish", help="Publish a manifest JSON file")
+    mp_publish.add_argument("manifest_file", help="Path to manifest JSON")
+    mp_publish.add_argument("--publisher", required=True, help="Publisher id")
+    mp_publish.add_argument("--key", required=True, help="Signing key (>=64 chars)")
+
     args = parser.parse_args(argv)
 
     if args.command == "run":
@@ -93,6 +113,12 @@ def main(argv: list[str] | None = None) -> int:
         return _contract_validate(args.contract_file)
     if args.command == "upgrade":
         return _upgrade(args.kind, args.component_id, args.version, args.dry_run)
+    if args.command == "ecosystem" and args.ecosystem_command == "search":
+        return _ecosystem_search(args.query, args.kind)
+    if args.command == "plugin" and args.plugin_command == "create":
+        return _plugin_create(args.kind, args.name, args.dir)
+    if args.command == "marketplace" and args.marketplace_command == "publish":
+        return _marketplace_publish(args.manifest_file, args.publisher, args.key)
     return 1
 
 
@@ -378,6 +404,48 @@ def _run_simulate(workflow_file: str) -> int:
     for node_id, node_result in result.node_results.items():
         print(f"  node {node_id}: {node_result}")
     return 0 if result.status.value == "completed" else 1
+
+
+def _ecosystem_search(query: str, kind: str | None) -> int:
+    # Ecosystem registry search (M8-E4). DB path convention khớp config.
+    from ..config import load_settings
+    from ..ecosystem import EcosystemRegistry
+
+    settings = load_settings()
+    registry = EcosystemRegistry(settings.ecosystem.db_path)
+    hits = registry.search(query, kind=kind)
+    out = [
+        {"kind": e.kind.value, "id": e.id, "version": e.version,
+         "name": e.name, "description": e.description}
+        for e in hits
+    ]
+    print(json.dumps({"count": len(out), "results": out}, indent=2))
+    return 0
+
+
+def _plugin_create(kind: str, name: str, out_dir: str) -> int:
+    # Developer Kit scaffold (M8-E5).
+    from ..ecosystem import DevKit
+
+    created = DevKit().create_scaffold(kind, name, out_dir)
+    print(json.dumps({"created": created}, indent=2))
+    return 0
+
+
+def _marketplace_publish(manifest_file: str, publisher_id: str, key: str) -> int:
+    # Marketplace publish (M8-E6) — requires manifest JSON file.
+    from ..config import load_settings
+    from ..ecosystem import MarketplaceRegistry, Publisher
+
+    with open(manifest_file, encoding="utf-8") as fh:
+        manifest = json.load(fh)
+    settings = load_settings()
+    registry = MarketplaceRegistry(settings.ecosystem.db_path)
+    registry.register_publisher(Publisher(id=publisher_id, name=publisher_id), key)
+    record = registry.publish(publisher_id, key, manifest)
+    print(json.dumps({"publisher": record.publisher_id, "name": record.name,
+                      "version": record.version, "signature": record.signature[:16] + "..."}))
+    return 0
 
 
 if __name__ == "__main__":

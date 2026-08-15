@@ -15,7 +15,7 @@
 | M5 | Core Intelligence (P9–P10: memory/context/model/planning/graph/scheduler) | `done` ✅ (1086 tests, 95.22%) |
 | M6 | AIOS Harness (P11: harness kernel, verification, test & simulation, evaluation, benchmark, doctor & readiness) | `done` ✅ (1521 tests, 95.35%) |
 | M7 | Enterprise (P12: identity, tenancy, distributed runtime, distributed scheduler, governance, security, operations, dashboard) | `in-progress` 🔄 (1560 tests, 95.05%) |
-| M8 | Ecosystem (P13: Public SDK, Plugin Runtime, Extension Contracts, Registry, Developer Kit, Hub, Certification) | `in-progress` 🔄 (planning TASK-043) |
+| M8 | Ecosystem (P13: Public SDK, Plugin Runtime, Extension Contracts, Registry, Developer Kit, Hub, Certification) | `done` ✅ (1639 tests) |
 
 ## Hạ tầng bổ sung (bypass)
 
@@ -260,14 +260,16 @@
 |------|----------|------------|---------|
 | TASK-043 | E1 Public AIOS SDK — `from aios import Agent, Tool, Capability, Workflow, Client`; transport injection; không import aios_core | `done` ✅ | `sdk/python/`; 5 SDK tests (2026-08-15) |
 | TASK-044 | E2 Plugin Runtime — lifecycle 10-state reuse `SkillState`/`assert_transition`; compat aios range (`*`/`2.x`/semver); dependency + dependent check; provides index active-only; events plugin.* | `done` ✅ | `plugins/` 7 file + 4 arch test m8_*; 1584 tests (2026-08-15) |
-| TASK-045 | E3 Extension Contracts — Internal/Public/Extension/Experimental API + Compatibility Matrix | `todo` | |
-| TASK-046 | E4 Ecosystem Registry — Registry v2 + discovery (`aios search`), MCP làm adapter | `todo` | |
-| TASK-047 | E5 Developer Kit — `aios create/dev/test` scaffold | `todo` | |
-| TASK-048 | E6 Marketplace/Distribution — Trust Model + signature | `todo` | |
-| TASK-049 | E7 Certification — COMMUNITY→VERIFIED→CERTIFIED, Harness gate | `todo` | |
+| TASK-045 | E3 Extension Contracts — Internal/Public/Extension/Experimental API + Compatibility Matrix | `done` ✅ | `extension/` 4 file; 8 tests + 3 arch (2026-08-15) |
+| TASK-046 | E4 Ecosystem Registry — Registry v2 + discovery (`aios search`), MCP làm adapter | `done` ✅ | `ecosystem/registry.py` + `contracts.py`; 7 tests + arch (2026-08-15) |
+| TASK-047 | E5 Developer Kit — `aios create/dev/test` scaffold | `done` ✅ | `ecosystem/devkit.py` + CLI `aiagent plugin create`; 7 tests + arch (2026-08-15) |
+| TASK-048 | E6 Marketplace/Distribution — Trust Model + signature | `done` ✅ | `ecosystem/marketplace.py` + CLI `aiagent marketplace publish`; 12 tests + arch (2026-08-15) |
+| TASK-049 | E7 Certification — COMMUNITY→VERIFIED→CERTIFIED, Harness gate | `done` ✅ | `ecosystem/certification.py`; 9 tests + arch (2026-08-15) |
 
-**Deliverable M8 (2/7)**: `sdk/python/src/aios/` (6 file + tests) + `backend/src/aios_core/plugins/` (contracts, compat, errors, manager, registry, schema, __init__) + config `PluginSettings` + `config.yaml` + wiring (`regs["plugins"]`/`regs["plugin_registry"]`) + 4 EventType `PLUGIN_*` + `tests/test_plugins.py` (20 tests) + 4 arch tests `test_m8_*`.
-**1584 collected (baseline 1560 + 24 mới), 10/10 AC (E1–E2) — M8 tiếp tục TASK-045**.
+**Deliverable M8 (7/7)**: `sdk/python/src/aios/` (TASK-043) + `plugins/` (TASK-044) + `extension/` (TASK-045: ApiNamespace + matrix) + `ecosystem/` (TASK-046..049: registry/contracts, devkit, certification, marketplace) + config `PluginSettings`/`EcosystemSettings` + `config.yaml` + wiring (`regs["plugins"]`/`regs["plugin_registry"]`/`regs["ecosystem"]`) + CLI `aiagent ecosystem search` / `plugin create` / `marketplace publish` + 4 EventType `PLUGIN_*`.
+**1639 passed (baseline 1584 + 55 mới), 7/7 AC (E1–E7) — M8 HOÀN TẤT**.
+
+> M8 KHÔNG thêm architecture invariant (đúng PLAN); arch tests `test_m8_*` (13 tests: 4 plugins + 3 extension + 6 ecosystem) bảo vệ import allow-list + literal gates.
 
 ## Log gần nhất
 

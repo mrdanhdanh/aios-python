@@ -127,6 +127,17 @@ def build_registries(settings: Settings, kernel: RuntimeKernel, regs: dict) -> d
     if "plugin_registry" not in regs or regs["plugin_registry"] is None:
         regs["plugin_registry"] = PluginRegistry(db_path=settings.plugins.db_path)
 
+    # Ecosystem (TASK-046..049, M8-E4..E7): registry + marketplace chung db.
+    def _build_ecosystem():
+        from ..ecosystem import EcosystemRegistry, MarketplaceRegistry
+
+        return {
+            "registry": EcosystemRegistry(settings.ecosystem.db_path),
+            "marketplace": MarketplaceRegistry(settings.ecosystem.db_path),
+        }
+
+    _ensure("ecosystem", _build_ecosystem)
+
     # Goals (db_path from Settings.goals).
     def _build_goals():
         from ..orchestrator.goals import GoalManager

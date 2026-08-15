@@ -132,6 +132,15 @@ class PluginSettings(BaseModel):
     strict: bool = True  # resolve/validate lỗi → raise (fail-fast)
 
 
+class EcosystemSettings(BaseModel):
+    """TASK-046..TASK-049: Ecosystem subsystem persistence (M8-E4..E7)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    db_path: str = "aios/data/ecosystem.db"  # registry + marketplace chung
+
+
 class ObservabilitySettings(BaseModel):
     """TASK-021: metrics/prompt-history/evaluations persistence."""
 
@@ -319,6 +328,7 @@ class Settings(BaseSettings):
     goals: GoalsSettings = GoalsSettings()
     skills: SkillsSettings = SkillsSettings()
     plugins: PluginSettings = PluginSettings()
+    ecosystem: EcosystemSettings = EcosystemSettings()
     observability: ObservabilitySettings = ObservabilitySettings()
     planning: PlanningSettings = PlanningSettings()
     graph: GraphSettings = GraphSettings()
