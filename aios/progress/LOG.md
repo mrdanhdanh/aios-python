@@ -4,6 +4,9 @@
 > Entry `[bypass]` = fix nhỏ làm nhanh, có lý do.
 > Entry mới ghi LÊN ĐẦU file (mới nhất trước).
 
+| 2026-08-15 | TASK-065,066,069 | evaluate | Đóng Phase 2 M10 (Harden): TASK-065 Runtime Hardening (Failure Matrix 12 loại, 12/12 scenario end-to-end — 18/18 PASS) + TASK-066 Durable Execution 1.0 (journal + verify-before-resume + idempotency — 10/10 PASS) + TASK-069 Reliability SLO (7 ratio + 5 zero-gate — 12/12 PASS) | **M10-P2 DONE** — full suite 1855 pass | `kernel/hardening.py`, `kernel/durability.py`, `observability/slo.py`, `test_{hardening,durability,slo}.py` |
+
+| 2026-08-15 | TASK-065,066,069 | hard-gate | Batch hard gate M10-P2: TASK-065 (Failure Matrix, critique ×2 C1-01..04/C2-01..03, review R1–R4) + TASK-066 (durable, critique ×2, review R1–R4) + TASK-069 (SLO, critique ×2, review R1–R4) | **PASS — được phép implement** | `aios/progress/tasks/TASK-065/`, `TASK-066/`, `TASK-069/` |
 | 2026-08-15 | TASK-063,064 | evaluate | Đóng Phase 1 M10 (Freeze): TASK-063 M10-F1 Architecture Freeze (docs/architecture/* 6 file + Constitution 1.0 + 2 enforcement test INV-008/012 bổ sung — 19/19 PASS) + TASK-064 Contract 1.0 (catalog 10 contract + checker matrix + CLI contract list/check — 20/20 PASS) | **M10-P1 DONE** — full suite 1815 pass | `docs/architecture/*`, `contracts/{catalog,check}.py`, `test_contracts_catalog.py` |
 
 | 2026-08-15 | TASK-063,064 | hard-gate | Batch hard gate M10-P1: TASK-063 spec v2 mở rộng M10-F1 (constitution + docs/architecture/*) + critique ×2 (C1-01..04, C2-01..03 resolved) + review APPROVED (R1–R4); TASK-064 spec Contract 1.0 + critique ×2 (C1-01..05, C2-01..03 resolved) + review APPROVED (R1–R4) | **PASS — được phép implement** | `aios/progress/tasks/TASK-063/`, `TASK-064/` |

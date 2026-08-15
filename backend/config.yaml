@@ -138,3 +138,10 @@ autonomous:
   cost_max: 1.0
   stuck_iterations: 3
   stuck_window: 20
+
+durability:
+  enabled: true
+  db_path: "aios/data/durability.db"
+  policy:
+    mode: resume
+    require_verify: true

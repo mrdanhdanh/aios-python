@@ -113,6 +113,9 @@ class MetricsService:
                 ok = None
                 if event.type == EventType.TOOL_FINISHED:
                     ok = 1 if payload.get("ok") else 0
+                elif event.type in _WORKFLOW_FINISH:
+                    # TASK-069: workflow outcome → ok (COMPLETED=1, FAILED/CANCELLED=0)
+                    ok = 1 if event.type == EventType.WORKFLOW_COMPLETED else 0
                 conn.execute(
                     "UPDATE metrics SET finished_at = ?, duration_ms = ?, ok = ? WHERE id = ?",
                     (_iso(finish), _ms(start, finish), ok, row["id"]),
@@ -185,6 +188,23 @@ class MetricsService:
                 "SELECT COUNT(*) AS n FROM metrics WHERE category = 'tool' AND ok = 0"
             ).fetchone()
         return row["n"] if row else 0
+
+    def counts_by_outcome(self, category: str) -> dict[str, int]:
+        """(M10 TASK-069) Đếm theo outcome ok=1/ok=0 — cho SLO execution success.
+
+        Additive — không đổi hành vi hiện có.
+        """
+        self._ensure()
+        with closing(self._connect()) as conn:
+            ok = conn.execute(
+                "SELECT COUNT(*) AS n FROM metrics WHERE category = ? AND ok = 1",
+                (category,),
+            ).fetchone()["n"]
+            bad = conn.execute(
+                "SELECT COUNT(*) AS n FROM metrics WHERE category = ? AND ok = 0",
+                (category,),
+            ).fetchone()["n"]
+        return {"ok": ok, "failed": bad}
 
     def summary(self) -> dict[str, Any]:
         """Keys: counts, avg_duration_ms, tool_failures, total."""

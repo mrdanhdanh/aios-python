@@ -345,6 +345,25 @@ class AutonomousSettings(BaseModel):
     stuck_window: int = 20
 
 
+class DurabilityPolicySettings(BaseModel):
+    """TASK-066: chính sách resume sau crash."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    mode: str = "resume"  # resume | rerun
+    require_verify: bool = True
+
+
+class DurabilitySettings(BaseModel):
+    """TASK-066 — Durable Execution 1.0 (M10-F2)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    db_path: str = "aios/data/durability.db"
+    policy: DurabilityPolicySettings = DurabilityPolicySettings()
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -378,6 +397,7 @@ class Settings(BaseSettings):
     doctor: DoctorSettings = DoctorSettings()
     enterprise: EnterpriseSettings = EnterpriseSettings()
     autonomous: AutonomousSettings = AutonomousSettings()
+    durability: DurabilitySettings = DurabilitySettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

@@ -43,6 +43,8 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("supervisor", help="Execution supervisor snapshot (M4-P8)")
 
+    sub.add_parser("slo", help="Reliability SLO report + release verdict (M10-F2)")
+
     serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
     serve.add_argument("--host", default="127.0.0.1", help="Bind host")
     serve.add_argument("--port", type=int, default=8000, help="Bind port")
@@ -110,6 +112,8 @@ def main(argv: list[str] | None = None) -> int:
         return _advisor()
     if args.command == "supervisor":
         return _supervisor()
+    if args.command == "slo":
+        return _slo()
     if args.command == "serve":
         return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
@@ -262,6 +266,19 @@ def _serve(host: str, port: int) -> int:
 
     run(host=host, port=port)
     return 0
+
+
+def _slo() -> int:
+    """Reliability SLO report + release verdict (M10-F2, TASK-069)."""
+    from ..kernel import RuntimeKernel
+    from ..observability.slo import SloEngine, format_slo_report
+
+    kernel = RuntimeKernel.create()
+    engine = SloEngine()
+    metrics = engine.metrics_from_runtime(kernel)
+    report = engine.check(metrics)
+    print(format_slo_report(report))
+    return 0 if report.release_ready else 1
 
 
 def _catalog_list() -> int:

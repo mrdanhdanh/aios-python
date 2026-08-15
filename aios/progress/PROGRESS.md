@@ -21,9 +21,9 @@
 |------|----------|-----------|------------|-------|
 | TASK-063 | F1 Architecture Freeze — Constitution 1.0 (INV-001..034 frozen) + docs/architecture/* (AIOS-1.0, layer-model, control-plane, execution-plane, autonomy) | M10-P1 | `done` ✅ (19/19 PASS; +2 enforcement test INV-008/012) | AIOS Orchestrator |
 | TASK-064 | F2 Contract 1.0 — freeze 10 contracts (Agent/Capability/Tool/Workflow/Runtime/Event/Artifact/Plugin/Model/Memory) + semantic versioning + `aiagent contract-check` | M10-P1 | `done` ✅ (20/20 PASS — full suite 1815) | AIOS Orchestrator |
-| TASK-065 | F3 Runtime Hardening — failure matrix 12 loại (detect→contain→recover→resume) | M10-P2 | `todo` | AIOS Orchestrator |
-| TASK-066 | Durable Execution 1.0 — journal + verify-before-resume + idempotency classification (exactly-once/at-least-once) | M10-P2 | `todo` | AIOS Orchestrator |
-| TASK-069 | Reliability Engineering — SLO registry + non-averaged gates (policy bypass=0, lost execution=0, ...) | M10-P2 | `todo` | AIOS Orchestrator |
+| TASK-065 | F3 Runtime Hardening — failure matrix 12 loại (detect→contain→recover→resume) | M10-P2 | `done` ✅ (18/18 PASS — 12 scenario end-to-end) | AIOS Orchestrator |
+| TASK-066 | Durable Execution 1.0 — journal + verify-before-resume + idempotency classification (exactly-once/at-least-once) | M10-P2 | `done` ✅ (10/10 PASS) | AIOS Orchestrator |
+| TASK-069 | Reliability Engineering — SLO registry + non-averaged gates (policy bypass=0, lost execution=0, ...) | M10-P2 | `done` ✅ (12/12 PASS — full suite 1855) | AIOS Orchestrator |
 | TASK-067 | F4 Autonomy Safety — Action Proposal → Risk Classifier → Governor → Policy → Permission → Capability → Tool (mandatory, stop-anywhere) | M10-P3 | `todo` | AIOS Orchestrator |
 | TASK-068 | Kill Switch — `aiagent stop execution/goal` + `aiagent emergency-stop` | M10-P3 | `todo` | AIOS Orchestrator |
 | TASK-070 | Security Baseline 1.0 — 11 items baseline + `aiagent security-check` | M10-P3 | `todo` | AIOS Orchestrator |
