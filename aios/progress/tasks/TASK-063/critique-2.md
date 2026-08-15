@@ -1,24 +1,20 @@
-# TASK-063 — Critique vòng 2
+# TASK-063 — Critique vòng 2 (M10-F1, spec v2)
 
-> Critic vòng 2 (độc lập, sau khi resolve vòng 1). Kiểm tra spec + quy ước đã bổ sung.
+> Critic vòng 2 (độc lập, sau khi resolve vòng 1 M10-F1). Kiểm tra spec v2 + bổ sung đã resolve.
 
 ## Các vấn đề tìm được
 
-### C2-01 (P2) — Kiểm tra render phải là "test thật", không chỉ nhìn
-AC2 nói "parser hoặc render thật chạy được" nhưng chưa nói làm thế nào.
-→ **Resolve**: Chạy thật `mermaid.parse()` bằng Node (jsdom) trên TỪNG block mermaid trích từ file; ghi kết quả vào `test.md`. Nếu môi trường không cài được (offline), ghi rõ lý do + fallback: render thủ công VS Code preview + đối chiếu cú pháp theo checklist. (Quyết định: thử parser trước, fallback thủ công.)
+### C2-01 (P2) — Kiểm tra "mọi INV có enforcement test" phải nêu ngoại lệ thực tế
+Một số INV được enforce bằng literal/allow-list trong test (vd `test_inv007_*`), số khác bằng scanner runtime (`arch_health.py`) hoặc label `test_m9_*` (INV-030..034). Script đối chiếu đơn giản grep `inv0XX` có thể miss nhãn `m9_*`.
+→ **Resolve**: Script đối chiếu grep cả 2 dạng: `test_inv0xx` (dạng đầy đủ: `test_inv007_hard_call_site`...) và `test_m9_*` cho 030..034; ghi rõ trong test.md cơ chế enforce từng nhóm (M2=M1–M10 arch tests, M5=test_inv011..016, M6=test_inv017..021, M7=test_inv022..029, M9=test_m9_*).
 
-### C2-02 (P2) — Bảng INV phải khớp nhãn canonical của test
-PROGRESS.md ghi rõ nhãn test: M6 = `test_inv017..inv021`, M7 = `test_inv022..inv029`, M9 = `test_inv030..inv034`. Bảng INV trong file mới phải dùng đúng các nhãn này, kèm tên gọi tiếng Việt.
-→ **Resolve**: Bảng INV có cột "ID" (INV-xxx), "Tên (canonical test label)", "Nội dung", "Milestone", "Enforce".
+### C2-02 (P3) — Layer-model thứ tự tầng dễ sai chữ
+PLAN §M10-4 kiến trúc cuối: `USER/SYSTEM → UI/SDK/API → AUTONOMY CONTROL → ORCHESTRATOR → Workflow/Agent/Capability → Runtime Kernel → Tools/State/Events → Infra` — 7 tầng đếm: (1) UI/SDK/API, (2) Autonomy Control, (3) Orchestrator, (4) Workflow/Agent/Capability, (5) Runtime Kernel, (6) Tools/State/Events, (7) Infra.
+→ **Resolve**: layer-model.md liệt kê đúng 7 tầng theo thứ tự trên (đánh số L1..L7), kèm bảng module thật của từng tầng.
 
-### C2-03 (P3) — File mới cần mục "Cách đọc tài liệu này"
-Người đọc mới cần biết thứ tự đọc và nguồn dữ liệu.
-→ **Resolve**: Thêm mục §0 "Cách đọc" ngay sau banner: nguồn (PLAN.md + PROGRESS.md), quy ước ký hiệu, thứ tự đọc đề xuất.
-
-### C2-04 (P3) — Giữ liên kết ADR
-File cũ tham chiếu `docs/adr/0004-architecture-invariants.md` — file mới phải giữ liên kết này để không mất thông tin.
-→ **Resolve**: Mục INV ghi rõ liên kết ADR-0004 + test_architecture.py + arch_health.py (scanner runtime).
+### C2-03 (P3) — Constitution cần mục "Hệ quả"
+Freeze có hệ quả quy trình: thay đổi INV phải qua ADR + M10 release gate A (INV violations = 0).
+→ **Resolve**: constitution-1.0.md thêm mục "Hệ quả" — Gate A (release), ADR bắt buộc cho sửa INV, AIOS 2.0 cho renumber/breaking.
 
 ## Kết luận vòng 2
-Các vấn đề đã resolve — **spec v2 đạt, được phép implement** (viết file + test render).
+Các vấn đề đã resolve — **spec v2 đạt, được phép implement** (tạo docs/architecture/* + constitution + script đối chiếu).

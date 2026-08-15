@@ -342,6 +342,30 @@ def test_inv011_memory_isolation():
     hits = dir_imports(AGENTS_DIR, ["aios_core.memory", "aios_core.knowledge"])
     assert hits == [], f"INV-011 vi phạm: {hits}"
 
+
+def test_inv008_artifact_first():
+    """INV-008 (M10: chốt enforce): output quan trọng phải là artifact có metadata.
+
+    ArtifactService phải dùng ArtifactContract (contract-first) + checksum
+    (metadata đầy đủ) + emit ARTIFACT_CREATED (event-driven, INV-009).
+    """
+    artifact_src = (AIOS / "kernel" / "services" / "artifacts.py").read_text(encoding="utf-8")
+    assert "ArtifactContract" in artifact_src, "INV-008: artifacts.py phải dùng ArtifactContract"
+    assert "checksum" in artifact_src, "INV-008: artifact phải có checksum (metadata)"
+    assert "ARTIFACT_CREATED" in artifact_src, "INV-008: store phải emit ARTIFACT_CREATED"
+
+
+def test_inv012_context_budget():
+    """INV-012 (M10: chốt enforce): context có token budget + priority.
+
+    ContextOptimizer phải đọc MemoryBudget (contract) và enforce tổng budget
+    không vượt hằng số MAX_BUDGET (20K — PLAN §3.3).
+    """
+    src = (AIOS / "context" / "optimizer.py").read_text(encoding="utf-8")
+    assert "MemoryBudget" in src, "INV-012: optimizer.py phải dùng MemoryBudget (contract)"
+    assert "budget" in src, "INV-012: optimizer.py phải tham chiếu budget"
+    assert "priority" in src.lower(), "INV-012: optimizer.py phải xử lý priority (P0–P6)"
+
 # -- context/ import allow-list (TASK-024 — Context Optimizer) ----------------
 
 _CONTEXT_ALLOWED_AIOS = {

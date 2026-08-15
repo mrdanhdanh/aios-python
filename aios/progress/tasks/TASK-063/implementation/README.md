@@ -1,13 +1,15 @@
-# TASK-063 — Implementation
+# TASK-063 — Implementation (M10-F1)
 
-Task tài liệu (docs-only) — artifact chính là file tài liệu, không có code hệ thống:
+> v1 (docs redraw) artifact: `docs/architecture-v2.md` (bản hiện hành — đã hoàn thành). v2 (M10-F1) artifact dưới đây.
 
-| Artifact | Vị trí |
-|----------|--------|
-| Tài liệu kiến trúc mới (bản hiện hành) | `docs/architecture-v2.md` |
-| File cũ (giữ làm lịch sử, không sửa) | `docs/architecture.md` |
-| Script kiểm tra cấu trúc markdown | `%TEMP%/aios-mermaid-check/check-markdown.js` (dùng để test, không commit) |
-
-Nội dung file mới: 14 mục — §0 cách đọc · §1 tổng quan 7 tầng + 4 lớp M6–M9 + bảng package · §2 ba mặt phẳng (Autonomy/Control/Worker/Execution) · §3 Orchestrator modules · §4 luồng request 12 bước + hành trình 1 lệnh + bảng module · §5 Runtime Kernel 9 services · §6 Core Intelligence M5 · §7 Harness M6 · §8 Enterprise M7 · §9 Ecosystem M8 · §10 Autonomous M9 · §11 milestones M0–M10 + bảng tasks · §12 INV-001..034 · §13 nguyên tắc · §14 nguồn & lịch sử.
-
-Định dạng: markdown thuần (bảng + danh sách + sơ đồ ASCII trong code block), không dùng Mermaid — theo yêu cầu người dùng (amend spec 2026-08-15).
+| Artifact | Nội dung |
+|----------|----------|
+| `docs/architecture/AIOS-1.0.md` | Kiến trúc 1.0 tổng thể + cam kết 10 năng lực + release gates (planned TASK-073) |
+| `docs/architecture/layer-model.md` | 7 tầng L1..L7 + bảng package + luồng request + quy tắc tầng |
+| `docs/architecture/control-plane.md` | Orchestrator + registries + governance + INV liên quan |
+| `docs/architecture/execution-plane.md` | Runtime kernel + workers + tools + sandbox + distributed (M7) |
+| `docs/architecture/autonomy.md` | Autonomy Layer + Governor gate + budget/risk + levels |
+| `docs/architecture/constitution-1.0.md` | **Constitution 1.0**: 15 core principle + INV-001..034 + freeze + hệ quả |
+| `docs/architecture-v2.md` | Cập nhật section 15 (M10) + link tới docs/architecture/ |
+| `backend/tests/test_architecture.py` | +2 enforcement test: `test_inv008_artifact_first`, `test_inv012_context_budget` |
+| `aios/progress/tasks/TASK-063/check_m10.py` | Script test 19 mục (AC1–AC7) |

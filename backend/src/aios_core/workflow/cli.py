@@ -17,7 +17,11 @@ def main(argv: list[str] | None = None) -> int:
       catalog list        List indexed catalog entries (built directly)
       workflow validate   Stateless validation of a workflow YAML (engine-agnostic)
       contract validate   Stateless validation of a contract payload
+      contract list/check Contract 1.0 matrix (M10-F2)
     """
+    # UTF-8 output (✓/⚠/→) — console cp1252 không in được (M10-F2).
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(prog="aiagent")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -56,6 +60,9 @@ def main(argv: list[str] | None = None) -> int:
     contract_sub = contract.add_subparsers(dest="contract_command", required=True)
     c_validate = contract_sub.add_parser("validate", help="Validate a contract payload")
     c_validate.add_argument("contract_file", help="Path to contract JSON")
+    contract_sub.add_parser("list", help="List the 10 frozen contracts (M10-F2)")
+    contract_sub.add_parser("check", help="Contract Compatibility Matrix (M10-F2)")
+    contract_sub.add_parser("check-full", help="Contract matrix + deprecated usage scan (M10-F2)")
 
     upgrade = sub.add_parser("upgrade", help="Upgrade a component via the upgrade pipeline (M4-P7)")
     upgrade.add_argument("kind", help="Component kind (v1: skill)")
@@ -111,6 +118,10 @@ def main(argv: list[str] | None = None) -> int:
         return _workflow_validate(args.workflow_file)
     if args.command == "contract" and args.contract_command == "validate":
         return _contract_validate(args.contract_file)
+    if args.command == "contract" and args.contract_command == "list":
+        return _contract_list()
+    if args.command == "contract" and args.contract_command in ("check", "check-full"):
+        return _contract_check(scan=args.contract_command == "check-full")
     if args.command == "upgrade":
         return _upgrade(args.kind, args.component_id, args.version, args.dry_run)
     if args.command == "ecosystem" and args.ecosystem_command == "search":
@@ -292,6 +303,36 @@ def _contract_validate(contract_file: str) -> int:
         return 1
     print("VALID contract payload")
     return 0
+
+
+def _contract_list() -> int:
+    """List 10 frozen contracts (M10-F2)."""
+    from ..contracts.catalog import ContractCatalog
+
+    catalog = ContractCatalog()
+    print(f"{'id'.ljust(12)}| {'version'.ljust(10)}| lifecycle")
+    print("-" * 34)
+    for c in sorted(catalog.all(), key=lambda x: x.id):
+        print(f"{c.id.ljust(12)}| {c.version.ljust(10)}| {c.lifecycle.value}")
+    return 0
+
+
+def _contract_check(scan: bool = False) -> int:
+    """Contract Compatibility Matrix (M10-F2).
+
+    `scan=True` (`contract check-full`): thêm deprecated usage scan trên
+    các contract mà runtime đang dùng (mặc định quét catalog đầy đủ).
+    """
+    from ..contracts.catalog import ContractCatalog
+    from ..contracts.check import ContractChecker, format_matrix
+
+    catalog = ContractCatalog()
+    checker = ContractChecker(catalog)
+    # check-full: quét usage của MỌI contract (phát hiện deprecated usage).
+    used = catalog.ids() if scan else None
+    report = checker.check_all(used=used)
+    print(format_matrix(report, catalog))
+    return 0 if not report.blocking else 1
 
 
 def _read_text(path: str) -> str:

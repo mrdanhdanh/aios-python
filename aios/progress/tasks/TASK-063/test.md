@@ -1,33 +1,30 @@
-# TASK-063 — Test
+# TASK-063 — Test (M10-F1)
 
-> Task tài liệu (docs-only): không có test code mới; test = kiểm tra cấu trúc markdown tự động + đối chiếu dữ liệu.
+> Phần v1 (docs redraw): script node 21/21 PASS (xem lịch sử cuối file). Phần v2 (M10-F1) test bên dưới.
 
-## 1. Kiểm tra cấu trúc markdown (AC2) — chạy thật
+## Test v2 (M10-F1) — 2026-08-15
 
-Script: `check-markdown.js` (Node, không dependency) chạy trên `docs/architecture-v2.md`.
+Script `check_m10.py` (python thuần) kiểm tra AC1–AC7:
 
-Kết quả **2026-08-15**:
+| # | Kiểm tra | Kết quả |
+|---|----------|---------|
+| AC1 | 6 file `docs/architecture/*` tồn tại | ✅ 6/6 |
+| AC2 | layer-model.md đủ 7 tầng L1..L7 đúng thứ tự | ✅ 7/7 |
+| AC3 | constitution-1.0.md chứa INV-001..INV-034 (34 invariant) | ✅ 34/34 |
+| AC4 | Mọi INV có enforcement test trong test_architecture.py | ✅ (bổ sung `test_inv008_artifact_first` + `test_inv012_context_budget` — 2 invariant trước đó chỉ enforce gián tiếp) |
+| AC5 | Freeze declaration + renumber deferred (AIOS 2.0) | ✅ |
+| AC6 | Không block ```mermaid trong 7 file | ✅ |
+| AC7 | architecture-v2.md có section 15 (M10) + link docs/architecture/ | ✅ |
 
-```
-[OK]   Không còn khối ```mermaid
-[OK]   Code fence cân bằng (14 fence, chẵn)
-[OK]   Chỉ 1 heading H1 (có 1)
-[OK]   Mục "## 0..14" — đủ 15 mục chính
-[OK]   Bảng hợp lệ (12 separator rows)
-[OK]   Đủ INV-001..034
-[OK]   Đủ milestone M0..M10 trong bảng
-KẾT QUẢ: TẤT CẢ CHECK PASS ✅  (21/21)
-```
+**Kết quả: 19/19 PASS** (lần đầu 18/19 — 2 INV thiếu enforce test → bổ sung 2 test, chạy riêng 2/2 pass).
 
-Lệnh chạy lại:
-```
-node check-markdown.js "docs/architecture-v2.md"
-```
+## Regression
+- `test_architecture.py` thêm 2 test: `test_inv008_artifact_first` + `test_inv012_context_budget` — **2/2 pass**.
+- Full suite: **1815 passed** (baseline 1793 + 22 mới).
 
-## 2. Đối chiếu dữ liệu với PROGRESS.md (AC1, AC4, AC5)
+## Lịch sử v1 (docs redraw) — 2026-08-15
 
-| Kiểm tra | Kết quả |
-|----------|---------|
+Script node `check-markdown.js`: không còn ```mermaid, code fence cân bằng, heading duy nhất, đủ 15 mục, bảng hợp lệ, đủ INV-001..034, đủ M0..M10 — **21/21 PASS**; đối chiếu PROGRESS.md khớp.
 | M0–M9 `done`, M10 `todo` | ✅ khớp PROGRESS.md 2026-08-15 |
 | Số liệu tests M1..M9 (428/669/689+12+19/809/1086/1521/1560/1639/1780) | ✅ khớp bảng milestone + tasks |
 | Coverage (95.76/95.51/94.92/95.22/95.35/95.05/94.46) | ✅ khớp |

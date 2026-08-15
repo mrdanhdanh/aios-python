@@ -10,6 +10,29 @@
 - **Test**: script node kiểm tra cấu trúc markdown 21/21 PASS; đối chiếu dữ liệu PROGRESS.md khớp. **7/7 AC — TASK-063 DONE**.
 - Xem chi tiết: `LOG.md` entry 2026-08-15 TASK-063.
 
+## M10 — AIOS 1.0 (P15: Productization + Stabilization + Certification) — PLAN
+
+> PLAN.md §M10: `BUILD NOTHING — PROVE EVERYTHING` → AIOS 1.0 CERTIFIED. Freeze Architecture (INV-001..034, vi phạm = release blocker), Contract 1.0, Runtime durable, Autonomous bounded, 5 release gates (Arch/Sec/Contract/Reliability/Autonomous), Golden Scenarios GS-001..020, `aiagent conformance` → AIOS 1.0 READY.
+> 13 task (TASK-063..075), 5 phase: **P1 Freeze** (063, 064) → **P2 Harden** (065, 066, 069) → **P3 Secure** (067, 068, 070) → **P4 Productize** (071, 072, 075) → **P5 Certify** (073, 074).
+> Ghi chú đánh số: TASK-063 đã tồn tại (docs redraw → `docs/architecture-v2.md`, done 2026-08-15) — được dùng làm nền tảng cho M10-F1 Architecture Freeze (mở rộng spec: Constitution 1.0 + docs/architecture/*).
+> Approach: mỗi phase = 1 batch hard gate (spec + critique ×2 + tasks + review) → implement (additive, không phá M0–M9) → test → evaluate → commit. Cuối M10: release gates + conformance + Golden Scenarios + milestone review.
+
+| Task | Nội dung | Milestone | Trạng thái | Owner |
+|------|----------|-----------|------------|-------|
+| TASK-063 | F1 Architecture Freeze — Constitution 1.0 (INV-001..034 frozen) + docs/architecture/* (AIOS-1.0, layer-model, control-plane, execution-plane, autonomy) | M10-P1 | `done` ✅ (19/19 PASS; +2 enforcement test INV-008/012) | AIOS Orchestrator |
+| TASK-064 | F2 Contract 1.0 — freeze 10 contracts (Agent/Capability/Tool/Workflow/Runtime/Event/Artifact/Plugin/Model/Memory) + semantic versioning + `aiagent contract-check` | M10-P1 | `done` ✅ (20/20 PASS — full suite 1815) | AIOS Orchestrator |
+| TASK-065 | F3 Runtime Hardening — failure matrix 12 loại (detect→contain→recover→resume) | M10-P2 | `todo` | AIOS Orchestrator |
+| TASK-066 | Durable Execution 1.0 — journal + verify-before-resume + idempotency classification (exactly-once/at-least-once) | M10-P2 | `todo` | AIOS Orchestrator |
+| TASK-069 | Reliability Engineering — SLO registry + non-averaged gates (policy bypass=0, lost execution=0, ...) | M10-P2 | `todo` | AIOS Orchestrator |
+| TASK-067 | F4 Autonomy Safety — Action Proposal → Risk Classifier → Governor → Policy → Permission → Capability → Tool (mandatory, stop-anywhere) | M10-P3 | `todo` | AIOS Orchestrator |
+| TASK-068 | Kill Switch — `aiagent stop execution/goal` + `aiagent emergency-stop` | M10-P3 | `todo` | AIOS Orchestrator |
+| TASK-070 | Security Baseline 1.0 — 11 items baseline + `aiagent security-check` | M10-P3 | `todo` | AIOS Orchestrator |
+| TASK-071 | F7 Developer Experience — command tree thống nhất + `aiagent doctor` first-class (Health/100) | M10-P4 | `todo` | AIOS Orchestrator |
+| TASK-072 | AIOS Dashboard 1.0 — 11 tabs + Execution Timeline | M10-P4 | `todo` | AIOS Orchestrator |
+| TASK-075 | Performance & Cost — metrics + Cost/Goal/Workflow/Agent/Tool/Success + model independence | M10-P4 | `todo` | AIOS Orchestrator |
+| TASK-073 | F8 Certification Suite — 13 categories + GS-001..020 + `aiagent conformance` + 5 release gates | M10-P5 | `todo` | AIOS Orchestrator |
+| TASK-074 | Upgrade & Migration 1.0 — migration plan/backup/dry-run/validation/rollback (0.x→1.0, plugin/contract/workflow v0→v1) | M10-P5 | `todo` | AIOS Orchestrator |
+
 ## ✅ Review toàn diện M0–M9 (2026-08-15)
 
 - **Kết quả**: M0–M9 ĐẠT — backend 1793 pass + dashboard 12 + extension 19; CLI deliverable chạy thật (doctor/arch-health/run --simulate); **ALL 62 TASK đủ 8-file hard gate**.

@@ -483,3 +483,47 @@ M0 → M1 → M2 → M3 → M4 → M5 → M6 → M7 → M8 → M9 → M10 🔲
 - Tài liệu này: `docs/architecture-v2.md` (2026-08-15, TASK-063) — **bản hiện hành**.
 - Bản cũ: `docs/architecture.md` — giữ làm lịch sử (mô tả đến M5 in-progress), không còn cập nhật.
 - Nguồn chính: `docs/PLAN.md` · `aios/progress/PROGRESS.md` · `aios/progress/LOG.md` · `docs/adr/` · `backend/tests/test_architecture.py` · `backend/src/aios_core/observability/arch_health.py`.
+
+---
+
+## 15. M10 — AIOS 1.0 (Freeze + Constitution)
+
+> PLAN §M10: `BUILD NOTHING — PROVE EVERYTHING → AIOS 1.0 CERTIFIED`. Kiến trúc bị **freeze** (INV-001..034 — vi phạm = release blocker), contract ổn định, runtime durable, autonomous bounded, có Certification Suite + Golden Scenarios + Conformance + Migration engine.
+
+### 15.1 Tài liệu chuẩn 1.0 (`docs/architecture/`)
+
+| File | Nội dung |
+|------|----------|
+| `AIOS-1.0.md` | Kiến trúc tổng thể 7 layers + 4 lớp mở rộng + cam kết 1.0 |
+| `layer-model.md` | Mô hình 7 tầng L1..L7 + quy tắc tầng |
+| `control-plane.md` | Orchestrator + registries + policy/governance + INV liên quan |
+| `execution-plane.md` | Runtime kernel + workers + tools + sandbox + distributed (M7) |
+| `autonomy.md` | Autonomy Layer — Governor gate + budget/risk + levels |
+| `constitution-1.0.md` | **AIOS Architecture Constitution 1.0** — 15 core principle + INV-001..034 frozen |
+
+### 15.2 Trạng thái M10 (theo PROGRESS.md)
+
+| Phase | Task | Nội dung | Trạng thái |
+|-------|------|----------|------------|
+| P1 Freeze | TASK-063 | Architecture Freeze + Constitution 1.0 (file này + bộ docs/architecture/) | ✅ done (2026-08-15) |
+| P1 Freeze | TASK-064 | Contract 1.0 — freeze 10 contracts + `aiagent contract-check` | 🔲 todo |
+| P2 Harden | TASK-065 | Runtime Hardening — failure matrix 12 loại | 🔲 todo |
+| P2 Harden | TASK-066 | Durable Execution 1.0 — journal + verify-before-resume + idempotency | 🔲 todo |
+| P2 Harden | TASK-069 | Reliability — SLO + non-averaged gates | 🔲 todo |
+| P3 Secure | TASK-067 | Autonomy Safety — Action Proposal → Governor → Policy → Tool | 🔲 todo |
+| P3 Secure | TASK-068 | Kill Switch — `aiagent stop` + `aiagent emergency-stop` | 🔲 todo |
+| P3 Secure | TASK-070 | Security Baseline 1.0 — 11 items + `aiagent security-check` | 🔲 todo |
+| P4 Productize | TASK-071 | Developer Experience — command tree + `aiagent doctor` first-class | 🔲 todo |
+| P4 Productize | TASK-072 | Dashboard 1.0 — 11 tabs + Execution Timeline | 🔲 todo |
+| P4 Productize | TASK-075 | Performance & Cost — metrics + Cost/Goal/Workflow/Agent/Tool/Success | 🔲 todo |
+| P5 Certify | TASK-073 | Certification Suite — 13 categories + GS-001..020 + conformance + 5 gates | 🔲 todo |
+| P5 Certify | TASK-074 | Migration 1.0 — plan/backup/dry-run/validation/rollback | 🔲 todo |
+
+### 15.3 Release Gates (TASK-073)
+
+```
+Gate A Architecture: INV violations = 0      Gate B Security: critical = 0, high = 0
+Gate C Contract:     breaking = 0            Gate D Reliability: critical failures = 0
+Gate E Autonomous:   policy/budget/kill-switch bypass = 0
+```
+Chỉ 1 gate fail → **AIOS 1.0 = NOT READY**. Conformance: `aiagent conformance` → 9 areas PASS → `AIOS 1.0 READY`.

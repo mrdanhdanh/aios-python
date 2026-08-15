@@ -1,28 +1,25 @@
-# TASK-063 — Evaluation
+# TASK-063 — Evaluation (M10-F1)
 
-## Đối chiếu tiêu chí chấp nhận (spec.md)
+## Đối chiếu AC (v2 — M10-F1)
 
-| AC | Tiêu chí | Kết quả |
+| AC | Nội dung | Kết quả |
 |----|----------|---------|
-| AC1 | Trạng thái M0–M9 done, M10 todo; số liệu khớp PROGRESS.md | ✅ PASS — test.md §2 |
-| AC2 | Không còn khối mermaid; cấu trúc markdown hợp lệ | ✅ PASS — script node 21/21 |
-| AC3 | Đủ 7 tầng lõi + 4 lớp M6–M9 | ✅ PASS — §1 + §7–§10 |
-| AC4 | Bảng INV-001..034 đúng nhãn canonical | ✅ PASS — §12 (M2:001-010, M5:011-016, M6:017-021, M7:022-029, M9:030-034) |
-| AC5 | Bảng milestone M0–M10 + bảng tasks M1–M9 đúng | ✅ PASS — §11 + §11.1 |
-| AC6 | File cũ `docs/architecture.md` không bị sửa | ✅ PASS — chỉ tạo file mới |
-| AC7 | DoD: LOG.md + PROGRESS.md + commit | ✅ PASS |
+| AC1 | 5 file docs/architecture/* + constitution-1.0.md | ✅ |
+| AC2 | layer-model 7 tầng đúng thứ tự | ✅ |
+| AC3 | constitution INV-001..034 đủ 34 + 15 core principle | ✅ |
+| AC4 | Mọi INV có enforcement test | ✅ (phát hiện + bổ sung 2 test thiếu) |
+| AC5 | Freeze tuyên bố + renumber deferred | ✅ |
+| AC6 | Không mermaid | ✅ |
+| AC7 | architecture-v2.md cập nhật | ✅ |
+| AC8 | DoD | ✅ |
 
-## Kết quả
+**ĐẠT 8/8 AC (v2) — TASK-063 DONE (gộp v1 7/7 + v2 8/8).**
 
-**ĐẠT 7/7 AC — TASK-063 DONE.**
+## Giá trị
+- **Constitution 1.0** = văn bản chuẩn cho mọi thay đổi sau freeze; mapping 15 core principle → canonical INV giúp tra cứu nhanh.
+- **Bộ 6 tài liệu docs/architecture/** tách vai trò rõ (tổng thể / layer / control / execution / autonomy / constitution) — không trùng lặp architecture-v2.md.
 
 ## Bài học
-
-1. **Người dùng ưu tiên khả năng đọc > sơ đồ đẹp**: yêu cầu "đọc không bị lỗi" + "markdown bình thường" → markdown thuần + ASCII diagrams là lựa chọn an toàn nhất, không phụ thuộc renderer (VS Code preview, GitHub, trình xem bất kỳ).
-2. **Source of truth quan trọng**: file cũ lệch 4–5 milestone với code thật — cần quy trình cập nhật tài liệu kiến trúc theo từng milestone (gợi ý: thêm bước "cập nhật architecture doc" vào DoD các milestone tới).
-3. **ASCII diagrams vẫn trực quan** mà không cần renderer — đủ cho tài liệu kiến trúc nội bộ.
-
-## Đề xuất (P3 — ghi nhận, không làm ngay)
-
-- Cân nhắc thêm bước "cập nhật docs/architecture-v2.md" vào DoD mỗi milestone (M10 khi hoàn tất).
-- Khi M10 (AIOS 1.0) xong: cập nhật §11 trạng thái M10 → done.
+1. **"Invariant trên giấy" có thật**: 2/34 INV (008 Artifact First, 012 Context Budget) chưa có enforce test trực tiếp — AC4 đối chiếu tự động đã phát hiện. Bài học: mọi milestone cần bước "đối chiếu INV với test" trước khi tuyên bố done (đã đưa vào M10 gate A).
+2. Tài liệu 1.0 nên viết trước khi làm task cụ thể (TASK-073 conformance sẽ dùng constitution làm chuẩn).
+3. (Từ v1) Ưu tiên khả năng đọc > sơ đồ đẹp; ASCII diagrams đủ trực quan.
