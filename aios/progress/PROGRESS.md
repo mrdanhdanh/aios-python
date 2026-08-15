@@ -87,6 +87,7 @@
 | Mục | Nội dung | Trạng thái | Ghi chú |
 |-----|----------|------------|---------|
 | Secret scan | GitHub Actions Gitleaks — quét secret trên push/PR master + manual trigger | `done` | `.github/workflows/secret-scan.yml` (2026-08-14) |
+| Hàng rào GARDEN | `[bypass]` — fix hàng rào không liền: đổi từ "cọc + thanh ngang 6px quanh cọc" sang **2 thanh ngang liền x 0..320 + 18 cọc đều 18px**; khắc phục luôn lệch spec TASK-079 (rào trước chỉ trải tới x=280) | `done` | theo yêu cầu người dùng 2026-08-15; core 27/27 + smoke 4/4 + Playwright 28/28 |
 | Remote | Chuyển origin → repo GitHub mới `mrdanhdanh/aios-python` (PUBLIC) | `done` | commit e42bae4 (2026-08-14) |
 | DoD checklist | **Definition of Done — Closing Checklist** (AGENTS.md §3.1 + PLAN.md): bắt buộc cập nhật LOG.md + PROGRESS.md + PLAN.md + STATS.md + task folder + commit sau MỖI task — tránh quên ghi tài liệu | `done` | theo yêu cầu người dùng 2026-08-15 |
 | README docs | `[bypass]` — cập nhật `docs/README.md` (GitHub fallback render khi root không có README.md) khớp trạng thái AIOS 1.0: mô tả 7 tầng + CERTIFIED, bảng M0–M10, mục kiểm tra sức khỏe (`aiagent doctor/conformance/arch-health`), link constitution-1.0.md; không tạo README root mới | `done` | theo yêu cầu người dùng 2026-08-15 |

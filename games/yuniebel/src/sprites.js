@@ -174,12 +174,12 @@
     // đường mòn đất
     R(ctx, 40, 76, 180, 2, mix(C.dirt, "#4a2f16", d));
     R(ctx, 60, 78, 120, 2, mix(C.dirt, "#4a2f16", d));
-    // hàng rào trắng (trải 0..320)
-    for (i = 0; i < 16; i++) {
+    // hàng rào trắng (trải 0..320) — 2 thanh ngang LIỀN + cọc dọc đều 18px
+    R(ctx, 0, 63, 320, 2, mix(C.fence, "#9a9386", d));
+    R(ctx, 0, 69, 320, 2, mix(C.fence, "#9a9386", d));
+    for (i = 0; i < 18; i++) {
       var fx = 8 + i * 18;
       R(ctx, fx, 62, 2, 10, mix(C.fence, "#9a9386", d));
-      R(ctx, fx - 2, 63, 6, 2, mix(C.fence, "#9a9386", d));
-      R(ctx, fx - 2, 69, 6, 2, mix(C.fence, "#9a9386", d));
     }
     // bụi cây + hoa (khớp 4 wall GARDEN)
     bush(ctx, 67, 62, 8, 5, mix("#2e8b57", "#14402a", d));
