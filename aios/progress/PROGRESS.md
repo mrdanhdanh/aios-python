@@ -3,6 +3,13 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## ✅ TASK-063 — Vẽ lại hoàn toàn kiến trúc hệ thống (2026-08-15)
+
+- **Kết quả**: tạo `docs/architecture-v2.md` (markdown thuần — bảng + ASCII diagrams, KHÔNG Mermaid theo yêu cầu người dùng) — tài liệu kiến trúc **hiện hành** thay thế file cũ; file cũ `docs/architecture.md` giữ nguyên làm lịch sử.
+- **Nội dung**: 14 mục — 7 tầng lõi M0–M5 + 4 lớp M6–M9 (Harness/Enterprise/Ecosystem/Autonomous) + 3 plane + Orchestrator modules + luồng request 12 bước + Runtime Kernel 9 services + Core Intelligence + INV-001..034 + milestones M0–M10 + bảng tasks M1–M9.
+- **Test**: script node kiểm tra cấu trúc markdown 21/21 PASS; đối chiếu dữ liệu PROGRESS.md khớp. **7/7 AC — TASK-063 DONE**.
+- Xem chi tiết: `LOG.md` entry 2026-08-15 TASK-063.
+
 ## ✅ Review toàn diện M0–M9 (2026-08-15)
 
 - **Kết quả**: M0–M9 ĐẠT — backend 1793 pass + dashboard 12 + extension 19; CLI deliverable chạy thật (doctor/arch-health/run --simulate); **ALL 62 TASK đủ 8-file hard gate**.
@@ -324,6 +331,16 @@
 **1780 passed (baseline 1639 + 141 mới), coverage 94.46%, 13/13 AC (TASK-050..062) — M9 HOÀN TẤT**.
 
 > Autonomy Layer định hướng Orchestrator (Autonomy → Orchestrator → Runtime); INV-030..034 enforced: governor gate duy nhất (loop gọi check_action), 7 budget limits, checkpoint/resume SQLite, experiment evidence-first, memory promote double gate.
+
+## TASK-063 — Vẽ lại hoàn toàn tài liệu kiến trúc (docs-only) ✅ (2026-08-15)
+
+- Tạo `docs/architecture-v2.md` — tài liệu kiến trúc **hiện hành** (markdown thuần: bảng + danh sách + ASCII diagrams — KHÔNG Mermaid, theo yêu cầu người dùng); phản ánh M0–M9 done + M10 todo + INV-001..034 + bảng tasks M1–M9.
+- File cũ `docs/architecture.md` giữ nguyên làm lịch sử (AC6); nguồn dữ liệu: PROGRESS.md/PLAN.md/code thật.
+- Hard gate đủ 8-file; test cấu trúc markdown 21/21 PASS; **7/7 AC — TASK-063 DONE**.
+
+| Task ID | Mô tả | Milestone | Trạng thái | Owner |
+|---------|-------|-----------|------------|-------|
+| TASK-063 | Vẽ lại hoàn toàn tài liệu kiến trúc hệ thống — `docs/architecture-v2.md` (markdown thuần, thay thế file cũ làm bản hiện hành) | Docs | `done` ✅ | AIOS Orchestrator |
 
 ## Log gần nhất
 
