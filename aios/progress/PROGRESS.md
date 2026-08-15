@@ -3,6 +3,12 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## ✅ TASK-076 — Architecture v3 (Mermaid): AIOS 1.0 Final (2026-08-15)
+
+- **Kết quả**: tạo `docs/architecture-v3.md` — bản **hiện hành** (AIOS 1.0 Final, **Mermaid** — theo yêu cầu người dùng phương án "2 và 3"), 12 khối sơ đồ (10 flowchart + stateDiagram-v2 Safety chain + sequenceDiagram Kill Switch), 7 tầng L1..L7 theo `layer-model.md` **frozen** (Autonomous = L2 — sửa điểm v2 sai; Harness/Enterprise/Ecosystem = L7; M10 = nhóm đảm bảo không phải L8), bảng tasks M10 13/13 done (đúng ánh xạ id PROGRESS), INV-001..034 frozen + 5 release gates + AIOS 1.0 READY/CERTIFIED. `architecture-v2.md` đánh dấu **LỊCH SỬ** (header/§0/§14); README link → v3.
+- **Test**: `validate-v3.js` **19/19 PASS**; Mermaid parse thật (mermaid v11 + jsdom tại `aios/tools/mermaid-validate/`, node_modules gitignored) **12/12 khối OK**; AC9 diff v2 chỉ header/§0/§14; AC12 `docs/architecture/*` nguyên vẹn. **13/13 AC — TASK-076 DONE**.
+- Xem chi tiết: `LOG.md` entry 2026-08-15 TASK-076.
+
 ## ✅ TASK-063 — Vẽ lại hoàn toàn kiến trúc hệ thống (2026-08-15)
 
 - **Kết quả**: tạo `docs/architecture-v2.md` (markdown thuần — bảng + ASCII diagrams, KHÔNG Mermaid theo yêu cầu người dùng) — tài liệu kiến trúc **hiện hành** thay thế file cũ; file cũ `docs/architecture.md` giữ nguyên làm lịch sử.

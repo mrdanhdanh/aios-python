@@ -5,7 +5,7 @@ AIOS Orchestrator (Control Plane) + Worker Agents, Core Intelligence (Memory/Con
 Graph/Scheduler), Capability Layer, Plugin/Skill system, Dashboard, VS Code Extension, Autonomous Layer —
 **AIOS 1.0 CERTIFIED**.
 
-> Kiến trúc hệ thống: [`architecture-v2.md`](architecture-v2.md) · Chi tiết + milestones: [`PLAN.md`](PLAN.md)
+> Kiến trúc hệ thống: [`architecture-v3.md`](architecture-v3.md) · Chi tiết + milestones: [`PLAN.md`](PLAN.md)
 > Tiến độ dự án: [`aios/progress/PROGRESS.md`](../aios/progress/PROGRESS.md)
 
 ## Trạng thái

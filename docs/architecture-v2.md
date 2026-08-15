@@ -1,11 +1,13 @@
 # AIOS — Kiến trúc hệ thống (v2)
 
-> **📌 TÀI LIỆU HIỆN HÀNH** — thay thế `docs/architecture.md` (bản cũ giữ làm lịch sử).
+> **� TÀI LIỆU LỊCH SỬ** — đã thay bằng [`docs/architecture-v3.md`](architecture-v3.md) (Mermaid, AIOS 1.0 Final, 2026-08-15). Bản này giữ làm lịch sử (phản ánh trạng thái đến M10 todo).
 > Nguồn sự thật: `docs/PLAN.md` (master plan v6) + `aios/progress/PROGRESS.md` (trạng thái build thực tế).
 > Cập nhật lần cuối: 2026-08-15 — phản ánh **M0–M9 done, M10 — AIOS 1.0 (todo)**.
-> Định dạng: **markdown thuần** (bảng + danh sách + sơ đồ ASCII) — không dùng Mermaid, đọc được ở mọi nơi, không phụ thuộc renderer.
+> Định dạng: **markdown thuần** (bảng + danh sách + sơ đồ ASCII) — quy ước cũ, không dùng Mermaid; từ v3 chuyển sang Mermaid diagrams (theo yêu cầu người dùng 2026-08-15).
 
 ## 0. Cách đọc tài liệu này
+
+> **⚠️ LỊCH SỬ**: tài liệu này không còn là bản hiện hành — xem [`docs/architecture-v3.md`](architecture-v3.md) (AIOS 1.0 Final, Mermaid, M10 done).
 
 - **Nguồn dữ liệu**: mọi trạng thái/số liệu test lấy từ `aios/progress/PROGRESS.md` (cập nhật 2026-08-15) và `docs/PLAN.md`; mọi module code đối chiếu `backend/src/aios_core/`.
 - **Quy ước ký hiệu**: `✅` = đã build + test thật (kèm số tests); `🔲` = chưa làm (todo).
@@ -480,7 +482,8 @@ M0 → M1 → M2 → M3 → M4 → M5 → M6 → M7 → M8 → M9 → M10 🔲
 
 ## 14. Nguồn & lịch sử
 
-- Tài liệu này: `docs/architecture-v2.md` (2026-08-15, TASK-063) — **bản hiện hành**.
+- Tài liệu này: `docs/architecture-v2.md` (2026-08-15, TASK-063) — **LỊCH SỬ** (markdown thuần, phản ánh đến M10 todo).
+- **Bản hiện hành**: `docs/architecture-v3.md` (2026-08-15, TASK-076) — AIOS 1.0 Final, Mermaid diagrams.
 - Bản cũ: `docs/architecture.md` — giữ làm lịch sử (mô tả đến M5 in-progress), không còn cập nhật.
 - Nguồn chính: `docs/PLAN.md` · `aios/progress/PROGRESS.md` · `aios/progress/LOG.md` · `docs/adr/` · `backend/tests/test_architecture.py` · `backend/src/aios_core/observability/arch_health.py`.
 
