@@ -1204,6 +1204,7 @@ _OBSERVABILITY_ALLOWED_EXTERNAL = {
     "logging",
     "enum",      # TASK-069 slo.py (SloKind/SloStatus)
     "pydantic",  # TASK-069 slo.py (SloDefinition)
+    "os",        # TASK-075 performance.py (_dir_size)
 }
 
 

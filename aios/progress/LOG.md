@@ -4,6 +4,9 @@
 > Entry `[bypass]` = fix nhỏ làm nhanh, có lý do.
 > Entry mới ghi LÊN ĐẦU file (mới nhất trước).
 
+| 2026-08-15 | TASK-071,072,075 | evaluate | Đóng Phase 4 M10 (Productize): TASK-071 Developer Experience (doctor first-class 18 hạng mục Health 100/100 + 6 lệnh mới — 10/10 PASS) + TASK-072 Dashboard 1.0 (11 tabs + Execution Timeline, API /m10/* — backend 5/5 + vitest 13/13) + TASK-075 Performance & Cost (cost 5 chiều + model independence — 11/11 PASS) | **M10-P4 DONE** — full suite 1917 pass + dashboard 13/13 | `cli/{doctor,system}.py`, `api/routers/m10.py`, `observability/performance.py`, `dashboard/src/views/{Overview,ExecutionTimeline}.tsx` |
+
+| 2026-08-15 | TASK-071,072,075 | hard-gate | Batch hard gate M10-P4: TASK-071 (doctor 18 items, critique ×2, review R1–R4) + TASK-072 (dashboard 11 tabs + timeline, critique ×2, review R1–R4) + TASK-075 (performance/cost, critique ×2, review R1–R4) | **PASS — được phép implement** | `aios/progress/tasks/TASK-071/`, `TASK-072/`, `TASK-075/` |
 | 2026-08-15 | TASK-067,068,070 | evaluate | Đóng Phase 3 M10 (Secure): TASK-067 Autonomy Safety (chain Risk→Governor→Policy→Permission + ToolGuard pre/post — 15/15 PASS) + TASK-068 Kill Switch (emergency-stop/stop/status, lazy wiring — 13/13 PASS) + TASK-070 Security Baseline (11 items, evidence thật — 8/8 PASS) | **M10-P3 DONE** — full suite 1891 pass | `autonomous/safety.py`, `kernel/kill_switch.py`, `security/*`, CLI stop/emergency-stop/status/security-check |
 
 | 2026-08-15 | TASK-067,068,070 | hard-gate | Batch hard gate M10-P3: TASK-067 (safety chain, critique ×2, review R1–R4) + TASK-068 (kill switch, critique ×2 C1-01..04/C2-01..03, review R1–R4) + TASK-070 (security baseline, critique ×2, review R1–R4) | **PASS — được phép implement** | `aios/progress/tasks/TASK-067/`, `TASK-068/`, `TASK-070/` |

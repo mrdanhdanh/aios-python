@@ -27,9 +27,9 @@
 | TASK-067 | F4 Autonomy Safety — Action Proposal → Risk Classifier → Governor → Policy → Permission → Capability → Tool (mandatory, stop-anywhere) | M10-P3 | `done` ✅ (15/15 PASS) | AIOS Orchestrator |
 | TASK-068 | Kill Switch — `aiagent stop execution/goal` + `aiagent emergency-stop` | M10-P3 | `done` ✅ (13/13 PASS) | AIOS Orchestrator |
 | TASK-070 | Security Baseline 1.0 — 11 items baseline + `aiagent security-check` | M10-P3 | `done` ✅ (8/8 PASS — 9/11 PASS 2 WARN, SECURE — full suite 1891) | AIOS Orchestrator |
-| TASK-071 | F7 Developer Experience — command tree thống nhất + `aiagent doctor` first-class (Health/100) | M10-P4 | `todo` | AIOS Orchestrator |
-| TASK-072 | AIOS Dashboard 1.0 — 11 tabs + Execution Timeline | M10-P4 | `todo` | AIOS Orchestrator |
-| TASK-075 | Performance & Cost — metrics + Cost/Goal/Workflow/Agent/Tool/Success + model independence | M10-P4 | `todo` | AIOS Orchestrator |
+| TASK-071 | F7 Developer Experience — command tree thống nhất + `aiagent doctor` first-class (Health/100) | M10-P4 | `done` ✅ (10/10 PASS — Health 100/100) | AIOS Orchestrator |
+| TASK-072 | AIOS Dashboard 1.0 — 11 tabs + Execution Timeline | M10-P4 | `done` ✅ (backend 5/5 + vitest 13/13) | AIOS Orchestrator |
+| TASK-075 | Performance & Cost — metrics + Cost/Goal/Workflow/Agent/Tool/Success + model independence | M10-P4 | `done` ✅ (11/11 PASS — full suite 1917) | AIOS Orchestrator |
 | TASK-073 | F8 Certification Suite — 13 categories + GS-001..020 + `aiagent conformance` + 5 release gates | M10-P5 | `todo` | AIOS Orchestrator |
 | TASK-074 | Upgrade & Migration 1.0 — migration plan/backup/dry-run/validation/rollback (0.x→1.0, plugin/contract/workflow v0→v1) | M10-P5 | `todo` | AIOS Orchestrator |
 

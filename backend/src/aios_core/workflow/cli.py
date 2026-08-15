@@ -58,6 +58,33 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("security-check", help="Security baseline 1.0 (M10-F3, TASK-070)")
 
+    sub.add_parser("health", help="Doctor first-class (M10-F4, TASK-071)")
+
+    system = sub.add_parser("system", help="System commands (M10-F4, TASK-071)")
+    system_sub = system.add_subparsers(dest="system_command", required=True)
+    system_sub.add_parser("status", help="Version + services + emergency flag")
+
+    goal = sub.add_parser("goal", help="Goal commands (M10-F4)")
+    goal_sub = goal.add_subparsers(dest="goal_command", required=True)
+    goal_sub.add_parser("list", help="List goals")
+
+    execution = sub.add_parser("execution", help="Execution commands (M10-F4)")
+    execution_sub = execution.add_subparsers(dest="execution_command", required=True)
+    exec_list = execution_sub.add_parser("list", help="List recent executions")
+    exec_list.add_argument("--limit", type=int, default=20)
+
+    skill = sub.add_parser("skill", help="Skill commands (M10-F4)")
+    skill_sub = skill.add_subparsers(dest="skill_command", required=True)
+    skill_sub.add_parser("list", help="List skills")
+
+    capability = sub.add_parser("capability", help="Capability commands (M10-F4)")
+    capability_sub = capability.add_subparsers(dest="capability_command", required=True)
+    capability_sub.add_parser("list", help="List capabilities")
+
+    sub.add_parser("cost", help="Cost dashboard (M10-F4, TASK-075)")
+
+    sub.add_parser("performance", help="Performance metrics (M10-F4, TASK-075)")
+
     serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
     serve.add_argument("--host", default="127.0.0.1", help="Bind host")
     serve.add_argument("--port", type=int, default=8000, help="Bind port")
@@ -137,6 +164,22 @@ def main(argv: list[str] | None = None) -> int:
         return _status()
     if args.command == "security-check":
         return _security_check()
+    if args.command == "health":
+        return _doctor_first_class()
+    if args.command == "system" and args.system_command == "status":
+        return _system_status()
+    if args.command == "goal" and args.goal_command == "list":
+        return _goal_list()
+    if args.command == "execution" and args.execution_command == "list":
+        return _execution_list(args.limit)
+    if args.command == "skill" and args.skill_command == "list":
+        return _skill_list()
+    if args.command == "capability" and args.capability_command == "list":
+        return _capability_list()
+    if args.command == "cost":
+        return _cost()
+    if args.command == "performance":
+        return _performance()
     if args.command == "serve":
         return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
@@ -364,6 +407,161 @@ def _security_check() -> int:
     report = SecurityChecker().run()
     print(format_security_report(report))
     return 0 if not report.blocking else 1
+
+
+def _doctor_first_class() -> int:
+    """Doctor first-class — 18 hạng mục + Health score (M10-F4, TASK-071)."""
+    from ..cli.doctor import DoctorFirstClass, format_doctor_report
+
+    report = DoctorFirstClass().run()
+    print(format_doctor_report(report))
+    return 0
+
+
+def _system_status() -> int:
+    """System status (M10-F4, TASK-071)."""
+    from ..cli.system import system_status
+
+    print(json.dumps(system_status(), indent=2))
+    return 0
+
+
+def _goal_list() -> int:
+    """List goals (M10-F4, TASK-071)."""
+    from ..config import load_settings
+    from ..orchestrator.goals import GoalManager
+
+    settings = load_settings()
+    manager = GoalManager(
+        __import__("aios_core.kernel.services", fromlist=["EventService"]).EventService(
+            __import__("aios_core.kernel.events", fromlist=["EventBus"]).EventBus(),
+            settings.audit.db_path,
+        ),
+        settings.goals.db_path,
+    )
+    goals = manager.list_goals(limit=100)
+    if not goals:
+        print("<empty>")
+        return 0
+    for g in goals:
+        print(f"{g.id} | {g.title} | {g.status.value} | progress={g.progress:.0%}")
+    return 0
+
+
+def _execution_list(limit: int) -> int:
+    """List recent executions (M10-F4, TASK-071) từ MetricsService."""
+    from ..config import load_settings
+    from ..observability.metrics import MetricsService
+
+    settings = load_settings()
+    svc = MetricsService(
+        __import__("aios_core.kernel.events", fromlist=["EventBus"]).EventBus(),
+        settings.observability.metrics_db_path
+        if hasattr(settings.observability, "metrics_db_path") else "aios/data/metrics.db",
+    )
+    rows = svc.recent(limit=limit)
+    if not rows:
+        print("<empty>")
+        return 0
+    for r in rows:
+        print(f"{r['execution_id'] or '-'} | {r['name'] or '-'} | "
+              f"{r['category']} | {r['duration_ms']:.0f}ms" if r.get("duration_ms") else
+              f"{r['execution_id'] or '-'} | {r['name'] or '-'} | {r['category']}")
+    return 0
+
+
+def _skill_list() -> int:
+    """List skills (M10-F4, TASK-071)."""
+    from ..config import load_settings
+    from ..skills import SkillManager
+
+    settings = load_settings()
+    manager = SkillManager(db_path=str(settings.skills.db_path))
+    skills = manager.list()
+    if not skills:
+        print("<empty>")
+        return 0
+    for s in skills:
+        print(f"{getattr(s, 'id', s)} | {getattr(s, 'state', '?')}")
+    return 0
+
+
+def _capability_list() -> int:
+    """List capabilities (M10-F4, TASK-071)."""
+    from ..capabilities import CapabilityRegistry
+
+    registry = CapabilityRegistry()
+    caps = registry.list()
+    if not caps:
+        print("<empty>")
+        return 0
+    for c in caps:
+        print(f"{c.name}")
+    return 0
+
+
+def _cost() -> int:
+    """Cost dashboard — 5 chiều (M10-F4, TASK-075)."""
+    from ..config import load_settings
+    from ..kernel import RuntimeKernel
+    from ..observability.metrics import MetricsService
+    from ..observability.performance import CostAggregator, CostEstimator
+
+    settings = load_settings()
+    kernel = RuntimeKernel.create()
+    registry = kernel.container.resolve(__import__(
+        "aios_core.models", fromlist=["ModelRegistry"]
+    ).ModelRegistry)
+
+    def capabilities(model_id: str):
+        try:
+            return registry.capability(model_id)
+        except Exception:  # noqa: BLE001
+            return None
+
+    metrics_svc = MetricsService(kernel.bus, settings.observability.metrics_db_path
+                                 if hasattr(settings.observability, "metrics_db_path")
+                                 else "aios/data/metrics.db")
+    outcome = metrics_svc.counts_by_outcome("workflow")
+    aggregator = CostAggregator(
+        CostEstimator(capabilities=capabilities),
+        workflow_success={"*": (outcome["ok"], outcome["ok"] + outcome["failed"])},
+    )
+    dash = aggregator.build()
+    print(json.dumps({
+        "cost_per_workflow": dash.cost_per_workflow,
+        "cost_per_agent": dash.cost_per_agent,
+        "cost_per_tool": dash.cost_per_tool,
+        "cost_per_goal": dash.cost_per_goal,
+        "cost_per_success": dash.cost_per_success,
+        "total_cost": dash.total_cost,
+    }, indent=2))
+    return 0
+
+
+def _performance() -> int:
+    """Performance metrics (M10-F4, TASK-075)."""
+    from ..config import load_settings
+    from ..kernel import RuntimeKernel
+    from ..observability.metrics import MetricsService
+    from ..observability.performance import PerformanceMetrics
+
+    settings = load_settings()
+    kernel = RuntimeKernel.create()
+    metrics_svc = MetricsService(kernel.bus, settings.observability.metrics_db_path
+                                 if hasattr(settings.observability, "metrics_db_path")
+                                 else "aios/data/metrics.db")
+    snap = PerformanceMetrics(metrics_svc, settings.artifacts.dir).snapshot()
+    print(json.dumps({
+        "avg_workflow_latency_ms": snap.avg_workflow_latency_ms,
+        "avg_tool_latency_ms": snap.avg_tool_latency_ms,
+        "throughput_per_minute": snap.throughput_per_minute,
+        "max_concurrency": snap.max_concurrency,
+        "storage_bytes": snap.storage_bytes,
+        "workflow_count": snap.workflow_count,
+        "tool_count": snap.tool_count,
+    }, indent=2))
+    return 0
 
 
 def _catalog_list() -> int:

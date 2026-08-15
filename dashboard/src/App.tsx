@@ -2,25 +2,30 @@ import { useState } from "react";
 import { ArtifactBrowser } from "./views/ArtifactBrowser";
 import { ChatView } from "./views/ChatView";
 import { EventTimeline } from "./views/EventTimeline";
+import { ExecutionTimeline } from "./views/ExecutionTimeline";
 import { HealthView } from "./views/HealthView";
 import { MemoryView } from "./views/MemoryView";
 import { ModelUsage } from "./views/ModelUsage";
-import { PromptInspector } from "./views/PromptInspector";
+import { Overview } from "./views/Overview";
 import { SkillMarketplace } from "./views/SkillMarketplace";
 import { ToolUsage } from "./views/ToolUsage";
 import { WorkflowView } from "./views/WorkflowView";
 
+// Dashboard 1.0 — 11 tabs (PLAN §M10-29). Views M3 giữ nguyên, nhóm lại.
+// Overview · Operations · Autonomy · Agents · Workflows · Knowledge · Memory
+// · Harness · Enterprise · Ecosystem · System
 const TABS: Array<[string, React.ComponentType]> = [
-  ["Chat", ChatView],
-  ["Workflow", WorkflowView],
-  ["Events", EventTimeline],
-  ["Tools", ToolUsage],
+  ["Overview", Overview],
+  ["Operations", EventTimeline],
+  ["Autonomy", ExecutionTimeline],
+  ["Agents", ChatView],
+  ["Workflows", WorkflowView],
+  ["Knowledge", ToolUsage],
   ["Memory", MemoryView],
-  ["Artifacts", ArtifactBrowser],
-  ["Skills", SkillMarketplace],
-  ["Models", ModelUsage],
-  ["Prompts", PromptInspector],
-  ["Health", HealthView],
+  ["Harness", HealthView],
+  ["Enterprise", ArtifactBrowser],
+  ["Ecosystem", SkillMarketplace],
+  ["System", ModelUsage],
 ];
 
 export function App() {

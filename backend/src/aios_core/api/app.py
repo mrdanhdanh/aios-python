@@ -19,6 +19,7 @@ from .routers import (
     events,
     goals,
     health,
+    m10,
     memory,
     observability,
     orchestrator_v2,
@@ -67,6 +68,7 @@ def create_app(
     app.include_router(chat.router, prefix=V1)
     app.include_router(observability.router, prefix=V1)
     app.include_router(orchestrator_v2.router, prefix=V1)
+    app.include_router(m10.router, prefix=V1)
 
     @app.exception_handler(ValueError)
     async def _value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
