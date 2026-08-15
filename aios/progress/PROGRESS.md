@@ -3,6 +3,18 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## ✅ TASK-081 — Scaffold Phaser 4 (Vite) cho Yuniebel's Cat (2026-08-15)
+
+- **Kết quả**: **DONE** — Tạo bản Phaser 4 (Vite) của webgame `games/yuniebel/` tại `games/yuniebel-phaser/`. Vendor `core.js`/`sprites.js`/`audio.js` **byte-identical** (SHA256 = bản vanilla, AC-16 ✓); 1 `GameScene` re-render bg CanvasTexture mỗi frame + sprite Player/Butterfly + camera scroll + DOM overlay UI preserve. Debug hook `?test=1` (chỉ test, chơi thật không hook). Hard gate: plan + spec v3 (16 AC) + critique×2 + tasks + review **APPROVED** + implement + test (vitest + playwright) + evaluate.
+- **Artifacts**:
+  - `games/yuniebel-phaser/` — `package.json` (type:module, phaser@4.2.1, vite/vitest/jsdom/@playwright/test), `vite.config.js` (base './'), `index.html` + `style.css` (canvas#game 480×270 + overlay DOM port vanilla ids), `src/main.js` (Phaser boot + input + resize + debug hook), `src/scenes/GameScene.js` (1 scene render), `src/ui/ui.js` (camX/mood/handleSoundFlags/syncUI), `src/vendor/{core,sprites,audio,loader}.js` (loader.js = UMD adapter ?raw+indirect eval, vendor không sửa).
+  - `games/yuniebel-phaser/test/` — `core.test.js` (27 vitest), `smoke.test.js` (3 vitest), `e2e.spec.js` (8 playwright), `visual.spec.js` (19 playwright: 17 shot + R1 + AC-7b), `brief/{COMPARISON.md,refs/1..6.png}`.
+  - `games/yuniebel-phaser/diagnose.mjs` — script chẩn đoán boot.
+- **Test**: **56/56 PASS** — Vitest **29/29** (core 27 + smoke 3, 0 failed suite) + Playwright **27/27** (e2e 8 + visual 19). **16/16 AC ĐẠT** (AC-13 vanilla untouched, AC-16 vendor identical, AC-14 CI build).
+- **Fix test phase**: (1) Phaser.AUTO crash custom canvas → `type:renderType` WEBGL/Canvas; (2) determinism khi freeze → đóng băng render time vào `renderBg`; (3) vitest double-run specs → `include:["test/**/*.test.js"]`; (4) ESM require/__dirname → import/fileURLToPath.
+- **CI**: `.github/workflows/pages.yml` đã cập nhật (setup-node@20 + `npm ci && npm run build` + `rm -rf node_modules` trước upload).
+- Xem chi tiết: `aios/progress/tasks/TASK-081/` (plan + spec v1/v3 + critique×2 + tasks + review + test + implementation/NOTES.md)
+
 ## ✅ TASK-080 — Game-Dev Skills: agent-sprite-forge + pixel-game-dev (2026-08-15)
 
 - **Kết quả**: **DONE** — Option 1 user chọn ("thực hiện 1, tự học và cô đọng lại các skill/repo"): mang skill/repo web-game & pixel-game về repo dưới dạng skill package.
