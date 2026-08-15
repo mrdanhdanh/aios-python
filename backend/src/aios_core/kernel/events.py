@@ -71,6 +71,10 @@ class EventType(str, Enum):
     AUTONOMY_DELEGATED = "autonomy.delegated"
     AUTONOMY_SCHEDULE = "autonomy.schedule"
 
+    # M10 (TASK-068): kill switch / emergency.
+    EMERGENCY_STOPPED = "emergency.stopped"
+    EMERGENCY_RELEASED = "emergency.released"
+
 
 @dataclass
 class Event:

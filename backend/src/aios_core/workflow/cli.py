@@ -45,6 +45,19 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("slo", help="Reliability SLO report + release verdict (M10-F2)")
 
+    stop = sub.add_parser("stop", help="Stop execution/goal (M10-F3, TASK-068)")
+    stop_sub = stop.add_subparsers(dest="stop_command", required=True)
+    stop_exec = stop_sub.add_parser("execution", help="Cancel an execution")
+    stop_exec.add_argument("execution_id")
+    stop_goal = stop_sub.add_parser("goal", help="Cascade cancel a goal")
+    stop_goal.add_argument("goal_id")
+
+    sub.add_parser("emergency-stop", help="EMERGENCY: block mọi việc mới (M10-F3, TASK-068)")
+
+    sub.add_parser("status", help="Kill switch + system status (M10-F3, TASK-068)")
+
+    sub.add_parser("security-check", help="Security baseline 1.0 (M10-F3, TASK-070)")
+
     serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
     serve.add_argument("--host", default="127.0.0.1", help="Bind host")
     serve.add_argument("--port", type=int, default=8000, help="Bind port")
@@ -114,6 +127,16 @@ def main(argv: list[str] | None = None) -> int:
         return _supervisor()
     if args.command == "slo":
         return _slo()
+    if args.command == "stop" and args.stop_command == "execution":
+        return _stop_execution(args.execution_id)
+    if args.command == "stop" and args.stop_command == "goal":
+        return _stop_goal(args.goal_id)
+    if args.command == "emergency-stop":
+        return _emergency_stop()
+    if args.command == "status":
+        return _status()
+    if args.command == "security-check":
+        return _security_check()
     if args.command == "serve":
         return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
@@ -279,6 +302,68 @@ def _slo() -> int:
     report = engine.check(metrics)
     print(format_slo_report(report))
     return 0 if report.release_ready else 1
+
+
+def _kill_switch() -> "object":
+    from ..kernel import RuntimeKernel
+    from ..kernel.kill_switch import KillSwitch
+
+    kernel = RuntimeKernel.create()
+    return kernel.container.resolve(KillSwitch)
+
+
+def _stop_execution(execution_id: str) -> int:
+    """Cancel một execution (M10-F3)."""
+    try:
+        _kill_switch().stop_execution(execution_id)
+    except Exception as exc:  # noqa: BLE001
+        print(f"FAILED: {exc}")
+        return 1
+    print(f"execution {execution_id} cancelled")
+    return 0
+
+
+def _stop_goal(goal_id: str) -> int:
+    """Cascade cancel một goal (M10-F3)."""
+    try:
+        goal = _kill_switch().stop_goal(goal_id)
+        print(f"goal {goal_id} cancelled (status={getattr(goal, 'status', '?')})")
+    except Exception as exc:  # noqa: BLE001
+        print(f"FAILED: {exc}")
+        return 1
+    return 0
+
+
+def _emergency_stop() -> int:
+    """EMERGENCY STOP (M10-F3): block mọi việc mới."""
+    state = _kill_switch().emergency_stop()
+    print(json.dumps(state.snapshot(), indent=2))
+    print("EMERGENCY STOP ACTIVE — release bằng: aiagent status (rồi gọi release qua API)")
+    return 0
+
+
+def _status() -> int:
+    """Kill switch status + system status (M10-F3)."""
+    switch = _kill_switch()
+    snap = switch.state.snapshot()
+    out = {
+        "emergency": snap["emergency"],
+        "blocked_executions": snap["blocked_executions"],
+        "blocked_tool_calls": snap["blocked_tool_calls"],
+        "cancelled_approvals": snap["cancelled_approvals"],
+        "reversible": snap["reversible"],
+    }
+    print(json.dumps(out, indent=2))
+    return 0
+
+
+def _security_check() -> int:
+    """Security baseline 1.0 — 11 items (M10-F3, TASK-070)."""
+    from ..security import SecurityChecker, format_security_report
+
+    report = SecurityChecker().run()
+    print(format_security_report(report))
+    return 0 if not report.blocking else 1
 
 
 def _catalog_list() -> int:

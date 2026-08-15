@@ -5,7 +5,7 @@ from __future__ import annotations
 from ..config import ResourcesSettings, Settings
 from ..container import Container
 from ..models import MockModel, ModelRegistry
-from .events import EventBus
+from .events import Event, EventBus, EventType
 from .services import (
     ArtifactService,
     ContextService,
@@ -363,5 +363,23 @@ class RuntimeKernel:
             event_service=container.resolve(EventService),
         )
         container.register_instance(AutonomyManager, autonomy_manager)
+
+        # Kill Switch (TASK-068, M10-F3): emergency control plane — gate duy
+        # nhất cho execution mới + tool calls (Gate E: bypass = 0).
+        from ..kernel.kill_switch import KillSwitch
+        from ..orchestrator.goals import GoalManager
+
+        kill_switch = KillSwitch(
+            # Lazy resolve — không bắt ExecutionService lúc create (test fake OK)
+            cancel_execution=lambda eid: container.resolve(ExecutionService).cancel(eid),
+            cancel_goal=(
+                (lambda gid: container.resolve(GoalManager).cancel_goal(gid))
+                if container.has(GoalManager) else None
+            ),
+            emit=lambda etype, payload: bus.publish(
+                Event(type=EventType(etype), payload=payload, source="kill_switch")
+            ),
+        )
+        container.register_instance(KillSwitch, kill_switch)
 
         return cls(container, bus)

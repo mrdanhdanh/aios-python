@@ -4,6 +4,9 @@
 > Entry `[bypass]` = fix nhỏ làm nhanh, có lý do.
 > Entry mới ghi LÊN ĐẦU file (mới nhất trước).
 
+| 2026-08-15 | TASK-067,068,070 | evaluate | Đóng Phase 3 M10 (Secure): TASK-067 Autonomy Safety (chain Risk→Governor→Policy→Permission + ToolGuard pre/post — 15/15 PASS) + TASK-068 Kill Switch (emergency-stop/stop/status, lazy wiring — 13/13 PASS) + TASK-070 Security Baseline (11 items, evidence thật — 8/8 PASS) | **M10-P3 DONE** — full suite 1891 pass | `autonomous/safety.py`, `kernel/kill_switch.py`, `security/*`, CLI stop/emergency-stop/status/security-check |
+
+| 2026-08-15 | TASK-067,068,070 | hard-gate | Batch hard gate M10-P3: TASK-067 (safety chain, critique ×2, review R1–R4) + TASK-068 (kill switch, critique ×2 C1-01..04/C2-01..03, review R1–R4) + TASK-070 (security baseline, critique ×2, review R1–R4) | **PASS — được phép implement** | `aios/progress/tasks/TASK-067/`, `TASK-068/`, `TASK-070/` |
 | 2026-08-15 | TASK-065,066,069 | evaluate | Đóng Phase 2 M10 (Harden): TASK-065 Runtime Hardening (Failure Matrix 12 loại, 12/12 scenario end-to-end — 18/18 PASS) + TASK-066 Durable Execution 1.0 (journal + verify-before-resume + idempotency — 10/10 PASS) + TASK-069 Reliability SLO (7 ratio + 5 zero-gate — 12/12 PASS) | **M10-P2 DONE** — full suite 1855 pass | `kernel/hardening.py`, `kernel/durability.py`, `observability/slo.py`, `test_{hardening,durability,slo}.py` |
 
 | 2026-08-15 | TASK-065,066,069 | hard-gate | Batch hard gate M10-P2: TASK-065 (Failure Matrix, critique ×2 C1-01..04/C2-01..03, review R1–R4) + TASK-066 (durable, critique ×2, review R1–R4) + TASK-069 (SLO, critique ×2, review R1–R4) | **PASS — được phép implement** | `aios/progress/tasks/TASK-065/`, `TASK-066/`, `TASK-069/` |

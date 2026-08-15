@@ -24,9 +24,9 @@
 | TASK-065 | F3 Runtime Hardening — failure matrix 12 loại (detect→contain→recover→resume) | M10-P2 | `done` ✅ (18/18 PASS — 12 scenario end-to-end) | AIOS Orchestrator |
 | TASK-066 | Durable Execution 1.0 — journal + verify-before-resume + idempotency classification (exactly-once/at-least-once) | M10-P2 | `done` ✅ (10/10 PASS) | AIOS Orchestrator |
 | TASK-069 | Reliability Engineering — SLO registry + non-averaged gates (policy bypass=0, lost execution=0, ...) | M10-P2 | `done` ✅ (12/12 PASS — full suite 1855) | AIOS Orchestrator |
-| TASK-067 | F4 Autonomy Safety — Action Proposal → Risk Classifier → Governor → Policy → Permission → Capability → Tool (mandatory, stop-anywhere) | M10-P3 | `todo` | AIOS Orchestrator |
-| TASK-068 | Kill Switch — `aiagent stop execution/goal` + `aiagent emergency-stop` | M10-P3 | `todo` | AIOS Orchestrator |
-| TASK-070 | Security Baseline 1.0 — 11 items baseline + `aiagent security-check` | M10-P3 | `todo` | AIOS Orchestrator |
+| TASK-067 | F4 Autonomy Safety — Action Proposal → Risk Classifier → Governor → Policy → Permission → Capability → Tool (mandatory, stop-anywhere) | M10-P3 | `done` ✅ (15/15 PASS) | AIOS Orchestrator |
+| TASK-068 | Kill Switch — `aiagent stop execution/goal` + `aiagent emergency-stop` | M10-P3 | `done` ✅ (13/13 PASS) | AIOS Orchestrator |
+| TASK-070 | Security Baseline 1.0 — 11 items baseline + `aiagent security-check` | M10-P3 | `done` ✅ (8/8 PASS — 9/11 PASS 2 WARN, SECURE — full suite 1891) | AIOS Orchestrator |
 | TASK-071 | F7 Developer Experience — command tree thống nhất + `aiagent doctor` first-class (Health/100) | M10-P4 | `todo` | AIOS Orchestrator |
 | TASK-072 | AIOS Dashboard 1.0 — 11 tabs + Execution Timeline | M10-P4 | `todo` | AIOS Orchestrator |
 | TASK-075 | Performance & Cost — metrics + Cost/Goal/Workflow/Agent/Tool/Success + model independence | M10-P4 | `todo` | AIOS Orchestrator |
