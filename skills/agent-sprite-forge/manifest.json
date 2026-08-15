@@ -1,0 +1,26 @@
+{
+  "id": "agent-sprite-forge",
+  "name": "Agent Sprite Forge",
+  "version": "1.0.0",
+  "source": "git",
+  "description": "Agent skill sinh sprite sheet & map pixel-art từ prompt (tự học cô đọng từ 0x0funky/agent-sprite-forge). Bao gồm $generate2dsprite (nhân vật, quái, props, spell, FX) và $generate2dmap (map lớp, prop pack, collision/zones). Script hậu-xử lý deterministic: chroma-key #FF00FF, cắt frame lưới, export PNG trong suốt + GIF + pipeline-meta.json.",
+  "dependencies": [],
+  "capabilities": [
+    "game-asset-generation",
+    "sprite-generation",
+    "map-generation",
+    "pixel-art-postprocessing"
+  ],
+  "permissions": [
+    "filesystem:write",
+    "shell:python"
+  ],
+  "metadata": {
+    "vendored_from": "https://github.com/0x0funky/agent-sprite-forge",
+    "license": "MIT",
+    "skill_type": "agent-skill",
+    "host_agents": ["codex", "grok", "claude"],
+    "runtime_note": "Script chạy bởi host agent (Codex/Grok/Claude), không chạy tự động trong AIOS. AIOS chỉ index metadata qua catalog.",
+    "engines": ["raw-canvas", "Phaser", "Godot_TileMap", "Unity_Tilemap", "Tiled_JSON"]
+  }
+}

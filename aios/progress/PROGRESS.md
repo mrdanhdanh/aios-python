@@ -3,6 +3,18 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## ✅ TASK-080 — Game-Dev Skills: agent-sprite-forge + pixel-game-dev (2026-08-15)
+
+- **Kết quả**: **DONE** — Option 1 user chọn ("thực hiện 1, tự học và cô đọng lại các skill/repo"): mang skill/repo web-game & pixel-game về repo dưới dạng skill package.
+- **Artifacts**:
+  - `skills/agent-sprite-forge/` — agent skill cô đọng từ [0x0funky/agent-sprite-forge](https://github.com/0x0funky/agent-sprite-forge) (MIT): `manifest.json` (SkillManifest conform: source=git, capabilities/permissions không rỗng), `SKILL.md` ($generate2dsprite + $generate2dmap, hard rules nền #FF00FF, lưới nhiều dòng, tách lớp), `references/`, `agents/openai.yaml`, `scripts/generate2dsprite.py` (Pillow: chroma-key, cắt frame, export PNG trong suốt + GIF + metadata).
+  - `skills/pixel-game-dev/` — meta-skill tự học cô đọng (Phaser4 filter pixel-art, KAPLAY, PixiJS, công cụ vẽ, palette LOSPEC/mulfok32, ánh xạ Yuniebel's Cat).
+  - `catalog/skill-agent-sprite-forge.json`, `catalog/skill-pixel-game-dev.json` — CatalogEntry (`kind=skill`).
+  - `skills/README.md` — giải thích SKILLS_DIR + catalog.
+- **Test**: `test_validate_artifacts.py` **ALL PASS** (manifest ×2 + catalog ×2). AC3: script sinh `sheet-transparent.png` (128×128, RGBA, **0 magenta**) + 4 frames + `animation.gif` + `pipeline-meta.json`. **6/6 AC ĐẠT**.
+- **Hard gate**: spec (AC1-6) + critique×2 (C1-01..05, C2-01..03) + tasks + review **APPROVED** + test + evaluation.
+- Xem chi tiết: `aios/progress/tasks/TASK-080/` (spec + critique×2 + tasks + review + test + evaluation + implementation/ + test_validate_artifacts.py)
+
 ## ✅ TASK-079 — Fix mèo biến mất sau START (bug TASK-078) (2026-08-15)
 
 - **Kết quả**: **DONE** — root cause: scale mismatch giữa sprite logical 160×90 (×3 → canvas 480×270) và world core gấp 3 → mèo vẽ ra ngoài canvas sau START, background không khớp walls/zones. Đã chuyển toàn bộ core về logical grid (GARDEN/HALLWAY 320×90 camera scroll, còn lại 160×90), mở rộng drawGarden/drawHallway với camera translate + save/restore, sửa camX(), khớp nội thất với walls, cập nhật test ÷3 + **thêm 4 pixel tests chống tái phát** (AC-1 mèo hiện tại spawn, AC-4 nhà khớp wall, AC-10 camera scroll, AC-5 mèo hiện diện). Phát hiện kèm: test visual TASK-078 "17/17 khớp brief" là sai — brief không có ảnh ref nên `toHaveScreenshot` bị skip.

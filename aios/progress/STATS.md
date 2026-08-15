@@ -251,6 +251,20 @@
 | Findings | 1 P2 (F1: 2 invariant chưa enforce trực tiếp — INV-008/012 → +2 test) + 2 P3 (F2 certification layer rule; F3 auth/authz WARN ghi nhận 1.1) |
 | Kết luận | **M10 ĐẠT (ACCEPTED)** — không P1; AIOS 1.0 READY |
 
+## Post-M10 — Game-Dev Skills (TASK-080, 2026-08-15)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task | 1 (TASK-080) — **DONE** |
+| Mục tiêu | Option 1 user ("thực hiện 1, tự học + cô đọng skill/repo web-game & pixel-game") |
+| Skills tạo | 2 (`agent-sprite-forge` cô đọng github 0x0funky; `pixel-game-dev` meta-skill tự học) |
+| Catalog entries | 2 (`catalog/skill-*.json`, kind=skill) |
+| Test | `test_validate_artifacts.py` ALL PASS (2 manifest + 2 catalog); AC3 script sinh sheet/frames/gif/meta (0 magenta) |
+| AC | **6/6 PASS** |
+| Hard gate | spec + critique×2 + tasks + review APPROVED + test + evaluation (đủ 8 file) |
+| Không đổi logic hệ thống | chỉ thêm skill package + catalog (file-based, ngoài runtime) |
+| Bypass | 0 |
+
 ## Tổng kết toàn dự án (M0–M10)
 
 | Chỉ số | Giá trị |

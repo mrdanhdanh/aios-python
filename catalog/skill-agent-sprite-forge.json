@@ -1,0 +1,19 @@
+{
+  "kind": "skill",
+  "id": "agent-sprite-forge",
+  "metadata": {
+    "name": "Agent Sprite Forge",
+    "version": "1.0.0",
+    "source": "git",
+    "license": "MIT",
+    "skill_type": "agent-skill",
+    "description": "Sinh sprite sheet & map pixel-art từ prompt (generate2dsprite, generate2dmap) + script hậu-xử lý deterministic (chroma-key #FF00FF, cắt frame, export PNG trong suốt + GIF + metadata).",
+    "capabilities": ["game-asset-generation", "sprite-generation", "map-generation", "pixel-art-postprocessing"],
+    "permissions": ["filesystem:write", "shell:python"],
+    "host_agents": ["codex", "grok", "claude"],
+    "engines": ["raw-canvas", "Phaser", "Godot_TileMap", "Unity_Tilemap", "Tiled_JSON"],
+    "vendored_from": "https://github.com/0x0funky/agent-sprite-forge",
+    "path": "skills/agent-sprite-forge",
+    "runtime_note": "Script chạy bởi host agent, AIOS chỉ index metadata qua catalog."
+  }
+}
