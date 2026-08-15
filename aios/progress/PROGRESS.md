@@ -295,13 +295,13 @@
 | TASK-052 | World Model — WorldState (System/Runtime/Goals/Tasks/Environment/Constraints/History) + Fact (source/timestamp/confidence/freshness); World ≠ Memory | `done` ✅ | `autonomous/world.py` (2026-08-15) |
 | TASK-053 | Autonomous Loop — Observe→Understand→Decide→Plan→Policy→Act→Verify→Learn; mọi action qua Governor (INV-030) | `done` ✅ | `autonomous/loop.py` (2026-08-15) |
 | TASK-054 | Autonomy Governor — CONTINUE/PAUSE/ASK_HUMAN/REPLAN/ROLLBACK/STOP + budget (steps/llm/cost/duration/tool/retries/parallel) + risk budget; INV-030/031 | `done` ✅ | `autonomous/governor.py` (2026-08-15) |
-| TASK-055 | Autonomous Recovery — Detect→Classify→Diagnose→Strategies→Score→Policy→Execute→Verify; fingerprint + circuit breaker + cooldown + escalation | `todo` | `autonomous/recovery.py` |
-| TASK-056 | Long-Horizon Execution — ExecutionSession + Checkpoint + context compaction + resume (INV-032) | `todo` | `autonomous/long_horizon.py` |
-| TASK-057 | Autonomous Memory — Working/Episodic/Semantic/Procedural/Failure/Goal + Learning Loop (candidate→dedup→validate→confidence→promote); INV-034 | `todo` | `autonomous/memory.py` |
+| TASK-055 | Autonomous Recovery — Detect→Classify→Diagnose→Strategies→Score→Policy→Execute→Verify; fingerprint + circuit breaker + cooldown + escalation | `done` ✅ | `autonomous/recovery.py` (2026-08-15) |
+| TASK-056 | Long-Horizon Execution — ExecutionSession + Checkpoint + context compaction + resume (INV-032) | `done` ✅ | `autonomous/long_horizon.py` (2026-08-15) |
+| TASK-057 | Autonomous Memory — Working/Episodic/Semantic/Procedural/Failure/Goal + Learning Loop (candidate→dedup→validate→confidence→promote); INV-034 | `done` ✅ | `autonomous/memory.py` (2026-08-15) |
 | TASK-058 | Autonomous Experimentation — Hypothesis→Design→Sandbox→Execute→Evaluate→Compare→Accept/Reject (qua Harness — INV-033) | `todo` | `autonomous/experimentation.py` |
 | TASK-059 | Multi-Agent Autonomy — mode single/parallel/sequential/hierarchical + delegation (owner/deadline/budget/output contract) | `todo` | `autonomous/multi_agent.py` |
 | TASK-060 | Autonomous Evaluation — correctness/quality/cost/risk/progress/confidence → decision (continue/retry/replan/stop/ask) + ProgressEstimator | `todo` | `autonomous/evaluation.py` |
-| TASK-061 | Advanced Stuck Detection — 7 signals (repeated tool/errors, no state change/progress, oscillation, budget burn, contradictory) | `todo` | `autonomous/stuck.py` |
+| TASK-061 | Advanced Stuck Detection — 7 signals (repeated tool/errors, no state change/progress, oscillation, budget burn, contradictory) | `done` ✅ | `autonomous/stuck.py` (2026-08-15) |
 | TASK-062 | Autonomous Scheduler — proactive triggers (interval/daily) chạy workflow/goal tự động | `todo` | `autonomous/scheduler.py` |
 | INV-030..034 | 5 invariant enforced bằng arch tests `test_m9_*` (governor gate, budget, checkpoint/resume, experiment qua harness, memory promote có kiểm chứng) | `todo` | trong `tests/test_architecture.py` |
 

@@ -17,15 +17,27 @@ from .contracts import (
     AutonomyDecision,
     AutonomyLevel,
     AutonomyPlan,
+    Checkpoint,
+    ExecutionSession,
+    FailureEvent,
     GoalConstraints,
     GoalContract,
     GoalLifecycleState,
     GovernorDecision,
+    Lesson,
     LoopFinalState,
     LoopResult,
+    MemoryEntry,
+    MemoryEntryKind,
     PlanStep,
+    RecoveryOutcome,
+    RecoveryStrategy,
     RiskClass,
     RollbackSpec,
+    SessionStatus,
+    STRATEGY_SCORES,
+    StuckReport,
+    StuckSignal,
     UsageSnapshot,
     VerificationResult,
     WorldFact,
@@ -47,8 +59,12 @@ from .errors import (
 )
 from .goal import AutonomousGoalEngine, new_goal_id
 from .governor import AutonomyGovernor
+from .long_horizon import LongHorizonManager, new_session_id
 from .loop import AutonomousLoop
+from .memory import AutonomousMemory
 from .planner import ACTION_KEYWORDS, AutonomousPlanner
+from .recovery import AutonomousRecovery, CircuitBreaker, fingerprint_of
+from .stuck import StuckDetector
 from .world import WorldModel
 
 
@@ -66,9 +82,15 @@ class AutonomyManager:
         planner: AutonomousPlanner | None = None,
         world: WorldModel | None = None,
         loop: AutonomousLoop | None = None,
+        recovery: AutonomousRecovery | None = None,
+        long_horizon: LongHorizonManager | None = None,
+        autonomous_memory: AutonomousMemory | None = None,
+        stuck_detector: StuckDetector | None = None,
+        db_path: str = "aios/data/autonomous.db",
+        event_service=None,
     ) -> None:
         self.goal_engine = goal_engine or AutonomousGoalEngine(
-            event_service=None, db_path="aios/data/autonomous.db"
+            event_service=event_service, db_path=db_path
         )
         self.governor = governor or AutonomyGovernor()
         self.planner = planner or AutonomousPlanner()
@@ -78,15 +100,18 @@ class AutonomyManager:
             world=self.world,
             planner=self.planner,
         )
-        self.recovery = None  # TASK-055 (Batch 2)
-        self.long_horizon = None  # TASK-056 (Batch 2)
-        self.autonomous_memory = None  # TASK-057 (Batch 2)
-        self.stuck_detector = None  # TASK-061 (Batch 2)
+        self.recovery = recovery or AutonomousRecovery(event_service=event_service)
+        self.long_horizon = long_horizon or LongHorizonManager(
+            event_service=event_service, db_path=db_path
+        )
+        self.autonomous_memory = autonomous_memory or AutonomousMemory(
+            event_service=event_service, db_path=db_path
+        )
+        self.stuck_detector = stuck_detector or StuckDetector()
         self.experimentation = None  # TASK-058 (Batch 3)
         self.evaluator = None  # TASK-060 (Batch 3)
         self.multi_agent = None  # TASK-059 (Batch 4)
         self.scheduler = None  # TASK-062 (Batch 4)
-
     def propose_goal(self, objective: str, **kwargs: object) -> GoalContract:
         """Tiện ích: tạo + propose goal từ objective."""
         goal = GoalContract(id=new_goal_id(), objective=objective, **kwargs)

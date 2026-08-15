@@ -555,3 +555,422 @@ def test_loop053_goal_progress_complete(loop_goal):
     # verifier mặc định success=True → vòng 1 xong
     result = loop.run_goal(loop_goal)
     assert result.success is True
+
+
+# ---------------------------------------------------------------------------
+# TASK-055 — Autonomous Recovery
+# ---------------------------------------------------------------------------
+
+from aios_core.autonomous import AutonomousRecovery, CircuitBreaker, RecoveryOutcome, RecoveryStrategy
+from aios_core.autonomous.contracts import FailureEvent, STRATEGY_SCORES
+from aios_core.autonomous.recovery import fingerprint_of
+
+
+class RClock:
+    def __init__(self) -> None:
+        self.now = 0.0
+
+    def __call__(self) -> float:
+        return self.now
+
+
+@pytest.fixture()
+def failure():
+    return FailureEvent(execution_id="exec-1", error_type="TimeoutError", message="model timeout")
+
+
+def test_rec055_fingerprint_deterministic():
+    a = fingerprint_of("TimeoutError", "model timeout")
+    b = fingerprint_of("TimeoutError", "model timeout")
+    c = fingerprint_of("TimeoutError", "other")
+    assert a == b
+    assert a != c
+    assert len(a) == 16
+
+
+def test_rec055_retry_then_success(failure):
+    calls = []
+
+    def execute(strategy, _f):
+        calls.append(strategy)
+
+    rec = AutonomousRecovery(execute_strategy=execute)
+    outcome = rec.recover(failure)
+    assert outcome.recovered is True
+    assert outcome.strategy == RecoveryStrategy.RETRY
+    assert calls == [RecoveryStrategy.RETRY]
+
+
+def test_rec055_verify_fail_chain(failure):
+    calls = []
+
+    def execute(strategy, _f):
+        calls.append(strategy)
+
+    rec = AutonomousRecovery(
+        execute_strategy=execute,
+        verifier=lambda: False,  # verify luôn fail
+        max_attempts=2,
+    )
+    outcome = rec.recover(failure)
+    assert outcome.recovered is False
+    assert outcome.escalated is True
+    assert outcome.attempts == 2
+    assert calls == [RecoveryStrategy.RETRY, RecoveryStrategy.FALLBACK]
+
+
+def test_rec055_policy_deny(failure):
+    calls = []
+
+    def execute(strategy, _f):
+        calls.append(strategy)
+
+    rec = AutonomousRecovery(
+        execute_strategy=execute,
+        policy_check=lambda s: s != RecoveryStrategy.RETRY,  # deny retry
+    )
+    outcome = rec.recover(failure)
+    assert outcome.strategy == RecoveryStrategy.FALLBACK
+    assert RecoveryStrategy.RETRY not in calls
+
+
+def test_rec055_circuit_breaker_open(failure):
+    rec = AutonomousRecovery(verifier=lambda: False, max_attempts=5)
+    # 3 lần fail liên tiếp → circuit OPEN
+    for _ in range(3):
+        outcome = rec.recover(failure)
+        if outcome.escalated:
+            break
+    assert rec._breaker.is_open(fingerprint_of("TimeoutError", "model timeout"))
+    outcome = rec.recover(failure)
+    assert outcome.escalated is True
+    assert "circuit open" in outcome.reason
+
+
+def test_rec055_circuit_cooldown(failure):
+    clock = RClock()
+    breaker = CircuitBreaker(fail_threshold=2, cooldown_s=10.0, clock=clock)
+    rec = AutonomousRecovery(breaker=breaker, verifier=lambda: False, max_attempts=5)
+    rec.recover(failure)
+    rec.recover(failure)
+    assert breaker.is_open(fingerprint_of("TimeoutError", "model timeout"))
+    clock.now = 11.0  # hết cooldown
+    assert breaker.is_open(fingerprint_of("TimeoutError", "model timeout")) is False
+
+
+def test_rec055_no_strategy_repeat(failure):
+    calls = []
+
+    def execute(strategy, _f):
+        calls.append(strategy)
+
+    rec = AutonomousRecovery(execute_strategy=execute, verifier=lambda: False, max_attempts=10)
+    rec.recover(failure)
+    # Lần 2: RETRY đã thử → không lặp vô ích
+    rec.recover(failure)
+    # Lần 2 sẽ thử FALLBACK → ALTERNATIVE (tried-set per fingerprint)
+    assert calls.count(RecoveryStrategy.RETRY) == 1
+
+
+def test_rec055_strategy_scores():
+    assert STRATEGY_SCORES[RecoveryStrategy.RETRY] == 1.0
+    assert STRATEGY_SCORES[RecoveryStrategy.ESCALATE] == 0.0
+    assert STRATEGY_SCORES[RecoveryStrategy.RETRY] > STRATEGY_SCORES[RecoveryStrategy.FALLBACK]
+
+
+# ---------------------------------------------------------------------------
+# TASK-056 — Long-Horizon Execution
+# ---------------------------------------------------------------------------
+
+from aios_core.autonomous import LongHorizonManager
+from aios_core.autonomous.contracts import SessionStatus
+
+
+@pytest.fixture()
+def long_horizon(tmp_path: Path):
+    return LongHorizonManager(event_service=None, db_path=tmp_path / "longhorizon.db")
+
+
+def test_lh056_session_create_resume(long_horizon):
+    s = long_horizon.create_session(goal_id="g1")
+    assert s.status == SessionStatus.ACTIVE
+    ckpt = long_horizon.checkpoint(
+        s.id, completed=["a", "b"], current="c", pending=["d", "e"],
+        state={"step": 3}, notes=["note1"],
+    )
+    assert ckpt.completed == ["a", "b"]
+    resumed = long_horizon.resume(s.id)
+    assert resumed.completed == ["a", "b"]
+    assert resumed.current == "c"
+    assert resumed.pending == ["d", "e"]
+    assert resumed.state == {"step": 3}
+    assert resumed.notes == ["note1"]
+
+
+def test_lh056_checkpoint_overwrite(long_horizon):
+    s = long_horizon.create_session()
+    long_horizon.checkpoint(s.id, completed=["a"], current="b")
+    long_horizon.checkpoint(s.id, completed=["a", "b"], current="c")
+    resumed = long_horizon.resume(s.id)
+    assert resumed.completed == ["a", "b"]
+    assert resumed.current == "c"
+
+
+def test_lh056_cross_instance(tmp_path: Path):
+    db = tmp_path / "longhorizon.db"
+    m1 = LongHorizonManager(event_service=None, db_path=db)
+    s = m1.create_session(goal_id="g1")
+    m1.checkpoint(s.id, completed=["a", "b", "c"], current="d")
+    m2 = LongHorizonManager(event_service=None, db_path=db)  # restart
+    resumed = m2.resume(s.id)
+    assert resumed.completed == ["a", "b", "c"]
+    assert resumed.current == "d"
+    assert m2.get_session(s.id).status == SessionStatus.RESUMED
+
+
+def test_lh056_terminal_no_resume(long_horizon):
+    s = long_horizon.create_session()
+    long_horizon.complete_session(s.id)
+    with pytest.raises(Exception):
+        long_horizon.resume(s.id)
+    with pytest.raises(Exception):
+        long_horizon.checkpoint(s.id, completed=["a"])
+
+
+def test_lh056_overlap_raises(long_horizon):
+    s = long_horizon.create_session()
+    with pytest.raises(Exception):
+        long_horizon.checkpoint(s.id, completed=["a"], pending=["a"])
+
+
+def test_lh056_compact_note(long_horizon):
+    s = long_horizon.create_session()
+    long_horizon.checkpoint(s.id, completed=["a"], current="b", pending=["c"])
+    long_horizon.compact_note(s.id, "compact: context summary")
+    resumed = long_horizon.resume(s.id)
+    assert resumed.notes == ["compact: context summary"]
+    assert resumed.completed == ["a"]  # giữ nguyên progress
+
+
+def test_lh056_history_bounded(long_horizon):
+    s = long_horizon.create_session()
+    for i in range(60):
+        long_horizon.checkpoint(s.id, completed=[f"s{i}"])
+    assert len(long_horizon.checkpoint_history(s.id)) == 50
+
+
+def test_lh056_list_sessions(long_horizon):
+    long_horizon.create_session(goal_id="g1")
+    long_horizon.create_session(goal_id="g1")
+    long_horizon.create_session(goal_id="g2")
+    assert len(long_horizon.list_sessions(goal_id="g1")) == 2
+    assert len(long_horizon.list_sessions()) == 3
+
+
+# ---------------------------------------------------------------------------
+# TASK-057 — Autonomous Memory
+# ---------------------------------------------------------------------------
+
+from aios_core.autonomous import AutonomousMemory
+from aios_core.autonomous.contracts import MemoryEntryKind
+
+
+@pytest.fixture()
+def auto_memory(tmp_path: Path):
+    return AutonomousMemory(event_service=None, db_path=tmp_path / "autonomous_memory.db")
+
+
+def test_mem057_six_kinds():
+    assert len(MemoryEntryKind) == 6
+
+
+def test_mem057_store_retrieve(auto_memory):
+    auto_memory.store(MemoryEntryKind.FAILURE, "k1", {"when": "x"}, confidence=0.8)
+    entry = auto_memory.retrieve(MemoryEntryKind.FAILURE, "k1")
+    assert entry is not None
+    assert entry.confidence == 0.8
+    assert entry.validated is False
+
+
+def test_mem057_retrieve_by_kind(auto_memory):
+    auto_memory.store(MemoryEntryKind.WORKING, "a", {"v": 1})
+    auto_memory.store(MemoryEntryKind.WORKING, "b", {"v": 2})
+    entries = auto_memory.retrieve(MemoryEntryKind.WORKING)
+    assert len(entries) == 2
+
+
+def test_mem057_inv034_promote_unvalidated_raises(auto_memory):
+    auto_memory.store(MemoryEntryKind.SEMANTIC, "lesson1", {"v": 1}, confidence=0.9)
+    with pytest.raises(Exception) as exc:
+        auto_memory.promote(MemoryEntryKind.SEMANTIC, "lesson1")
+    assert "INV-034" in str(exc.value)
+
+
+def test_mem057_inv034_promote_low_confidence(auto_memory):
+    auto_memory.store(MemoryEntryKind.SEMANTIC, "lesson1", {"v": 1}, confidence=0.2)
+    auto_memory.validate("lesson1", MemoryEntryKind.SEMANTIC, 0.2, "evaluation")
+    with pytest.raises(Exception) as exc:
+        auto_memory.promote(MemoryEntryKind.SEMANTIC, "lesson1")
+    assert "confidence" in str(exc.value)
+
+
+def test_mem057_validate_then_promote(auto_memory):
+    auto_memory.store(MemoryEntryKind.SEMANTIC, "lesson1", {"v": 1}, confidence=0.8)
+    auto_memory.validate("lesson1", MemoryEntryKind.SEMANTIC, 0.9, "evaluation")
+    promoted = auto_memory.promote(MemoryEntryKind.SEMANTIC, "lesson1")
+    assert promoted.promoted is True
+    assert promoted.validated is True
+
+
+def test_mem057_validate_requires_source(auto_memory):
+    auto_memory.store(MemoryEntryKind.SEMANTIC, "x", {"v": 1}, confidence=0.9)
+    with pytest.raises(Exception):
+        auto_memory.validate("x", MemoryEntryKind.SEMANTIC, 0.9, "  ")
+
+
+def test_mem057_learn_full(auto_memory):
+    lesson = auto_memory.learn({
+        "when": "Oracle migration",
+        "failure": "TIMESTAMP mismatch",
+        "cause": "timezone",
+        "fix": "FROM_TZ(...)",
+        "confidence": 0.92,
+    })
+    assert lesson.key.startswith("lesson:")
+    entry = auto_memory.retrieve(MemoryEntryKind.FAILURE, lesson.key)
+    assert entry is not None
+    assert entry.confidence == 0.92
+
+
+def test_mem057_learn_incomplete_low_confidence(auto_memory):
+    lesson = auto_memory.learn({"when": "x", "failure": "y"})
+    entry = auto_memory.retrieve(MemoryEntryKind.FAILURE, lesson.key)
+    assert entry.confidence == 0.3  # C1-03 v1
+
+
+def test_mem057_learn_dedup_increases_confidence(auto_memory):
+    data = {"when": "w", "failure": "f", "cause": "c", "fix": "x", "confidence": 0.5}
+    lesson1 = auto_memory.learn(data)
+    auto_memory.learn(data)
+    entry = auto_memory.retrieve(MemoryEntryKind.FAILURE, lesson1.key)
+    assert entry.confidence == pytest.approx(0.6)  # 0.5 + 0.1
+
+
+def test_mem057_persist_cross_instance(tmp_path: Path):
+    db = tmp_path / "m.db"
+    m1 = AutonomousMemory(event_service=None, db_path=db)
+    m1.store(MemoryEntryKind.GOAL, "g1", {"note": "progress 50%"}, confidence=0.9)
+    m2 = AutonomousMemory(event_service=None, db_path=db)
+    entry = m2.retrieve(MemoryEntryKind.GOAL, "g1")
+    assert entry is not None
+    assert entry.content == {"note": "progress 50%"}
+
+
+def test_mem057_goal_note(auto_memory):
+    auto_memory.store_goal_note("goal-1", "analysis done")
+    entry = auto_memory.retrieve(MemoryEntryKind.GOAL, "goal-1")
+    assert entry is not None
+
+
+# ---------------------------------------------------------------------------
+# TASK-061 — Stuck Detection
+# ---------------------------------------------------------------------------
+
+from aios_core.autonomous import StuckDetector
+
+
+@pytest.fixture()
+def detector():
+    return StuckDetector(window_size=20)
+
+
+def test_stuck061_repeated_tool_calls(detector):
+    for _ in range(3):
+        detector.record("TOOL_CALL", "g1", {"tool_id": "python"})
+    report = detector.detect("g1")
+    assert "repeated_tool_calls" in report.signals
+    assert report.verdict == "stuck"
+
+
+def test_stuck061_repeated_errors(detector):
+    for _ in range(3):
+        detector.record("ERROR", "g1", {"fingerprint": "fp1"})
+    assert "repeated_errors" in detector.detect("g1").signals
+
+
+def test_stuck061_no_state_change(detector):
+    for _ in range(5):
+        detector.record("STATE_CHANGE", "g1", {"state": "RUNNING"})
+    assert "no_state_change" in detector.detect("g1").signals
+
+
+def test_stuck061_no_progress(detector):
+    for _ in range(5):
+        detector.record("TOOL_CALL", "g1", {"tool_id": f"t{_}"})
+    assert "no_progress" in detector.detect("g1").signals
+
+
+def test_stuck061_oscillation(detector):
+    for state in ["A", "B", "A", "B"]:
+        detector.record("STATE_CHANGE", "g1", {"state": state})
+    report = detector.detect("g1")
+    assert "oscillation" in report.signals
+    assert report.verdict == "stuck"
+
+
+def test_stuck061_no_oscillation_when_linear(detector):
+    for state in ["A", "B", "C", "D"]:
+        detector.record("STATE_CHANGE", "g1", {"state": state})
+    assert "oscillation" not in detector.detect("g1").signals
+
+
+def test_stuck061_budget_burn(detector):
+    for _ in range(3):
+        detector.record("BUDGET", "g1", {"cost": 1.0})
+    report = detector.detect("g1")
+    assert "budget_burn" in report.signals
+
+
+def test_stuck061_contradictory_plans(detector):
+    for _ in range(3):
+        detector.record("REPLAN", "g1", {"reason": "world changed"})
+    assert "contradictory_plans" in detector.detect("g1").signals
+
+
+def test_stuck061_normal(detector):
+    detector.record("TOOL_CALL", "g1", {"tool_id": "a"})
+    detector.record("PROGRESS", "g1", {"progress": 0.5})
+    detector.record("STATE_CHANGE", "g1", {"state": "A"})
+    detector.record("STATE_CHANGE", "g1", {"state": "B"})
+    report = detector.detect("g1")
+    assert report.verdict == "normal"
+    assert report.signals == []
+
+
+def test_stuck061_reset(detector):
+    for _ in range(3):
+        detector.record("ERROR", "g1", {"fingerprint": "fp"})
+    assert detector.detect("g1").verdict == "stuck"
+    detector.reset("g1")
+    assert detector.detect("g1").verdict == "normal"
+
+
+def test_stuck061_empty_window(detector):
+    assert detector.detect("g1").verdict == "normal"
+
+
+def test_stuck061_window_bounded(detector):
+    d = StuckDetector(window_size=5)
+    for i in range(10):
+        d.record("TOOL_CALL", "g1", {"tool_id": f"t{i}"})
+    report = d.detect("g1")
+    assert report.window_size == 5
+    assert "repeated_tool_calls" not in report.signals  # window 5 — không đủ 3 lặp
+
+
+def test_stuck061_progress_clears_no_progress(detector):
+    for _ in range(5):
+        detector.record("TOOL_CALL", "g1", {"tool_id": f"t{_}"})
+    detector.record("PROGRESS", "g1", {"progress": 0.5})
+    report = detector.detect("g1")
+    assert "no_progress" not in report.signals

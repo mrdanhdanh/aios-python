@@ -310,3 +310,156 @@ class LoopResult(BaseModel):
     decisions: list[GovernorDecision] = Field(default_factory=list)
     final_state: LoopFinalState = LoopFinalState.STOPPED
     success: bool = False
+
+
+# ---------------------------------------------------------------------------
+# TASK-055 — Autonomous Recovery
+# ---------------------------------------------------------------------------
+
+class FailureEvent(BaseModel):
+    """Một failure cần recovery (PLAN §M9-15)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    execution_id: str
+    error_type: str
+    message: str
+    at: float = 0.0
+
+
+class RecoveryStrategy(str, Enum):
+    """Các chiến lược deterministic (C1-02 v1)."""
+
+    RETRY = "retry"
+    FALLBACK = "fallback"
+    ALTERNATIVE = "alternative"
+    ESCALATE = "escalate"
+
+
+# Score deterministic: RETRY > FALLBACK > ALTERNATIVE > ESCALATE.
+STRATEGY_SCORES: dict[RecoveryStrategy, float] = {
+    RecoveryStrategy.RETRY: 1.0,
+    RecoveryStrategy.FALLBACK: 0.7,
+    RecoveryStrategy.ALTERNATIVE: 0.5,
+    RecoveryStrategy.ESCALATE: 0.0,
+}
+
+
+class RecoveryOutcome(BaseModel):
+    """Kết quả recover() (C1-04 v1: escalate là outcome hợp lệ, không raise)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    recovered: bool = False
+    escalated: bool = False
+    strategy: RecoveryStrategy | None = None
+    attempts: int = 0
+    reason: str = ""
+
+
+# ---------------------------------------------------------------------------
+# TASK-056 — Long-Horizon Execution
+# ---------------------------------------------------------------------------
+
+class SessionStatus(str, Enum):
+    """Trạng thái session (C1-04 v1)."""
+
+    ACTIVE = "active"
+    RESUMED = "resumed"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class ExecutionSession(BaseModel):
+    """Session dài hạn (PLAN §M9-17)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    goal_id: str = ""
+    status: SessionStatus = SessionStatus.ACTIVE
+    created_at: str = ""
+
+
+class Checkpoint(BaseModel):
+    """Checkpoint: Completed · Current · Pending · State (PLAN §M9-18)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    session_id: str
+    completed: list[str] = Field(default_factory=list)
+    current: str = ""  # C2-02: mặc định "" (chưa bắt đầu)
+    pending: list[str] = Field(default_factory=list)
+    state: dict[str, Any] = Field(default_factory=dict)
+    notes: list[str] = Field(default_factory=list)
+    at: str = ""
+
+
+# ---------------------------------------------------------------------------
+# TASK-057 — Autonomous Memory
+# ---------------------------------------------------------------------------
+
+class MemoryEntryKind(str, Enum):
+    """6 loại memory (PLAN §M9-19)."""
+
+    WORKING = "working"
+    EPISODIC = "episodic"
+    SEMANTIC = "semantic"
+    PROCEDURAL = "procedural"
+    FAILURE = "failure"
+    GOAL = "goal"
+
+
+class MemoryEntry(BaseModel):
+    """Một entry memory autonomous."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: MemoryEntryKind
+    key: str
+    content: dict[str, Any]
+    confidence: float = 0.0
+    validated: bool = False
+    promoted: bool = False
+    source: str = ""
+    created_at: str = ""
+
+
+class Lesson(BaseModel):
+    """Lesson từ Learning Loop (PLAN §M9-20)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    key: str
+    when: str
+    failure: str
+    cause: str = ""
+    fix: str = ""
+    confidence: float = 0.0
+
+
+# ---------------------------------------------------------------------------
+# TASK-061 — Advanced Stuck Detection
+# ---------------------------------------------------------------------------
+
+class StuckSignal(str, Enum):
+    """7 signal stuck (PLAN §M9-27)."""
+
+    REPEATED_TOOL_CALLS = "repeated_tool_calls"
+    REPEATED_ERRORS = "repeated_errors"
+    NO_STATE_CHANGE = "no_state_change"
+    NO_PROGRESS = "no_progress"
+    OSCILLATION = "oscillation"
+    BUDGET_BURN = "budget_burn"
+    CONTRADICTORY_PLANS = "contradictory_plans"
+
+
+class StuckReport(BaseModel):
+    """Báo cáo detect()."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    signals: list[str] = Field(default_factory=list)
+    counts: dict[str, int] = Field(default_factory=dict)
+    verdict: str = "normal"  # "stuck" | "normal"
+    window_size: int = 0
