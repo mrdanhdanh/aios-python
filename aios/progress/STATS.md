@@ -117,6 +117,18 @@
 | Deliverable M4 | Upgrade pipeline 6 bước + Observability (metrics/prompt-history/profiler/doctor/arch-health/eval v2) + Orchestrator v2 (advisor/supervisor/collector/goal reporter) ✓ |
 | Commit | 5 (f1f8f90, 362cdb3, f46e086, 9145637 + cleanup) |
 
+## M4 — Review độc lập (2026-08-15)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Review type | Self-review (AIOS Orchestrator), đọc code + chạy test + chạy scanner cây thật |
+| Findings | 1 P1 (F1) + 2 P3 (F2, F3) |
+| F1 (P1) | `ArchitectureHealth.scan()` skip silent layer/contract check trên cây thật (base-dir mismatch `backend/src/agents` không tồn tại) + `rel` dot-form sai định dạng cho `collect_imports`. **ĐÃ TỰ SỬA** (aios_root + slash-form + exempt slash-form) |
+| F2 (P3) | `orchestrator/__init__.py` không export module M4 (inconsistency, không phải bug) |
+| F3 (P3) | advisor rule 1+5 dedup collapse (đúng spec) |
+| Test regresi thêm | 2 (`test_nested_aios_core_layout_scans_layer_violations`, `test_nested_aios_core_layout_policy_check`) |
+| Full suite sau fix | **1636 passed, 0 fail** |
+
 ## M5 — Core Intelligence ✅ (2026-08-15)
 
 | Chỉ số | Giá trị |
