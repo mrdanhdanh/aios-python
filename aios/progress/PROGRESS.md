@@ -10,7 +10,7 @@
 | M0 | Development Foundation (VS Code agent + progress system) | `done` ✅ |
 | M1 | Core Runtime (P0–P2: infra, kernel, model/memory/knowledge, workflow/capability/catalog) | `done` ✅ (review độc lập PASS) |
 | M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `done` ✅ (669 tests, 95.51%) |
-| M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `done` ✅ (689 pytest + 19 vitest) |
+| M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `done` ✅ (689 pytest + 19 vitest) — **review độc lập PASS** (V1–V6,V8 PASS; V7 P2 process gap) |
 | M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `done` ✅ (809 tests, 94.92%) |
 | M5 | Core Intelligence (P9–P10: memory/context/model/planning/graph/scheduler) | `done` ✅ (1086 tests, 95.22%) |
 | M6 | AIOS Harness (P11: harness kernel, verification, test & simulation, evaluation, benchmark, doctor & readiness) | `done` ✅ (1521 tests, 95.35%) |
@@ -242,6 +242,7 @@
 | TASK-041 | E7 Operations — CentralAuditStore (tamper-evident INV-027) + HealthMonitor failover + RecoveryManager | `done` ✅ | `enterprise/operations.py` |
 | TASK-042 | Enterprise Operations + Dashboard — EnterpriseDashboard aggregate tenant metrics từ audit | `done` ✅ | `enterprise/dashboard.py` |
 | TASK-043 | M8-E1 — Public AIOS SDK | `done` ✅ | 5 SDK tests pass; backend regression có 1 flaky timing failure không liên quan |
+| TASK-044 | M8-E2 — Plugin Runtime | `in-progress` | spec + critique ×2 + review complete; implementation next |
 | INV-022..029 | 8 architecture invariant enforced bằng import allow-list + source-literal tests trong `tests/test_architecture.py` (m7_*) | `done` ✅ | 79 arch tests pass (chung) |
 
 **Deliverable M7 (batch)**: `backend/src/aios_core/enterprise/` 10 file (contracts, identity, tenancy, runtime, scheduler, governance, security, operations, dashboard, __init__) + config (`EnterpriseSettings` trong `config.py` + `config.yaml`) + wiring (`RuntimeKernel.create` register `EnterpriseManager`) + `tests/test_enterprise.py` (29 tests) + `tests/test_architecture.py` (8 m7_* invariant tests).
