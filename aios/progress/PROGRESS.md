@@ -3,6 +3,17 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## ✅ TASK-082 — Nâng cấp Phaser 4 hướng E: sprite sheet PNG + fx + parallax + transition (2026-08-16)
+
+- **Kết quả**: **DONE** — user chọn hướng E (A+B+C+D) + "tự hoạt động, tự quyết định". Nâng cấp toàn diện `games/yuniebel-phaser/`:
+  - **(A) Sprite sheet PNG thật** — `tools/gen-sprites.mjs` (0 dependency, PNG encoder thuần, deterministic — chạy 2 lần SHA256 giống hệt) sinh `src/assets/{cat,butterfly,ghost,owner,cake}.png` + `sprites.json` (17 frames: mèo walk 4f + idle-cycle blink/đuôi, bướm vỗ cánh 4f, ma float 2f, chủ, bánh kem nến cháy 2f) + Phaser Animations (add.sprite); mèo origin 0.5 pos p.x*3+24 (hitbox khớp cũ), flipX quanh tâm.
+  - **(B) FX deterministic** — `src/fx/fx.js` (PRNG mulberry32 seeded, 0 Math.random): bụi 14 hạt GARDEN ngày, đom đóm 10 đêm, hơi thở ma 8, tia lửa lò sưởi 6 BIRTHDAY (LIVING không lò sưởi); **light pool radial gradient** thay overlay phẳng (ambient α theo scene + nguồn sáng: player/đèn hiên/cửa sổ/ma/đồng hồ/sconce/lò sưởi/nến/đuốc tường 11 — camX trừ đúng).
+  - **(C) Parallax + camera** — farTex mây 3 lớp drift (scrollFactor 0.25, redraw rtime) + nearTex cỏ/hoa 1200×270 (1.15); **shake manual deterministic** (sin/cos — camera effects Phaser không update + Math.random) + zoom lerp 1.04 khi scare 5.
+  - **(D) Transition mượt** — fade 0.6s ease-out (t²×0.75), night tint lerp 1.5s theo timers.dark (guard NaN: timers.dark ?? 5*(1-darkness)).
+- **Test**: **88/88 PASS** — vitest **50/50** (core 26 + smoke 3 + fx 15 + sprite-sheet 6: PNG decode/SHA256/vendor baseline) + Playwright **38/38** (e2e 8 + visual 30: 25 shots + 5 đặc biệt — cat-walk anim, freeze-ngay, light pool probe, shake/zoom, flip bbox). **23/23 AC ĐẠT** (AC-1..23; AC-15 vendor byte-identical, AC-18 vanilla untouched). Build PASS + dist/assets 5 PNG (assetsInlineLimit 0).
+- **Bug phát hiện khi test**: (1) `src/fx/fx.js` lightSources đọc sai index `src[4]` → crash L_SEARCH (pageerror + bisect phase); (2) camera effects Phaser 4 không update tự động + Math.random → chuyển manual; (3) `add.image` không có anims → `add.sprite`; (4) PNG Playwright filter Paeth → png-decode hỗ trợ 5 filters + RGB/RGBA; (5) WebGL getImageData rỗng → probe qua PNG decode; (6) WebServer EBUSY → quy trình clean build/preview.
+- **Hard gate**: plan → spec v3.1 (23 AC) → critique ×2 (28 + 16 = 44 vấn đề resolved) → tasks (14 mục) → review (2 P1 + 4 P2 resolved, tọa độ verify vendor) → implement → test → evaluate. Xem chi tiết: `aios/progress/tasks/TASK-082/`
+
 ## ✅ TASK-081 — Scaffold Phaser 4 (Vite) cho Yuniebel's Cat (2026-08-15)
 
 - **Kết quả**: **DONE** — Tạo bản Phaser 4 (Vite) của webgame `games/yuniebel/` tại `games/yuniebel-phaser/`. Vendor `core.js`/`sprites.js`/`audio.js` **byte-identical** (SHA256 = bản vanilla, AC-16 ✓); 1 `GameScene` re-render bg CanvasTexture mỗi frame + sprite Player/Butterfly + camera scroll + DOM overlay UI preserve. Debug hook `?test=1` (chỉ test, chơi thật không hook). Hard gate: plan + spec v3 (16 AC) + critique×2 + tasks + review **APPROVED** + implement + test (vitest + playwright) + evaluate.
@@ -116,7 +127,6 @@
 | Remote | Chuyển origin → repo GitHub mới `mrdanhdanh/aios-python` (PUBLIC) | `done` | commit e42bae4 (2026-08-14) |
 | DoD checklist | **Definition of Done — Closing Checklist** (AGENTS.md §3.1 + PLAN.md): bắt buộc cập nhật LOG.md + PROGRESS.md + PLAN.md + STATS.md + task folder + commit sau MỖI task — tránh quên ghi tài liệu | `done` | theo yêu cầu người dùng 2026-08-15 |
 | README docs | `[bypass]` — cập nhật `docs/README.md` (GitHub fallback render khi root không có README.md) khớp trạng thái AIOS 1.0: mô tả 7 tầng + CERTIFIED, bảng M0–M10, mục kiểm tra sức khỏe (`aiagent doctor/conformance/arch-health`), link constitution-1.0.md; không tạo README root mới | `done` | theo yêu cầu người dùng 2026-08-15 |
-| PR #1 | `[bypass]` — tạo Pull Request `operation/test-A` → `verify` (theo ADR-0005: feature → verify → master): 158 files, +13,527/-1, 12 commits (TASK-077..081 + bypass fixes) | `done` | theo yêu cầu người dùng 2026-08-16; https://github.com/mrdanhdanh/aios-python/pull/1 |
 
 
 ## M0 — Development Foundation ✅
