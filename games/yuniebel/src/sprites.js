@@ -190,35 +190,35 @@
     R(ctx, 210, 87, 2, 2, "#ffd93b"); R(ctx, 42, 74, 2, 2, "#ffd93b");
     // quả bóng đỏ
     R(ctx, 56, 72, 4, 4, "#e03030"); R(ctx, 57, 73, 1, 1, "rgba(255,255,255,0.5)");
-    // cây lớn (230,13 — khớp wall cây)
-    R(ctx, 230, 36, 3, 24, C.woodDark);
-    R(ctx, 223, 24, 17, 16, mix("#2e8b57", "#0f3020", d));
-    R(ctx, 226, 12, 11, 14, mix("#3aa05f", "#155030", d));
-    // ===== NGÔI NHÀ (x 267..320 — khớp wall nhà (267,7,53,43)) =====
+    // cây lớn (230 — khớp wall cây, gốc 68 cắm vào cỏ)
+    R(ctx, 230, 44, 3, 24, C.woodDark);
+    R(ctx, 223, 30, 17, 16, mix("#2e8b57", "#0f3020", d));
+    R(ctx, 226, 18, 11, 14, mix("#3aa05f", "#155030", d));
+    // ===== NGÔI NHÀ (x 267..320 — khớp wall nhà) — chân 68 CẮM vào cỏ =====
     // thân nhà (tường be)
-    R(ctx, 267, 26, 53, 24, mix(C.wallCream, "#8a7a58", d));
+    R(ctx, 267, 40, 53, 28, mix(C.wallCream, "#8a7a58", d));
     // mái đỏ 3 lớp
-    R(ctx, 265, 22, 57, 5, mix(C.roofRed, "#5e1c13", d));
-    R(ctx, 268, 19, 51, 4, mix(C.roofRed, "#5e1c13", d));
-    R(ctx, 271, 16, 45, 4, mix(C.roofRed, "#5e1c13", d));
-    // cửa gỗ (khớp door zone 284,48)
-    R(ctx, 285, 42, 9, 8, mix(C.wood, "#3c2716", d));
-    R(ctx, 286, 43, 7, 6, mix(C.woodDark, "#2a1a0e", d));
+    R(ctx, 265, 36, 57, 5, mix(C.roofRed, "#5e1c13", d));
+    R(ctx, 268, 33, 51, 4, mix(C.roofRed, "#5e1c13", d));
+    R(ctx, 271, 30, 45, 4, mix(C.roofRed, "#5e1c13", d));
+    // cửa gỗ LỚN (khớp door zone 284,48,16,20)
+    R(ctx, 285, 50, 14, 16, mix(C.wood, "#3c2716", d));
+    R(ctx, 287, 52, 10, 12, mix(C.woodDark, "#2a1a0e", d));
     // cửa sổ
-    R(ctx, 271, 32, 5, 5, mix("#bfe8ff", "#20304a", d));
-    R(ctx, 300, 32, 5, 5, mix("#bfe8ff", "#20304a", d));
-    R(ctx, 273, 34, 1, 3, C.woodDark); R(ctx, 302, 34, 1, 3, C.woodDark);
-    // hiên nhà
-    R(ctx, 265, 49, 55, 2, mix(C.wood, "#3c2716", d));
-    R(ctx, 265, 48, 55, 1, mix(C.woodLight, "#5a3a24", d));
+    R(ctx, 271, 46, 5, 5, mix("#bfe8ff", "#20304a", d));
+    R(ctx, 300, 46, 5, 5, mix("#bfe8ff", "#20304a", d));
+    R(ctx, 273, 48, 1, 3, C.woodDark); R(ctx, 302, 48, 1, 3, C.woodDark);
+    // hiên nhà (bậc thềm — chìm vào cỏ)
+    R(ctx, 265, 64, 55, 1, mix(C.woodLight, "#5a3a24", d));
+    R(ctx, 265, 65, 55, 3, mix(C.woodDark, "#3c2716", d));
     // đèn hiên khi darkness>0.15 (hoàng hôn, ảnh B panel 2)
     if (d > 0.15) {
-      R(ctx, 287, 38, 2, 2, "#ffd93b");
-      R(ctx, 285, 39, 6, 1, "rgba(255,217,59,0.35)");
+      R(ctx, 289, 46, 2, 2, "#ffd93b");
+      R(ctx, 287, 47, 6, 1, "rgba(255,217,59,0.35)");
     }
     // chủ nhân đứng ở cửa khi G_INIT (gọi mèo)
     if (state.phase === "G_INIT" && state.dialogue) {
-      drawOwner(ctx, 288, 44, 0, 1);
+      drawOwner(ctx, 286, 52, 0, 1);
     }
     ctx.restore();
   }
@@ -233,20 +233,17 @@
     for (i = 0; i < 8; i++) R(ctx, 0, 62 + i * 4, GW, 4, mix(C.wood, "#6a4526", i / 8));
     // viền chân tường
     R(ctx, 0, 62, GW, 2, C.woodDark);
-    // sofa đỏ cam + gối (khớp wall (10,53,30,15))
-    R(ctx, 10, 52, 30, 12, C.sofaRedDark);
-    R(ctx, 8, 50, 32, 5, C.sofaRed);
-    R(ctx, 12, 48, 10, 4, C.cushion);   // gối tựa
-    R(ctx, 24, 48, 8, 4, C.cushion);
-    R(ctx, 10, 64, 4, 4, C.sofaRedDark); // chân
-    R(ctx, 36, 64, 4, 4, C.sofaRedDark);
+    // sofa đỏ cam + gối (khớp wall (10,53,30,15)) — khối liền, không chân rời
+    R(ctx, 10, 52, 30, 16, C.sofaRedDark);
+    R(ctx, 10, 50, 30, 4, C.sofaRed);
+    R(ctx, 12, 46, 8, 4, C.cushion);
+    R(ctx, 26, 46, 8, 4, C.cushion);
     // thảm trải (giữa sofa và bàn trà)
     R(ctx, 44, 73, 20, 2, C.rug);
     for (i = 0; i < 6; i++) R(ctx, 44 + i * 4, 73, 2, 2, C.rugStripe);
-    // bàn trà gỗ (khớp wall (63,67,23,4))
+    // bàn trà gỗ (khớp wall (63,67,23,4)) — khối liền
     R(ctx, 63, 66, 23, 2, C.woodLight);
-    R(ctx, 65, 68, 19, 4, C.wood);
-    R(ctx, 63, 72, 2, 2, C.woodDark); R(ctx, 82, 72, 2, 2, C.woodDark);
+    R(ctx, 63, 68, 23, 4, C.wood);
     // đèn tường sconce
     R(ctx, 12, 12, 2, 6, C.woodDark); R(ctx, 10, 10, 6, 3, "#ffd93b");
     R(ctx, 10, 13, 6, 1, "rgba(255,217,59,0.3)");
@@ -259,19 +256,26 @@
     R(ctx, 82, 16, 10, 10, C.woodLight);
     R(ctx, 84, 18, 6, 6, "#ffffff");
     R(ctx, 86, 20, 1, 2, C.woodDark); R(ctx, 87, 21, 2, 1, C.woodDark);
-    // kệ đứng + chậu cây (phải — khớp wall kệ (127,70,10,17))
-    R(ctx, 126, 62, 12, 24, C.wood);
-    R(ctx, 127, 64, 4, 6, "#b04a3c"); R(ctx, 133, 64, 4, 6, "#b04a3c");
-    R(ctx, 127, 72, 4, 6, "#3a6e4a"); R(ctx, 133, 72, 4, 6, "#3a6e4a");
-    R(ctx, 127, 80, 4, 4, "#b04a3c"); R(ctx, 133, 80, 4, 4, "#b04a3c");
-    R(ctx, 138, 56, 6, 8, C.pot);
-    R(ctx, 139, 52, 4, 6, C.plant); R(ctx, 140, 50, 2, 3, C.plant);
+    // kệ đứng gọn (phải — khớp wall kệ (127,70,10,17)) — bỏ chậu đè kệ
+    R(ctx, 127, 70, 10, 17, C.wood);
+    R(ctx, 127, 75, 10, 1, C.woodDark);
+    R(ctx, 127, 80, 10, 1, C.woodDark);
+    R(ctx, 128, 71, 8, 3, "#b04a3c");
+    R(ctx, 128, 76, 8, 3, "#3a6e4a");
+    R(ctx, 128, 81, 8, 3, "#b04a3c");
+    R(ctx, 128, 85, 8, 1, "#3a6e4a");
+    // chậu cây góc trái dưới (decor — không chặn)
+    R(ctx, 2, 72, 6, 8, C.pot);
+    R(ctx, 3, 68, 4, 6, C.plant); R(ctx, 4, 66, 2, 3, C.plant);
     // cửa tối hậu cảnh (bếp)
     R(ctx, 96, 34, 12, 26, "#0a0a14");
     R(ctx, 96, 34, 2, 26, C.woodDark); R(ctx, 106, 34, 2, 26, C.woodDark);
-    // cửa ra phòng khách — bên trái (đi tới bếp) + mũi tên (khớp door_kitchen (3,30,11,20))
-    R(ctx, 0, 36, 4, 24, "#1a1a24");
-    arrow(ctx, 3, 46, 1);
+    // cửa ra phòng bếp — bên trái RÕ + khung gỗ + mũi tên (khớp door_kitchen (3,30,11,20))
+    R(ctx, 0, 32, 8, 28, "#1a1a24");
+    R(ctx, 0, 32, 2, 28, C.woodDark);
+    R(ctx, 6, 32, 2, 28, C.woodDark);
+    R(ctx, 0, 32, 8, 2, C.woodDark);
+    arrow(ctx, 3, 48, 1);
   }
 
   // ===== 4. KITCHEN — bếp tối: tủ trắng, lò, tủ lạnh, vết máu LỚN, mắt sáng (ảnh C phải) =====
@@ -320,6 +324,8 @@
     if (Math.floor(time * 2) % 2 === 0) {
       R(ctx, 17, 19, 3, 2, "#ffffff"); R(ctx, 25, 19, 3, 2, "#ffffff");
     }
+    // cửa vào bếp (từ phòng khách — góc trái dưới, chỗ mèo spawn)
+    R(ctx, 0, 60, 5, 14, "#1a1a24");
     // cửa ra (phải — quay về phòng khách ma ám, khớp door_out (149,43,11,20))
     R(ctx, 149, 40, 4, 20, "#0a0a14");
     // nếu đang K_CHOICE: highlight vết máu

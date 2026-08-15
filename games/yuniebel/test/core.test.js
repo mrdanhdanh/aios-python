@@ -74,7 +74,7 @@ T("Bảng phase→task đúng §6.1", function () {
     G_INIT: "Đuổi theo con bướm!", G_CHASE: "Đuổi theo con bướm!",
     G_DARK: "Hãy vào nhà!", G_DOOR: "Hãy vào nhà!",
     L_SEARCH: "Tìm chủ nhân ở nhà bếp.",
-    K_INIT: "Kiểm tra vết máu!", K_BLOOD: "Kiểm tra vết máu!", K_CHOICE: "Kiểm tra vết máu!",
+    K_INIT: "Kiểm tra vết máu!", K_BLOOD: "Kiểm tra vùng tối!", K_CHOICE: "Kiểm tra vùng tối!",
     H_INIT: "Tìm người chủ!",
     H_BLOCK: "Phải đi qua phòng khác!", H_EXIT: "Phải đi qua phòng khác!",
     W_INIT: "Đi qua hành lang.", W_WALK: "Đi qua hành lang.",

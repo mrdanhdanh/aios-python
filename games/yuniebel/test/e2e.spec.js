@@ -85,7 +85,8 @@ test("AC-14a: chơi thật title → sinh nhật (D_END) — không hook", async
   await page.waitForFunction(() => ["G_DOOR", "L_SEARCH"].includes(window.__yuniebel.getState().phase), null, { timeout: 15000 });
   st = await getState(page);
   if (st.phase !== "L_SEARCH") {
-    await moveTo(page, 288, 50); // cửa mở dưới y=48..68 — mèo phải đi thấp (C2-P2-1/C3-P1)
+    await moveTo(page, 284, 70); // xuống đường mòn (dưới tường nhà — nhà giờ chạm đất)
+    await moveTo(page, 284, 52); // vào cửa (284..300) — chạm door zone
     st = await getState(page);
   }
   expect(st.phase).toBe("L_SEARCH");
@@ -96,10 +97,15 @@ test("AC-14a: chơi thật title → sinh nhật (D_END) — không hook", async
   st = await getState(page);
   expect(["K_INIT", "K_BLOOD", "K_CHOICE"].includes(st.phase)).toBeTruthy();
 
-  // ===== S3 Bếp: chạm vết máu → K_BLOOD → K_CHOICE =====
+  // ===== S3 Bếp: đi tới vết máu → K_BLOOD → vùng tối → K_CHOICE =====
   st = await getState(page);
   expect(["K_INIT", "K_BLOOD", "K_CHOICE"].includes(st.phase)).toBeTruthy();
-  await page.keyboard.press("Space");
+  await page.keyboard.press("Space"); // advance K_INIT dialogue
+  if ((await getState(page)).phase === "K_INIT") {
+    await moveTo(page, 70, 72); // vết máu (50,78,40,8) — spawn giờ XA vết máu
+  }
+  await page.keyboard.press("Space"); // advance K_BLOOD câu 1
+  await page.keyboard.press("Space"); // advance K_BLOOD câu 2
   if ((await getState(page)).phase !== "K_CHOICE") {
     await moveTo(page, 20, 20); // vùng tối (7,7,31,33) → K_CHOICE
   }
@@ -152,15 +158,22 @@ test("AC-14b: chơi thật title → game over (chọn 2) — không hook", asyn
   await chaseButterfly(page);
   await page.waitForFunction(() => ["G_DOOR", "L_SEARCH"].includes(window.__yuniebel.getState().phase), null, { timeout: 15000 });
   let st = await getState(page);
-  if (st.phase !== "L_SEARCH") { await moveTo(page, 288, 50); } // cửa mở y 48..68 (C2-P2-1/C3-P1)
+  if (st.phase !== "L_SEARCH") {
+    await moveTo(page, 284, 70); // xuống đường mòn (dưới tường nhà)
+    await moveTo(page, 284, 52); // vào cửa (284..300)
+  }
   await page.keyboard.press("Space");
   await moveTo(page, 7, 20); // lối TRÊN sofa → door_kitchen
   await page.waitForFunction(() => ["K_INIT", "K_BLOOD", "K_CHOICE"].includes(window.__yuniebel.getState().phase));
   await page.keyboard.press("Space");
   st = await getState(page);
-  if (!["K_BLOOD", "K_CHOICE"].includes(st.phase)) {
-    await moveTo(page, 20, 20);
+  if (st.phase === "K_INIT") {
+    await moveTo(page, 70, 72); // vết máu (50,78,40,8) — spawn xa vết máu
   }
+  await page.keyboard.press("Space");
+  await page.keyboard.press("Space");
+  st = await getState(page);
+  if (st.phase !== "K_CHOICE") { await moveTo(page, 20, 20); }
   st = await getState(page);
   if (st.phase !== "K_CHOICE") { await moveTo(page, 20, 20); }
   st = await getState(page);

@@ -34,15 +34,16 @@
       spawn: { x: 107, y: 70 },
       butterflyWp: [ { x: 167, y: 40 }, { x: 217, y: 30 }, { x: 180, y: 63 } ],
       walls: [
-        { x: 267, y: 7, w: 53, h: 43 },   // thân nhà (tới y=50)
+        { x: 267, y: 30, w: 17, h: 38 },  // thân nhà TRÁI cửa (267..284, 30..68 — chân cắm cỏ)
+        { x: 300, y: 30, w: 20, h: 38 },  // thân nhà PHẢI cửa (300..320, 30..68)
         { x: 67, y: 62, w: 8, h: 5 },     // bụi cây 1
         { x: 117, y: 33, w: 7, h: 5 },    // bụi cây 2
         { x: 207, y: 85, w: 9, h: 4 },    // bụi cây 3 (sát mép dưới — không chặn đường chính y=70)
         { x: 13, y: 50, w: 7, h: 4 },     // bụi cây 4
-        { x: 230, y: 13, w: 6, h: 23 }    // cây lớn
+        { x: 230, y: 18, w: 6, h: 30 }    // cây lớn (18..48 — tán + thân trên)
       ],
       zones: [
-        { id: "door", x: 284, y: 48, w: 11, h: 20, phases: ["G_INIT", "G_DOOR"] }
+        { id: "door", x: 284, y: 48, w: 16, h: 20, phases: ["G_INIT", "G_DOOR"] }
       ]
     },
     LIVING: {
@@ -59,7 +60,7 @@
     },
     KITCHEN: {
       w: 160, h: 90,
-      spawn: { x: 80, y: 73 },
+      spawn: { x: 20, y: 73 },   // xa vết máu — người chơi điều khiển mèo TỚI vết máu
       walls: [
         { x: 100, y: 47, w: 30, h: 15 },  // bàn bếp
         { x: 127, y: 7, w: 33, h: 43 }    // tủ bếp phải
@@ -118,8 +119,8 @@
     G_DOOR:     { scene: "GARDEN",    task: "Hãy vào nhà!", lock: false },
     L_SEARCH:   { scene: "LIVING",    task: "Tìm chủ nhân ở nhà bếp.", lock: false },
     K_INIT:     { scene: "KITCHEN",   task: "Kiểm tra vết máu!", lock: false },
-    K_BLOOD:    { scene: "KITCHEN",   task: "Kiểm tra vết máu!", lock: false },
-    K_CHOICE:   { scene: "KITCHEN",   task: "Kiểm tra vết máu!", lock: false },
+    K_BLOOD:    { scene: "KITCHEN",   task: "Kiểm tra vùng tối!", lock: false },
+    K_CHOICE:   { scene: "KITCHEN",   task: "Kiểm tra vùng tối!", lock: false },
     H_INIT:     { scene: "HAUNTED",   task: "Tìm người chủ!", lock: false },
     H_BLOCK:    { scene: "HAUNTED",   task: "Phải đi qua phòng khác!", lock: false },
     H_EXIT:     { scene: "HAUNTED",   task: "Phải đi qua phòng khác!", lock: false },
