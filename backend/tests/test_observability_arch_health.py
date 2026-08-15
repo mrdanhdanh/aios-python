@@ -287,3 +287,126 @@ def test_m7_enterprise_no_orchestrator_fires(tmp_path):
         v.kind == "layer" and "enterprise" in v.module
         for v in report.violations
     )
+
+
+# ---------------------------------------------------------------------------
+# M9 — Autonomous: runtime scanner must cover INV-030..034 (PLAN §M9 yêu cầu
+# "observability đầy đủ"). Rule layer cho autonomous/ được thêm cùng đợt review
+# M9; test này khoá vào không cho quay lại trạng thái "scanner bỏ qua M9"
+# (cf. M5 F1 silent-skip — cùng pattern M7).
+# ---------------------------------------------------------------------------
+
+def test_m9_real_src_healthy():
+    """INV-030..034: scanner chạy trên src thật phải xanh (gồm autonomous)."""
+    from aios_core.observability.arch_scan import SRC_ROOT
+
+    report = ArchitectureHealth().scan(package_dir=SRC_ROOT)
+    aut_violations = [v for v in report.violations if "autonomous" in v.module]
+    assert aut_violations == [], f"M9 scanner vi phạm: {aut_violations}"
+
+
+def test_m9_autonomous_isolation_fires(tmp_path):
+    """autonomous/ không được import kernel.services.execution (INV-030)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(
+        aios,
+        "autonomous/evil",
+        "from aios_core.kernel.services.execution import ExecutionService\n",
+    )
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "autonomous" in v.module
+        for v in report.violations
+    )
+    assert any("kernel.services" in v.message for v in report.violations)
+
+
+def test_m9_autonomous_no_worker_plane_fires(tmp_path):
+    """autonomous/ không được import agents/tools (INV-030 — Worker Plane)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(
+        aios,
+        "autonomous/evil",
+        "from aios_core.agents.base import BaseAgent\n",
+    )
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "autonomous" in v.module
+        for v in report.violations
+    )
+
+
+# ---------------------------------------------------------------------------
+# M8 — Ecosystem: runtime scanner must cover plugins/ extension/ ecosystem/
+# (PLAN §M8 yêu cầu "observability đầy đủ" cho ecosystem boundary). Rule layer
+# cho 3 package được thêm cùng đợt review M8; test này khoá vào không cho quay
+# lại trạng thái "scanner bỏ qua M8" (cf. M5 F1 silent-skip).
+# ---------------------------------------------------------------------------
+
+def test_m8_real_src_healthy():
+    """M8: scanner chạy trên src thật phải xanh (gồm plugins/extension/ecosystem)."""
+    from aios_core.observability.arch_scan import SRC_ROOT
+
+    report = ArchitectureHealth().scan(package_dir=SRC_ROOT)
+    m8_violations = [
+        v for v in report.violations
+        if v.module.startswith("plugins")
+        or v.module.startswith("extension")
+        or v.module.startswith("ecosystem")
+    ]
+    assert m8_violations == [], f"M8 scanner vi phạm: {m8_violations}"
+
+
+def test_m8_plugins_isolation_fires(tmp_path):
+    """plugins/ không được import agents/tools (M8-E2 allow-list)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(
+        aios,
+        "plugins/evil",
+        "from aios_core.agents.general import GeneralAgent\n",
+    )
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "plugins" in v.module
+        for v in report.violations
+    )
+
+
+def test_m8_extension_isolation_fires(tmp_path):
+    """extension/ không được import orchestrator/kernel (M8-E3 allow-list)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(
+        aios,
+        "extension/evil",
+        "from aios_core.orchestrator.planner import x\n",
+    )
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "extension" in v.module
+        for v in report.violations
+    )
+
+
+def test_m8_ecosystem_isolation_fires(tmp_path):
+    """ecosystem/ không được import kernel.services.execution (M8 allow-list)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(
+        aios,
+        "ecosystem/evil",
+        "from aios_core.kernel.services.execution import ExecutionService\n",
+    )
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "ecosystem" in v.module
+        for v in report.violations
+    )

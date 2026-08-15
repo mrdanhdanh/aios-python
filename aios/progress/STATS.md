@@ -196,6 +196,26 @@
 | Verify sau fix | scanner `SRC_ROOT` → `healthy=True, 0 violations` (enterprise đã cover); 42/42 M7 test pass; 150 pass cho enterprise+arch-health+architecture |
 | Kết luận | **M7 ĐẠT** V1–V7 PASS; V8 P2→RESOLVED (F1/F2/F3); không P1 |
 
+## M8 — Ecosystem ✅ (2026-08-15)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task tổng | 7 (TASK-043 Public SDK, 044 Plugin Runtime, 045 Extension Contracts, 046 Ecosystem Registry, 047 Developer Kit, 048 Marketplace/Hub, 049 Certification) — TẤT CẢ done |
+| Task done | 7/7 |
+| Tests (cuối M8) | **1639 pass** (M7: 1560 → M8: +79 test) |
+| Invariants | Tái dụng INV-022..029 (Enterprise) làm ecosystem boundary guardrails — M8 KHÔNG định nghĩa invariant mới |
+| Packages | `sdk/python/` + `plugins/` + `extension/` + `ecosystem/` (registry/devkit/marketplace/certification) |
+| Deliverable M8 | Public SDK + Plugin Runtime (reuse SkillState) + Extension Contracts (namespace/matrix fail-closed) + Ecosystem Registry + Developer Kit + Marketplace (9-step trust chain + HMAC) + Certification (Harness gate M6) ✓ |
+| Commit | M8 impl (1) + review fix (1) |
+| Milestone review (2026-08-15) | **TỰ REVIEW** — đọc code TASK-043..049 + spec, chạy 62 functional + 20 m8/INV-022..029 arch + 25 observability scanner = 107 M8 test (đều pass) |
+| Findings | 1 P2 (F1) + 2 P3 (F2 thiếu review doc; F3 tái dụng INV-022..029 không conflict) |
+| F1 (P2) | runtime `ArchitectureHealth.scan()` không cover `plugins/`/`extension/`/`ecosystem/` — vi phạm PLAN §M8 "observability đầy đủ" (gap tương tự M5/M6/M7 F1). **ĐÃ TỰ SỬA** (thêm 3 M8 layer rule vào `observability/arch_health.py` + 4 test regresi `tests/test_observability_arch_health.py`) |
+| F2 (P3) | M8 thiếu milestone review doc (M0/M3/M4/M5/M6/M7 có) — process. **ĐÃ TỰ SỬA** (viết `reviews/M8-review.md` + `reviews/M8-review-brief.md`) |
+| F3 (P3) | M8 tái dụng INV-022..029 (Enterprise) làm ecosystem boundary — không invariant mới, không conflict (M7 review F3 đã chuẩn hóa nhãn) — observation |
+| Test regresi thêm | 4 (`test_m8_real_src_healthy`, `test_m8_plugins_isolation_fires`, `test_m8_extension_isolation_fires`, `test_m8_ecosystem_isolation_fires`) |
+| Verify sau fix | scanner `SRC_ROOT` → `healthy=True` cho M8 (0 violations); 25/25 arch-health test pass (gồm 4 mới); 107 M8 test pass |
+| Kết luận | **M8 ĐẠT** V1–V8 (sau F1); không P1 |
+
 ## Bài học M3-M4 (bổ sung)
 
 36. **VS Code Selection không có `.text`** — phải `document.getText(selection)`; stub test theo API thật, không bịa (P1 TASK-019).

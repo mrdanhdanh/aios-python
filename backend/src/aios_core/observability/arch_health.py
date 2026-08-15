@@ -149,6 +149,70 @@ _LAYER_RULES: list[tuple[str, str, tuple[str, ...]]] = [
         "aios_core.contracts", "aios_core.metadata", "aios_core.catalog",
         "aios_core.goals", "aios_core.policy",
     )),
+    # -- M8 — Ecosystem (Plugin Runtime / Extension Contracts / Registry /
+    # DevKit / Marketplace / Certification; INV-022..029 reuse + M8 allow-lists)
+    # PLAN §M8 requires "observability đầy đủ" for the ecosystem boundary, so
+    # the runtime scanner MUST actually scan plugins/ extension/ ecosystem/ (not
+    # silently skip them, cf. M5 F1 silent-skip). These mirror the allow-lists
+    # enforced by tests/test_architecture.py (test_m8_plugins_import_allowlist,
+    # test_m8_extension_import_allowlist, test_m8_ecosystem_import_allowlist).
+    # Every forbidden module below is one the package is NOT allowed to import
+    # per its allow-list, so no false positives (the real packages pass the
+    # test_m8_* allow-list checks, i.e. import only their permitted modules).
+    ("layer", "plugins", (
+        "aios_core.agents", "aios_core.tools", "aios_core.capabilities",
+        "aios_core.workflow", "aios_core.orchestrator", "aios_core.orchestrator.planning",
+        "aios_core.models", "aios_core.memory", "aios_core.knowledge",
+        "aios_core.context", "aios_core.prompts", "aios_core.sandbox",
+        "aios_core.observability", "aios_core.upgrade", "aios_core.harness",
+        "aios_core.enterprise", "aios_core.ecosystem", "aios_core.extension",
+        "aios_core.contracts", "aios_core.kernel",
+    )),
+    ("layer", "extension", (
+        "aios_core.agents", "aios_core.tools", "aios_core.capabilities",
+        "aios_core.workflow", "aios_core.orchestrator", "aios_core.orchestrator.planning",
+        "aios_core.models", "aios_core.memory", "aios_core.knowledge",
+        "aios_core.context", "aios_core.prompts", "aios_core.skills",
+        "aios_core.sandbox", "aios_core.observability", "aios_core.upgrade",
+        "aios_core.harness", "aios_core.enterprise", "aios_core.ecosystem",
+        "aios_core.plugins", "aios_core.contracts", "aios_core.metadata",
+        "aios_core.kernel",
+    )),
+    ("layer", "ecosystem", (
+        "aios_core.agents", "aios_core.tools", "aios_core.capabilities",
+        "aios_core.workflow", "aios_core.orchestrator", "aios_core.orchestrator.planning",
+        "aios_core.models", "aios_core.memory", "aios_core.knowledge",
+        "aios_core.context", "aios_core.prompts", "aios_core.skills",
+        "aios_core.sandbox", "aios_core.observability", "aios_core.upgrade",
+        "aios_core.harness", "aios_core.enterprise", "aios_core.plugins",
+        "aios_core.extension", "aios_core.contracts", "aios_core.kernel",
+    )),
+    # M9 — Autonomous (INV-030..034, PLAN §M9 "observability đầy đủ").
+    # Autonomy Layer đứng TRÊN Orchestrator: autonomous/ KHÔNG chạm Worker
+    # Plane (tools/agents — INV-030), KHÔNG tự promote Knowledge (INV-034),
+    # và chỉ import kernel.events + kernel.services (aios) — còn lại cấm.
+    # KHÔNG cấm aios_core.kernel.events / aios_core.kernel.services (cho phép
+    # theo allow-list test_m9_autonomous_import_allowlist) và KHÔNG cấm
+    # aios_core.autonomous (intra-package). Các submodule kernel khác bị cấm
+    # cụ thể để tránh false-positive trên kernel.events/services (cf. M5 F1
+    # silent-skip — runtime scanner phải thực sự quét autonomous/).
+    ("layer", "autonomous", (
+        "aios_core.agents", "aios_core.tools", "aios_core.capabilities",
+        "aios_core.workflow", "aios_core.orchestrator", "aios_core.orchestrator.planning",
+        "aios_core.models", "aios_core.memory", "aios_core.knowledge",
+        "aios_core.context", "aios_core.prompts", "aios_core.skills",
+        "aios_core.sandbox", "aios_core.observability", "aios_core.upgrade",
+        "aios_core.harness", "aios_core.enterprise", "aios_core.ecosystem",
+        "aios_core.plugins", "aios_core.extension", "aios_core.contracts",
+        "aios_core.metadata", "aios_core.catalog", "aios_core.goals",
+        "aios_core.policy", "aios_core.api",
+        "aios_core.kernel.execution", "aios_core.kernel.execution_plan",
+        "aios_core.kernel.resource", "aios_core.kernel.scheduler",
+        "aios_core.kernel.policy", "aios_core.kernel.state",
+        "aios_core.kernel.runtime_kernel", "aios_core.kernel.dag",
+        "aios_core.kernel.graph", "aios_core.kernel.services.execution",
+        "aios_core.kernel.services.resource",
+    )),
 ]
 
 _CONTRACT_RULES: list[tuple[str, str, tuple[str, ...]]] = [
