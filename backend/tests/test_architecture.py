@@ -1352,6 +1352,74 @@ def test_m7_enterprise_no_god_object():
         assert f"from .{module} import" in init_src, f"thiếu import .{module}"
 
 
+# -- plugins/ import allow-list (M8 — TASK-044) --------------------------------
+# PLAN §M8-E2: plugin lifecycle REUSES the skills 10-state machine — only
+# skills.base/skills.errors + semver + metadata are allowed aios imports.
+# Plugins must NOT touch kernel/services/orchestrator/models/memory/knowledge/
+# tools/agents/capabilities/workflow/harness/enterprise (plugin boundary).
+
+PLUGINS_DIR = AIOS / "plugins"
+
+_PLUGINS_ALLOWED_AIOS = {
+    "aios_core.skills.base",
+    "aios_core.skills.errors",
+    "aios_core.semver",
+    "aios_core.metadata",
+}
+_PLUGINS_ALLOWED_EXTERNAL = {
+    "pydantic", "typing", "enum", "dataclasses", "datetime", "time",
+    "uuid", "hashlib", "json", "collections", "abc", "threading",
+    "functools", "re", "copy", "math", "pathlib", "sqlite3", "contextlib",
+}
+
+
+@pytest.mark.skipif(not PLUGINS_DIR.is_dir(), reason="plugins/ chưa tồn tại (M8)")
+def test_m8_plugins_import_allowlist():
+    """plugins/ chỉ import skills.base/errors + semver + metadata (aios) và
+    pydantic/stdlib — không chạm Runtime/Registry/DB/Filesystem (M8-E2)."""
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(PLUGINS_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.plugins")}
+    bad_aios = aios_mods - _PLUGINS_ALLOWED_AIOS
+    bad_external = external - _PLUGINS_ALLOWED_EXTERNAL
+    assert not bad_aios, f"plugins/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"plugins/ import ngoài allow-list (external): {bad_external}"
+
+
+@pytest.mark.skipif(not PLUGINS_DIR.is_dir(), reason="plugins/ chưa tồn tại (M8)")
+def test_m8_plugins_reuse_skills_state_machine():
+    """M8-E2: PluginState = SkillState + assert_transition từ skills.base —
+    KHÔNG định nghĩa state machine thứ hai."""
+    contracts_src = (PLUGINS_DIR / "contracts.py").read_text(encoding="utf-8")
+    manager_src = (PLUGINS_DIR / "manager.py").read_text(encoding="utf-8")
+    assert "from ..skills.base import SkillState, assert_transition" in contracts_src
+    assert "PluginState = SkillState" in contracts_src
+    assert "assert_transition(current, op)" in manager_src
+
+
+@pytest.mark.skipif(not PLUGINS_DIR.is_dir(), reason="plugins/ chưa tồn tại (M8)")
+def test_m8_plugins_compat_fail_fast():
+    """M8-E2: compat range parse fail-fast + check trong resolve/validate."""
+    compat_src = (PLUGINS_DIR / "compat.py").read_text(encoding="utf-8")
+    assert "PluginCompatibilityError" in compat_src
+    manager_src = (PLUGINS_DIR / "manager.py").read_text(encoding="utf-8")
+    assert "check_compatibility" in manager_src
+    assert "raise PluginCompatibilityError" in manager_src
+
+
+@pytest.mark.skipif(not PLUGINS_DIR.is_dir(), reason="plugins/ chưa tồn tại (M8)")
+def test_m8_plugins_provides_active_only():
+    """M8-E2: provides index chỉ chứa plugin active (ENABLED/RELOADED)."""
+    manager_src = (PLUGINS_DIR / "manager.py").read_text(encoding="utf-8")
+    assert "SkillState.ENABLED" in manager_src
+    assert "SkillState.RELOADED" in manager_src
+    assert "def provides(" in manager_src
+
+
 def test_arch_scan_ignores_future():
     _, aios_mods = collect_imports(SRC_ROOT, "aios_core/orchestrator/planner")
     assert "__future__" not in aios_mods

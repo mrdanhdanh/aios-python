@@ -122,6 +122,16 @@ class SkillsSettings(BaseModel):
     db_path: str = "aios/data/skills.db"
 
 
+class PluginSettings(BaseModel):
+    """TASK-044: Plugin Runtime persistence + strictness (M8-E2)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    db_path: str = "aios/data/plugins.db"
+    strict: bool = True  # resolve/validate lỗi → raise (fail-fast)
+
+
 class ObservabilitySettings(BaseModel):
     """TASK-021: metrics/prompt-history/evaluations persistence."""
 
@@ -308,6 +318,7 @@ class Settings(BaseSettings):
     memory: MemorySettings = MemorySettings()
     goals: GoalsSettings = GoalsSettings()
     skills: SkillsSettings = SkillsSettings()
+    plugins: PluginSettings = PluginSettings()
     observability: ObservabilitySettings = ObservabilitySettings()
     planning: PlanningSettings = PlanningSettings()
     graph: GraphSettings = GraphSettings()

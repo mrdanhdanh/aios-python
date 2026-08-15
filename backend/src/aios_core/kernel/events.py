@@ -54,6 +54,11 @@ class EventType(str, Enum):
     UPGRADE_MIGRATED = "upgrade.migrated"
     UPGRADE_HEALTH_OK = "upgrade.health_ok"
     UPGRADE_ROLLED_BACK = "upgrade.rolled_back"
+    # M8-E2 (TASK-044): plugin lifecycle events.
+    PLUGIN_RESOLVED = "plugin.resolved"
+    PLUGIN_INSTALLED = "plugin.installed"
+    PLUGIN_UPDATED = "plugin.updated"
+    PLUGIN_REMOVED = "plugin.removed"
 
 
 @dataclass

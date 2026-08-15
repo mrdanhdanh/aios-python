@@ -242,7 +242,7 @@
 | TASK-041 | E7 Operations — CentralAuditStore (tamper-evident INV-027) + HealthMonitor failover + RecoveryManager | `done` ✅ | `enterprise/operations.py` |
 | TASK-042 | Enterprise Operations + Dashboard — EnterpriseDashboard aggregate tenant metrics từ audit | `done` ✅ | `enterprise/dashboard.py` |
 | TASK-043 | M8-E1 — Public AIOS SDK | `done` ✅ | 5 SDK tests pass; backend regression có 1 flaky timing failure không liên quan |
-| TASK-044 | M8-E2 — Plugin Runtime | `in-progress` | spec + critique ×2 + review complete; implementation next |
+| TASK-044 | M8-E2 — Plugin Runtime | `done` ✅ | 1584 tests (baseline 1560 + 24), 1 flaky timing có sẵn |
 | INV-022..029 | 8 architecture invariant enforced bằng import allow-list + source-literal tests trong `tests/test_architecture.py` (m7_*) | `done` ✅ | 79 arch tests pass (chung) |
 
 **Deliverable M7 (batch)**: `backend/src/aios_core/enterprise/` 10 file (contracts, identity, tenancy, runtime, scheduler, governance, security, operations, dashboard, __init__) + config (`EnterpriseSettings` trong `config.py` + `config.yaml`) + wiring (`RuntimeKernel.create` register `EnterpriseManager`) + `tests/test_enterprise.py` (29 tests) + `tests/test_architecture.py` (8 m7_* invariant tests).
@@ -250,11 +250,30 @@
 
 > ⚠️ Ghi chú đánh số: PLAN định M7 = INV-022..INV-029, nhưng TASK-034 (M6-H5) đã dùng nhãn `test_inv022_*` trong `test_architecture.py` (trôi thực tế). Để không phá test cũ, M7 invariant tests đặt tên `test_m7_*` (vẫn bao phủ INV-022..INV-029 theo semantics).
 
+## M8 — Ecosystem (in-progress) — 2026-08-15
+
+> PLAN.md §M8: đưa AIOS từ nền tảng vận hành (M7) thành hệ sinh thái mở rộng được bởi bên thứ ba. E1–E4 = Core Ecosystem, E5–E7 = hệ sinh thái bên ngoài. M8 KHÔNG thêm architecture invariant (tập invariant giữ nguyên tại M8).
+> Dependency: TASK-043 → ┬ TASK-044 ┐ → TASK-046 Registry → TASK-047 DevKit → TASK-049 Certification → TASK-048 Marketplace; └ TASK-045 ┘
+> Approach: SDK độc lập (`sdk/python/`), Plugin Runtime trong `backend/src/aios_core/plugins/` (lifecycle reuse 10-state skills — không state machine thứ hai), plugin là record passive (không chạm Runtime/Registry/DB trực tiếp — import allow-list).
+
+| Task | Nội dung | Trạng thái | Ghi chú |
+|------|----------|------------|---------|
+| TASK-043 | E1 Public AIOS SDK — `from aios import Agent, Tool, Capability, Workflow, Client`; transport injection; không import aios_core | `done` ✅ | `sdk/python/`; 5 SDK tests (2026-08-15) |
+| TASK-044 | E2 Plugin Runtime — lifecycle 10-state reuse `SkillState`/`assert_transition`; compat aios range (`*`/`2.x`/semver); dependency + dependent check; provides index active-only; events plugin.* | `done` ✅ | `plugins/` 7 file + 4 arch test m8_*; 1584 tests (2026-08-15) |
+| TASK-045 | E3 Extension Contracts — Internal/Public/Extension/Experimental API + Compatibility Matrix | `todo` | |
+| TASK-046 | E4 Ecosystem Registry — Registry v2 + discovery (`aios search`), MCP làm adapter | `todo` | |
+| TASK-047 | E5 Developer Kit — `aios create/dev/test` scaffold | `todo` | |
+| TASK-048 | E6 Marketplace/Distribution — Trust Model + signature | `todo` | |
+| TASK-049 | E7 Certification — COMMUNITY→VERIFIED→CERTIFIED, Harness gate | `todo` | |
+
+**Deliverable M8 (2/7)**: `sdk/python/src/aios/` (6 file + tests) + `backend/src/aios_core/plugins/` (contracts, compat, errors, manager, registry, schema, __init__) + config `PluginSettings` + `config.yaml` + wiring (`regs["plugins"]`/`regs["plugin_registry"]`) + 4 EventType `PLUGIN_*` + `tests/test_plugins.py` (20 tests) + 4 arch tests `test_m8_*`.
+**1584 collected (baseline 1560 + 24 mới), 10/10 AC (E1–E2) — M8 tiếp tục TASK-045**.
+
 ## Log gần nhất
 
 Xem chi tiết: `LOG.md`. 3 entry cuối:
 
-1. `2026-08-13 | TASK-022 | T4-T11 | Orchestrator v2: advisor/supervisor/collector/goal_reporter + API 4 GET + CLI; 809 pass, coverage 94.92%; M4 DONE` → done
-2. `2026-08-13 | TASK-022 | [bypass] | fix _metrics() đọc sai db suffix (R2-1 reviewer phát hiện)` → done
-3. `2026-08-13 | TASK-021 | T4-T15 | observability/: metrics/prompt_history/profiler/doctor/arch_health/evaluation + execution emit FAILED/CANCELLED + API/CLI; 779 pass, 95.11%` → done
+1. `2026-08-15 | TASK-044 | implement/test | plugins/: lifecycle reuse 10-state, compat, provides, dependency, events; 1584 collected (baseline 1560 + 24), 10/10 AC — TASK-044 DONE` → done
+2. `2026-08-15 | TASK-044 | hard-gate | spec + critique ×2 + tasks + review PASS` → done
+3. `2026-08-15 | TASK-043 | evaluate | Public SDK v1 đạt phạm vi; TASK-043 DONE` → done
 

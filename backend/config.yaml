@@ -41,6 +41,11 @@ goals:
 skills:
   db_path: "aios/data/skills.db"
 
+plugins:
+  enabled: true
+  db_path: "aios/data/plugins.db"
+  strict: true
+
 observability:
   db_path: "aios/data/observability.db"
 

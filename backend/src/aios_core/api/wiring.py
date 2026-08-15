@@ -14,6 +14,7 @@ from ..orchestrator.orchestrator import Orchestrator
 from ..orchestrator.planner import Planner
 from ..orchestrator.rule_engine import default_rules
 from ..orchestrator.workflow_matcher import WorkflowMatcher
+from ..plugins import PluginManager, PluginRegistry
 from ..prompts import PromptRegistry
 from ..sandbox import SandboxPool
 from ..skills import SkillManager
@@ -98,6 +99,33 @@ def build_registries(settings: Settings, kernel: RuntimeKernel, regs: dict) -> d
         return SkillManager(db_path=settings.skills.db_path)
 
     _ensure("skills", _build_skills)
+
+    # Plugins (TASK-044, M8-E2): manager + read-through registry.
+    def _build_plugins():
+        from ..kernel.events import Event, EventType as KernelEventType
+
+        _PLUGIN_EVENT_TYPES = {
+            "plugin.resolved": KernelEventType.PLUGIN_RESOLVED,
+            "plugin.installed": KernelEventType.PLUGIN_INSTALLED,
+            "plugin.updated": KernelEventType.PLUGIN_UPDATED,
+            "plugin.removed": KernelEventType.PLUGIN_REMOVED,
+        }
+
+        def _plugin_event_sink(kind: str, payload: dict) -> None:
+            bus = getattr(kernel, "bus", None)
+            event_type = _PLUGIN_EVENT_TYPES.get(kind)
+            if bus is not None and event_type is not None:
+                bus.publish(Event(type=event_type, payload=payload, source="plugins"))
+
+        return PluginManager(
+            db_path=settings.plugins.db_path,
+            event_sink=_plugin_event_sink,
+            strict=settings.plugins.strict,
+        )
+
+    _ensure("plugins", _build_plugins)
+    if "plugin_registry" not in regs or regs["plugin_registry"] is None:
+        regs["plugin_registry"] = PluginRegistry(db_path=settings.plugins.db_path)
 
     # Goals (db_path from Settings.goals).
     def _build_goals():
