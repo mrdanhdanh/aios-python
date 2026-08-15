@@ -13,7 +13,7 @@
 | M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `done` ✅ (689 pytest + 12+19 vitest) — **review độc lập ACCEPTED** (V1–V6,V8 PASS; V7 P2 → đã bổ sung đủ 8-file hard gate TASK-017/018/019) |
 | M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `done` ✅ (809 tests, 94.92%) — **review độc lập + 1 P1 fix (F1 arch-health scanner)** |
 | M5 | Core Intelligence (P9–P10: memory/context/model/planning/graph/scheduler) | `done` ✅ (1086 tests, 95.22%) |
-| M6 | AIOS Harness (P11: harness kernel, verification, test & simulation, evaluation, benchmark, doctor & readiness) | `done` ✅ (1521 tests, 95.35%) |
+| M6 | AIOS Harness (P11: harness kernel, verification, test & simulation, evaluation, benchmark, doctor & readiness) | `done` ✅ (1521 tests, 95.35%) — **review độc lập (self) + 1 P2 fix (F1 harness scanner)** |
 | M7 | Enterprise (P12: identity, tenancy, distributed runtime, distributed scheduler, governance, security, operations, dashboard) | `done` ✅ (1560 tests, 95.05%) |
 | M8 | Ecosystem (P13: Public SDK, Plugin Runtime, Extension Contracts, Registry, Developer Kit, Hub, Certification) | `done` ✅ (1639 tests) |
 | M9 | Autonomous (P14: goal engine, planner, world model, loop, governor, recovery, long-horizon, memory, experimentation, multi-agent, evaluation, stuck, scheduler) | `done` ✅ (**1780 tests, coverage 94.46%**) |

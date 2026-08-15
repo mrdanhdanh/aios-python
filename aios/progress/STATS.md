@@ -167,6 +167,14 @@
 | Harnesses đăng ký | 6: verification, test, evaluation, benchmark, doctor, readiness |
 | Deliverable M6 | harness/ 4 subsystem (execution, testing, evaluation, benchmark, doctor) + evidence mọi run (INV-018) + replay + scenario/simulation + trajectory + regression gate + readiness score ✓ |
 | Commit | 6 (b62ac75, 117fbfe, c543816, 9c7f3e0, b8762f1, + cuối) |
+| Milestone review (2026-08-15) | **TỰ REVIEW** — đọc code TASK-029..034 + spec, chạy 406 harness + 29 INV-017..022 arch + 18 observability scanner = 424 test (đều pass) |
+| Findings | 1 P2 (F1) + 2 P3 (F2 đánh số INV-022 overlap M7; F3 thiếu review doc) |
+| F1 (P2) | runtime `ArchitectureHealth.scan()` không cover `harness/` packages — vi phạm PLAN §M6 "observability đầy đủ" (gap tương tự M5 F1). **ĐÃ TỰ SỬA** (thêm 1 M6 `harness` layer rule vào `observability/arch_health.py` + 3 test regresi `tests/test_observability_arch_health.py`) |
+| F2 (P3) | Doctor gán INV-022 overlap với M7 Identity First (PLAN/ADR: M6=INV-017..021, M7=INV-022..029) — observation, không renumber (behavior đúng, test pass) |
+| F3 (P3) | M6 thiếu milestone review doc (M0/M3/M4/M5 có) — process. **ĐÃ TỰ SỬA** (viết `reviews/M6-review.md` + `reviews/M6-review-brief.md`) |
+| Test regresi thêm | 3 (`test_m6_real_src_healthy`, `test_m6_harness_isolation_fires`, `test_m6_harness_no_control_plane_fires`) |
+| Verify sau fix | scanner `SRC_ROOT` → `healthy=True` cho harness (0 violations); 18/18 arch-health test pass (gồm 3 mới); 424 M6 test pass |
+| Kết luận | **M6 ĐẠT** V1–V8 (sau F1); không P1 |
 
 ## Bài học M3-M4 (bổ sung)
 

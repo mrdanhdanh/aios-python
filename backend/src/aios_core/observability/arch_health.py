@@ -89,6 +89,66 @@ _LAYER_RULES: list[tuple[str, str, tuple[str, ...]]] = [
         "aios_core.enterprise", "aios_core.ecosystem", "aios_core.plugins",
         "aios_core.extension",
     )),
+    # -- M6 — AIOS Harness (INV-017..022) ------------------------------------
+    # Mirror the allow-list enforced by tests/test_architecture.py
+    # (test_inv017_harness_import_allowlist, test_inv017_harness_no_kernel_impl,
+    # test_inv018_runner_builds_evidence, test_inv019_*/test_inv020_*/test_inv021_*
+    # /test_inv022_*). PLAN §M6 requires "observability đầy đủ" for INV-017..022,
+    # so the runtime architecture-health scanner must actually scan the harness/
+    # packages (not silently skip them, cf. M5 F1). The rule forbids harness/
+    # from coupling to kernel implementation + the control-plane layers it must
+    # stay isolated from. Every forbidden module below is one harness is NOT
+    # allowed to import per its allow-list (config/logging/kernel.services.state|
+    # artifacts/contracts.artifact), so no false positives.
+    ("layer", "harness", (
+        "aios_core.kernel.services.execution",
+        "aios_core.kernel.services.resource",
+        "aios_core.kernel.services.scheduler",
+        "aios_core.kernel.services.policy",
+        "aios_core.kernel.services.permissions",
+        "aios_core.kernel.services.context",
+        "aios_core.kernel.services.events",
+        "aios_core.kernel.graph",
+        "aios_core.kernel.runtime_kernel",
+        "aios_core.orchestrator",
+        "aios_core.orchestrator.planning",
+        "aios_core.models",
+        "aios_core.memory",
+        "aios_core.knowledge",
+        "aios_core.capabilities",
+        "aios_core.workflow",
+        "aios_core.agents",
+        "aios_core.tools",
+        "aios_core.sandbox",
+        "aios_core.ecosystem",
+        "aios_core.enterprise",
+        "aios_core.upgrade",
+        "aios_core.extension",
+        "aios_core.plugins",
+        "aios_core.prompts",
+        "aios_core.skills",
+        "aios_core.observability",
+    )),
+    # -- M7 — Enterprise / Control Plane (INV-022..029) ------------------------
+    # PLAN §M7 requires "observability đầy đủ" for the 8 M7 invariants, so the
+    # runtime scanner MUST actually scan enterprise/ (not silently skip it, cf.
+    # M5 F1 silent-skip). enterprise/ is the Control Plane (INV-029) and must
+    # stay self-contained: it may only import its own intra-package modules +
+    # pydantic/stdlib. Every downward aios_core import below is forbidden,
+    # mirroring the allow-list enforced by tests/test_architecture.py
+    # (test_inv022_..test_inv029_*). This keeps the control plane from reaching
+    # into execution/runtime internals and prevents a God Object.
+    ("layer", "enterprise", (
+        "aios_core.kernel", "aios_core.orchestrator", "aios_core.models",
+        "aios_core.memory", "aios_core.knowledge", "aios_core.tools",
+        "aios_core.agents", "aios_core.capabilities", "aios_core.workflow",
+        "aios_core.context", "aios_core.prompts", "aios_core.skills",
+        "aios_core.sandbox", "aios_core.observability", "aios_core.harness",
+        "aios_core.upgrade", "aios_core.autonomous", "aios_core.api",
+        "aios_core.ecosystem", "aios_core.plugins", "aios_core.extension",
+        "aios_core.contracts", "aios_core.metadata", "aios_core.catalog",
+        "aios_core.goals", "aios_core.policy",
+    )),
 ]
 
 _CONTRACT_RULES: list[tuple[str, str, tuple[str, ...]]] = [

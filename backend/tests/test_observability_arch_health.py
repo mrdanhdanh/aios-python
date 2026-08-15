@@ -186,3 +186,104 @@ def test_m5_scheduler_no_orchestrator_fires(tmp_path):
         v.kind == "layer" and "kernel/scheduler" in v.module
         for v in report.violations
     )
+
+
+# ---------------------------------------------------------------------------
+# M6 — AIOS Harness: runtime scanner must cover INV-017..022 (PLAN §M6 yêu cầu
+# "observability đầy đủ"). Rule layer cho harness/ được thêm cùng đợt review M6;
+# test này khoá vào không cho quay lại trạng thái "scanner bỏ qua M6" (cf. M5 F1).
+# ---------------------------------------------------------------------------
+
+def test_m6_real_src_healthy():
+    """INV-017..021: scanner chạy trên src thật phải xanh (gồm harness)."""
+    from aios_core.observability.arch_scan import SRC_ROOT
+
+    report = ArchitectureHealth().scan(package_dir=SRC_ROOT)
+    harness_violations = [v for v in report.violations if "harness" in v.module]
+    assert harness_violations == [], f"M6 scanner vi phạm: {harness_violations}"
+
+
+def test_m6_harness_isolation_fires(tmp_path):
+    """harness/ không được import kernel.services.execution (INV-017)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(
+        aios,
+        "harness/evil",
+        "from aios_core.kernel.services.execution import ExecutionService\n",
+    )
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "harness" in v.module
+        for v in report.violations
+    )
+    assert any("kernel.services" in v.message for v in report.violations)
+
+
+def test_m6_harness_no_control_plane_fires(tmp_path):
+    """harness/ không được import orchestrator/models/memory (INV-017/018)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(
+        aios,
+        "harness/evaluation/evil",
+        "from aios_core.orchestrator.planner import x\n",
+    )
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "harness" in v.module
+        for v in report.violations
+    )
+
+
+# ---------------------------------------------------------------------------
+# M7 — Enterprise: runtime scanner must cover INV-022..029 (PLAN §M7 yêu cầu
+# "observability đầy đủ"). Rule layer cho enterprise/ được thêm cùng đợt review
+# M7; test này khoá vào không cho quay lại trạng thái "scanner bỏ qua M7"
+# (cf. M5 F1 silent-skip).
+# ---------------------------------------------------------------------------
+
+def test_m7_real_src_healthy():
+    """INV-022..029: scanner chạy trên src thật phải xanh (gồm enterprise)."""
+    from aios_core.observability.arch_scan import SRC_ROOT
+
+    report = ArchitectureHealth().scan(package_dir=SRC_ROOT)
+    ent_violations = [v for v in report.violations if "enterprise" in v.module]
+    assert ent_violations == [], f"M7 scanner vi phạm: {ent_violations}"
+
+
+def test_m7_enterprise_isolation_fires(tmp_path):
+    """enterprise/ không được import kernel.services.execution (INV-029)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(
+        aios,
+        "enterprise/evil",
+        "from aios_core.kernel.services.execution import ExecutionService\n",
+    )
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "enterprise" in v.module
+        for v in report.violations
+    )
+    assert any("kernel.services" in v.message for v in report.violations)
+
+
+def test_m7_enterprise_no_orchestrator_fires(tmp_path):
+    """enterprise/ không được import orchestrator/models (INV-022..029)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(
+        aios,
+        "enterprise/evil",
+        "from aios_core.orchestrator.planner import x\n",
+    )
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "enterprise" in v.module
+        for v in report.violations
+    )
