@@ -1,5 +1,6 @@
 # Review M3 — Desktop Edition (template nâng cấp v2)
 
+> **⚠️ SNAPSHOT @M3 (2026-08-13)** — brief này chụp trạng thái M3. Số liệu test ghi trong này (689 pytest / 12+19 vitest) ĐÚNG TẠI THỜI ĐIỂM M3. Sau M3, full backend suite tăng lên (M4–M7 thêm test, M8 thêm package). Khi review độc lập, model PHẢI chạy thật để lấy con số hiện tại, không dùng số trong brief làm kết luận cuối.
 > **Bản điền sẵn từ** `REVIEW-BRIEF-TEMPLATE.md` — đem cho model khác review độc lập.
 > Copy TOÀN BỘ file này sang model review. Model tự đọc repo, tự kết luận — không xem bản review nội bộ nào trước đó.
 >

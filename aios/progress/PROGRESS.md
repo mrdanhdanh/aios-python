@@ -10,7 +10,7 @@
 | M0 | Development Foundation (VS Code agent + progress system) | `done` ✅ |
 | M1 | Core Runtime (P0–P2: infra, kernel, model/memory/knowledge, workflow/capability/catalog) | `done` ✅ (review độc lập PASS) |
 | M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `done` ✅ (669 tests, 95.51%) |
-| M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `done` ✅ (689 pytest + 19 vitest) — **review độc lập PASS** (V1–V6,V8 PASS; V7 P2 process gap) |
+| M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `done` ✅ (689 pytest + 12+19 vitest) — **review độc lập ACCEPTED** (V1–V6,V8 PASS; V7 P2 → đã bổ sung đủ 8-file hard gate TASK-017/018/019) |
 | M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `done` ✅ (809 tests, 94.92%) |
 | M5 | Core Intelligence (P9–P10: memory/context/model/planning/graph/scheduler) | `done` ✅ (1086 tests, 95.22%) |
 | M6 | AIOS Harness (P11: harness kernel, verification, test & simulation, evaluation, benchmark, doctor & readiness) | `done` ✅ (1521 tests, 95.35%) |
@@ -168,7 +168,10 @@
 **TASK-019 — M3-P6: VS Code Extension (TS, 9 lệnh)** ✅
 - `extension/`: package.json (9 commands + activationEvents + config aios.serverUrl), client.ts (AiosClient.callChat — 3 envelope + 422 array + trim slash), context.ts (editorText qua document.getText — Selection thật không có .text; gitDiff(cwd); buildPrompt 8 template), extension.ts (activate với vscode injected, 9 commands, INTENTS map đúng bảng §4, guard selection warning, editor.edit replace cho fix/generate_test)
 - Critic ×2: critique-1 13 vấn đề (1 P1 — Selection.text, 7 P2, 5 P3) + critique-2 3 vấn đề — resolved hết; Review: APPROVED có điều kiện → 3 R2 (gitDiff cwd, intent test 9 case, editor.edit test) + 7 R3 resolved
+- **Đủ 8-file hard gate**: spec, critique-1, critique-2, tasks, review, test, evaluation, implementation/ (test.md + implementation/README.md bổ sung 2026-08-15 để đóng F1 review)
 - **vitest 19/19 pass + tsc clean + build emit out/extension.js — M3 HOÀN TẤT**
+
+**TASK-017 / TASK-018 — bổ sung hard-gate files (F1 review M3, 2026-08-15)**: TASK-017 thiếu critique-2/tasks/review/test/implementation → đã tạo đủ; TASK-018 thiếu tasks/review/test/implementation → đã tạo đủ. Cả 3 task TASK-017/018/019 nay đủ 8-file hard gate (spec, critique-1, critique-2, tasks, review, test, evaluation, implementation/).
 ## M4 — Platform Edition (in-progress)
 
 ### P7 — TASK-020: Upgrade Pipeline ✅ (2026-08-13)
