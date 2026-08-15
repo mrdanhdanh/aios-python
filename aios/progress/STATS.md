@@ -216,6 +216,26 @@
 | Verify sau fix | scanner `SRC_ROOT` → `healthy=True` cho M8 (0 violations); 25/25 arch-health test pass (gồm 4 mới); 107 M8 test pass |
 | Kết luận | **M8 ĐẠT** V1–V8 (sau F1); không P1 |
 
+## M9 — Autonomous ✅ (2026-08-15)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task tổng | 13 (TASK-050 Goal, 051 Planner, 052 World, 053 Loop, 054 Governor, 055 Recovery, 056 Long-Horizon, 057 Memory, 058 Experimentation, 059 Multi-Agent, 060 Evaluation, 061 Stuck, 062 Scheduler) — TẤT CẢ done |
+| Task done | 13/13 |
+| Tests (cuối M9) | **1780 pass — coverage 94.46%** (M8: 1639 → M9: +141 test autonomous + 9 INV) |
+| Invariants | INV-030 Governor Gate · INV-031 Autonomy Budget · INV-032 Long-Horizon Checkpoint/Resume · INV-033 Evidence-First Self-Improvement · INV-034 Memory⇸Unverified Knowledge |
+| Package | `backend/src/aios_core/autonomous/` (goal/planner/world/loop/governor/recovery/long_horizon/memory/experimentation/evaluation/multi_agent/stuck/scheduler/contracts/errors + `AutonomyManager` facade) |
+| Deliverable M9 | autonomous/ 4 phase (P1 foundation, P2 long-running, P3 adaptive, P4 ecosystem) + 5 invariant + 8-step governor-gated loop + circuit breaker + checkpoint/resume + 6-kind memory + experimentation canary + multi-agent delegation + proactive scheduler ✓ |
+| Commit | M9 impl (1) + review fix (1) |
+| Milestone review (2026-08-15) | **TỰ REVIEW** — đọc code TASK-050..062 + spec, chạy 129 autonomous + 9 INV-030..034 arch + 3 new arch-health regresi = 141 M9-related test (đều pass); full suite 1793 pass |
+| Findings | 1 P2 (F1 scanner không cover autonomous) + 2 P3 observation (F2/F3 không apply — TASK-050..062 đã đủ 8-file, INV-030..034 không collision) |
+| F1 (P2) | runtime `ArchitectureHealth.scan()` không cover `autonomous/` — vi phạm PLAN §M9 "observability đầy đủ" (gap tương tự M5/M6/M7/M8 F1, chưa áp dụng cho M9). **ĐÃ TỰ SỬA** (thêm 1 `autonomous` layer rule vào `observability/arch_health.py` + 3 test regresi `tests/test_observability_arch_health.py`) |
+| F2 (P3 observation, không apply) | TASK-050..062 ĐỦ 8-file hard gate (implementation/ CÓ — M9 học từ M7 F2, không lặp lại) |
+| F3 (P3 observation, không apply) | nhãn INV-030..034 KHÔNG xung đột (canonical, cuối cùng trước M10 freeze); test `test_inv030..inv034_*` không collision với milestone khác |
+| Test regresi thêm | 3 (`test_m9_real_src_healthy`, `test_m9_autonomous_isolation_fires`, `test_m9_autonomous_no_worker_plane_fires`) |
+| Verify sau fix | scanner `SRC_ROOT` → `healthy=True, 0 violations` (autonomous đã cover); 3/3 new test pass; full suite 1793 pass |
+| Kết luận | **M9 ĐẠT** V1–V7 PASS; V8 P2→RESOLVED (F1); không P1 |
+
 ## Bài học M3-M4 (bổ sung)
 
 36. **VS Code Selection không có `.text`** — phải `document.getText(selection)`; stub test theo API thật, không bịa (P1 TASK-019).
