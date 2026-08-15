@@ -114,3 +114,27 @@ enterprise:
     timeout_s: 60.0
   lease_ttl_s: 60.0
   heartbeat_timeout_s: 30.0
+
+autonomous:
+  enabled: true
+  db_path: "aios/data/autonomous.db"
+  loop_max_iterations: 100
+  budget:
+    max_steps: 100
+    max_llm_calls: 50
+    max_cost: 10.0
+    max_duration_s: 7200.0
+    max_tool_calls: 200
+    max_retries: 5
+    max_parallel_agents: 4
+  risk_table:
+    read: autonomous
+    edit: autonomous
+    commit: approval
+    deploy: approval
+    delete: impossible
+  correctness_min: 0.7
+  risk_max: 0.8
+  cost_max: 1.0
+  stuck_iterations: 3
+  stuck_window: 20

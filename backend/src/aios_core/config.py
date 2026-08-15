@@ -308,6 +308,43 @@ class EnterpriseSettings(BaseModel):
     heartbeat_timeout_s: float = 30.0
 
 
+class AutonomousBudgetSettings(BaseModel):
+    """TASK-054 (M9): Autonomy Budget (PLAN §M9-13)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_steps: int = 100
+    max_llm_calls: int = 50
+    max_cost: float = 10.0
+    max_duration_s: float = 7200.0
+    max_tool_calls: int = 200
+    max_retries: int = 5
+    max_parallel_agents: int = 4
+
+
+class AutonomousSettings(BaseModel):
+    """M9 — Autonomous layer tuning (TASK-050..062)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    db_path: str = "aios/data/autonomous.db"
+    loop_max_iterations: int = 100
+    budget: AutonomousBudgetSettings = AutonomousBudgetSettings()
+    risk_table: dict[str, str] = {
+        "read": "autonomous",
+        "edit": "autonomous",
+        "commit": "approval",
+        "deploy": "approval",
+        "delete": "impossible",
+    }
+    correctness_min: float = 0.7
+    risk_max: float = 0.8
+    cost_max: float = 1.0
+    stuck_iterations: int = 3
+    stuck_window: int = 20
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -340,6 +377,7 @@ class Settings(BaseSettings):
     benchmark: BenchmarkSettings = BenchmarkSettings()
     doctor: DoctorSettings = DoctorSettings()
     enterprise: EnterpriseSettings = EnterpriseSettings()
+    autonomous: AutonomousSettings = AutonomousSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

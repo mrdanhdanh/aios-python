@@ -13,12 +13,17 @@ Public API:
 from __future__ import annotations
 
 from .contracts import (
+    AgentMode,
+    AgentTask,
     AutonomyBudget,
     AutonomyDecision,
     AutonomyLevel,
     AutonomyPlan,
     AutonomousVerdict,
     Checkpoint,
+    Delegation,
+    DelegationResult,
+    DelegationStatus,
     EvaluationConfig,
     EvaluationDimensions,
     ExecutionSession,
@@ -41,10 +46,13 @@ from .contracts import (
     RecoveryStrategy,
     RiskClass,
     RollbackSpec,
+    ScheduleTrigger,
     SessionStatus,
     STRATEGY_SCORES,
     StuckReport,
     StuckSignal,
+    TriggerKind,
+    TriggerRun,
     UsageSnapshot,
     VerificationResult,
     WorldFact,
@@ -71,8 +79,10 @@ from .governor import AutonomyGovernor
 from .long_horizon import LongHorizonManager, new_session_id
 from .loop import AutonomousLoop
 from .memory import AutonomousMemory
+from .multi_agent import MultiAgentOrchestrator
 from .planner import ACTION_KEYWORDS, AutonomousPlanner
 from .recovery import AutonomousRecovery, CircuitBreaker, fingerprint_of
+from .scheduler import AutonomousScheduler
 from .stuck import StuckDetector
 from .world import WorldModel
 
@@ -119,8 +129,16 @@ class AutonomyManager:
         self.stuck_detector = stuck_detector or StuckDetector()
         self.evaluator = AutonomousEvaluator(event_service=event_service)
         self.experimentation = None  # TASK-058: cần evaluate_fn (wiring cấp)
-        self.multi_agent = None  # TASK-059 (Batch 4)
-        self.scheduler = None  # TASK-062 (Batch 4)    def propose_goal(self, objective: str, **kwargs: object) -> GoalContract:
+        self.multi_agent = MultiAgentOrchestrator(event_service=event_service)
+        self.scheduler = None  # TASK-062: cần db_path + clock (wiring cấp)
+
+    def wire_experimentation(self, engine: ExperimentationEngine) -> None:
+        self.experimentation = engine
+
+    def wire_scheduler(self, scheduler: AutonomousScheduler) -> None:
+        self.scheduler = scheduler
+
+    def propose_goal(self, objective: str, **kwargs: object) -> GoalContract:
         """Tiện ích: tạo + propose goal từ objective."""
         goal = GoalContract(id=new_goal_id(), objective=objective, **kwargs)
         return self.goal_engine.propose(goal)
@@ -137,12 +155,17 @@ class AutonomyManager:
 
 __all__ = [
     # contracts
+    "AgentMode",
+    "AgentTask",
     "AutonomyBudget",
     "AutonomyDecision",
     "AutonomyLevel",
     "AutonomyPlan",
     "AutonomousVerdict",
     "Checkpoint",
+    "Delegation",
+    "DelegationResult",
+    "DelegationStatus",
     "EvaluationConfig",
     "EvaluationDimensions",
     "ExecutionSession",
@@ -165,10 +188,13 @@ __all__ = [
     "RecoveryStrategy",
     "RiskClass",
     "RollbackSpec",
+    "ScheduleTrigger",
     "SessionStatus",
     "STRATEGY_SCORES",
     "StuckReport",
     "StuckSignal",
+    "TriggerKind",
+    "TriggerRun",
     "UsageSnapshot",
     "VerificationResult",
     "WorldFact",
@@ -198,10 +224,12 @@ __all__ = [
     "CircuitBreaker",
     "ExperimentationEngine",
     "LongHorizonManager",
+    "MultiAgentOrchestrator",
     "ProgressEstimator",
     "StuckDetector",
     "WorldModel",
     "AutonomyManager",
+    "AutonomousScheduler",
     "fingerprint_of",
     "new_experiment_id",
     "new_goal_id",

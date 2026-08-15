@@ -281,4 +281,87 @@ class RuntimeKernel:
         enterprise = EnterpriseManager()
         container.register_instance(EnterpriseManager, enterprise)
 
+        # Autonomous (M9): Autonomy Layer trên Orchestrator (INV-030..034).
+        # Offline-first: goal/loop/governor/recovery/long-horizon/memory/stuck/
+        # evaluation/multi-agent wired ngay; experimentation (cần evaluate_fn)
+        # và scheduler (cần re-register fn) do wiring cấp cao cung cấp.
+        from ..autonomous import (
+            AutonomyBudget,
+            AutonomyGovernor,
+            AutonomousEvaluator,
+            AutonomousGoalEngine,
+            AutonomousLoop,
+            AutonomousMemory,
+            AutonomousPlanner,
+            AutonomousRecovery,
+            AutonomyManager,
+            EvaluationConfig,
+            LongHorizonManager,
+            MultiAgentOrchestrator,
+            RiskClass,
+            StuckDetector,
+            WorldModel,
+        )
+
+        risk_table = {
+            RiskClass(key): value
+            for key, value in settings.autonomous.risk_table.items()
+        }
+
+        autonomy_budget = AutonomyBudget(**settings.autonomous.budget.model_dump())
+        autonomy_governor = AutonomyGovernor(
+            budget=autonomy_budget,
+            risk_table=risk_table,
+        )
+        autonomy_planner = AutonomousPlanner(risk_table=risk_table)
+        autonomy_world = WorldModel()
+        autonomy_goal_engine = AutonomousGoalEngine(
+            event_service=container.resolve(EventService),
+            db_path=settings.autonomous.db_path,
+        )
+        autonomy_loop = AutonomousLoop(
+            governor=autonomy_governor,
+            world=autonomy_world,
+            planner=autonomy_planner,
+            max_iterations=settings.autonomous.loop_max_iterations,
+            event_service=container.resolve(EventService),
+        )
+        autonomy_memory = AutonomousMemory(
+            event_service=container.resolve(EventService),
+            db_path=settings.autonomous.db_path,
+        )
+        autonomy_manager = AutonomyManager(
+            goal_engine=autonomy_goal_engine,
+            governor=autonomy_governor,
+            planner=autonomy_planner,
+            world=autonomy_world,
+            loop=autonomy_loop,
+            recovery=AutonomousRecovery(
+                event_service=container.resolve(EventService),
+            ),
+            long_horizon=LongHorizonManager(
+                event_service=container.resolve(EventService),
+                db_path=settings.autonomous.db_path,
+            ),
+            autonomous_memory=autonomy_memory,
+            stuck_detector=StuckDetector(
+                window_size=settings.autonomous.stuck_window
+            ),
+            db_path=settings.autonomous.db_path,
+            event_service=container.resolve(EventService),
+        )
+        autonomy_manager.evaluator = AutonomousEvaluator(
+            config=EvaluationConfig(
+                correctness_min=settings.autonomous.correctness_min,
+                risk_max=settings.autonomous.risk_max,
+                cost_max=settings.autonomous.cost_max,
+                stuck_iterations=settings.autonomous.stuck_iterations,
+            ),
+            event_service=container.resolve(EventService),
+        )
+        autonomy_manager.multi_agent = MultiAgentOrchestrator(
+            event_service=container.resolve(EventService),
+        )
+        container.register_instance(AutonomyManager, autonomy_manager)
+
         return cls(container, bus)

@@ -1196,3 +1196,276 @@ def test_ev060_thresholds_injectable():
     ev = AutonomousEvaluator(config=EvaluationConfig(correctness_min=0.5))
     verdict, _ = ev.evaluate("g1", EvaluationDimensions(correctness=0.6))
     assert verdict == AutonomousVerdict.CONTINUE
+
+
+# ---------------------------------------------------------------------------
+# TASK-059 — Multi-Agent Autonomy
+# ---------------------------------------------------------------------------
+
+from aios_core.autonomous import (
+    AgentMode,
+    AgentTask,
+    DelegationStatus,
+    MultiAgentOrchestrator,
+)
+
+
+@pytest.fixture()
+def agents():
+    return [
+        {"id": "agent-b", "capabilities": ["python"]},
+        {"id": "agent-a", "capabilities": ["python", "filesystem"]},
+    ]
+
+
+def test_ma059_select_mode_single():
+    orch = MultiAgentOrchestrator()
+    assert orch.select_mode([AgentTask(id="t1", title="x")]) == AgentMode.SINGLE
+
+
+def test_ma059_select_mode_parallel():
+    orch = MultiAgentOrchestrator()
+    tasks = [AgentTask(id="t1", title="x"), AgentTask(id="t2", title="y")]
+    assert orch.select_mode(tasks) == AgentMode.PARALLEL
+
+
+def test_ma059_select_mode_sequential():
+    orch = MultiAgentOrchestrator()
+    tasks = [
+        AgentTask(id="t1", title="x"),
+        AgentTask(id="t2", title="y", depends_on=["t1"]),
+    ]
+    assert orch.select_mode(tasks) == AgentMode.SEQUENTIAL
+
+
+def test_ma059_select_mode_hierarchical():
+    orch = MultiAgentOrchestrator()
+    task = AgentTask(id="t1", title="x", hierarchical=True,
+                     subtasks=[AgentTask(id="s1", title="sub")])
+    assert orch.select_mode([task]) == AgentMode.HIERARCHICAL
+
+
+def test_ma059_single_delegation(agents):
+    calls = []
+
+    def agent_fn(task, ctx):
+        calls.append(task.id)
+        return {"ok": task.id}
+
+    orch = MultiAgentOrchestrator(agent_fn=agent_fn)
+    results = orch.delegate([AgentTask(id="t1", title="x", required_capabilities=["python"])],
+                            agents)
+    assert results[0].status == DelegationStatus.COMPLETED
+    assert results[0].result == {"ok": "t1"}
+    # agent-a sorted trước agent-b và đủ capability
+    assert results[0].agent_id == "agent-a"
+
+
+def test_ma059_capability_missing_raises(agents):
+    orch = MultiAgentOrchestrator()
+    with pytest.raises(Exception):
+        orch.delegate([AgentTask(id="t1", title="x", required_capabilities=["docker"])],
+                      agents)
+
+
+def test_ma059_sequential_order_and_context(agents):
+    order = []
+
+    def agent_fn(task, ctx):
+        order.append(task.id)
+        return f"result-{task.id}"
+
+    orch = MultiAgentOrchestrator(agent_fn=agent_fn)
+    tasks = [
+        AgentTask(id="t1", title="x"),
+        AgentTask(id="t2", title="y", depends_on=["t1"]),
+    ]
+    results = orch.delegate(tasks, agents, mode=AgentMode.SEQUENTIAL)
+    assert order == ["t1", "t2"]
+    assert all(r.status == DelegationStatus.COMPLETED for r in results)
+
+
+def test_ma059_sequential_fail_skips_rest(agents):
+    def agent_fn(task, ctx):
+        if task.id == "t1":
+            raise RuntimeError("boom")
+        return "ok"
+
+    orch = MultiAgentOrchestrator(agent_fn=agent_fn)
+    tasks = [
+        AgentTask(id="t1", title="x"),
+        AgentTask(id="t2", title="y", depends_on=["t1"]),
+    ]
+    results = orch.delegate(tasks, agents, mode=AgentMode.SEQUENTIAL)
+    assert results[0].status == DelegationStatus.FAILED
+    assert results[1].status == DelegationStatus.SKIPPED
+
+
+def test_ma059_parallel_aggregation(agents):
+    results_by_id = {}
+
+    def agent_fn(task, ctx):
+        results_by_id[task.id] = task.id
+        return task.id
+
+    orch = MultiAgentOrchestrator(agent_fn=agent_fn)
+    tasks = [AgentTask(id="t1", title="x"), AgentTask(id="t2", title="y")]
+    results = orch.delegate(tasks, agents, mode=AgentMode.PARALLEL)
+    assert [r.task_id for r in results] == ["t1", "t2"]  # deterministic order
+    assert results_by_id == {"t1": "t1", "t2": "t2"}
+
+
+def test_ma059_hierarchical_aggregation(agents):
+    def agent_fn(task, ctx):
+        return f"done-{task.id}"
+
+    orch = MultiAgentOrchestrator(agent_fn=agent_fn)
+    task = AgentTask(id="parent", title="p", hierarchical=True,
+                     subtasks=[AgentTask(id="s1", title="sub")])
+    results = orch.delegate([task], agents, mode=AgentMode.HIERARCHICAL)
+    assert results[0].status == DelegationStatus.COMPLETED
+    assert results[0].result == {"parent": {"s1": results[0].result["parent"]["s1"]}}
+
+
+def test_ma059_empty_tasks(agents):
+    orch = MultiAgentOrchestrator()
+    assert orch.delegate([], agents) == []
+
+
+def test_ma059_no_agents_raises():
+    orch = MultiAgentOrchestrator()
+    with pytest.raises(Exception):
+        orch.delegate([AgentTask(id="t1", title="x")], [])
+
+
+# ---------------------------------------------------------------------------
+# TASK-062 — Autonomous Scheduler
+# ---------------------------------------------------------------------------
+
+from aios_core.autonomous import AutonomousScheduler, ScheduleTrigger, TriggerKind
+
+
+class SClock:
+    def __init__(self) -> None:
+        self.now = 0.0
+
+    def __call__(self) -> float:
+        return self.now
+
+
+@pytest.fixture()
+def scheduler(tmp_path: Path):
+    return AutonomousScheduler(event_service=None, db_path=tmp_path / "scheduler.db",
+                               now=SClock())
+
+
+def test_sch062_interval_due(scheduler):
+    calls = []
+    scheduler.register_trigger(
+        ScheduleTrigger(id="t1", kind=TriggerKind.INTERVAL, interval_s=60.0),
+        lambda: calls.append("run"),
+    )
+    runs = scheduler.run_due(now=0.0)
+    assert len(runs) == 1 and runs[0].status == "ok"
+    assert calls == ["run"]
+    # chưa đến hạn
+    assert scheduler.run_due(now=30.0) == []
+    # đến hạn
+    assert len(scheduler.run_due(now=61.0)) == 1
+
+
+def test_sch062_daily_hour(scheduler):
+    # chọn now sao cho hour = 2 (UTC) — epoch 2026-08-15T02:00 UTC
+    import calendar
+
+    now = calendar.timegm((2026, 8, 15, 2, 0, 0))
+    calls = []
+    scheduler.register_trigger(
+        ScheduleTrigger(id="d1", kind=TriggerKind.DAILY, at_hour=2),
+        lambda: calls.append("daily"),
+    )
+    runs = scheduler.run_due(now=now)
+    assert len(runs) == 1
+    # cùng ngày, giờ khác → không chạy lại
+    later = calendar.timegm((2026, 8, 15, 5, 0, 0))
+    assert scheduler.run_due(now=later) == []
+    # ngày mai cùng giờ → chạy
+    next_day = calendar.timegm((2026, 8, 16, 2, 0, 0))
+    assert len(scheduler.run_due(now=next_day)) == 1
+
+
+def test_sch062_disabled(scheduler):
+    scheduler.register_trigger(
+        ScheduleTrigger(id="t1", kind=TriggerKind.INTERVAL, interval_s=10.0, enabled=False),
+        lambda: None,
+    )
+    assert scheduler.run_due(now=0.0) == []
+
+
+def test_sch062_fn_raise_failed(scheduler):
+    def boom():
+        raise RuntimeError("x")
+
+    scheduler.register_trigger(
+        ScheduleTrigger(id="t1", kind=TriggerKind.INTERVAL, interval_s=10.0), boom)
+    runs = scheduler.run_due(now=0.0)
+    assert runs[0].status == "failed"
+    assert "x" in runs[0].note
+
+
+def test_sch062_persist_restart(tmp_path: Path):
+    db = tmp_path / "scheduler.db"
+    s1 = AutonomousScheduler(event_service=None, db_path=db, now=SClock())
+    s1.register_trigger(ScheduleTrigger(id="t1", kind=TriggerKind.INTERVAL, interval_s=60.0),
+                        lambda: None)
+    s1.run_due(now=0.0)
+    # restart: fn chưa đăng ký → failed run (không crash)
+    s2 = AutonomousScheduler(event_service=None, db_path=db, now=SClock())
+    runs = s2.run_due(now=100.0)  # đã qua 60s từ lần chạy 0
+    assert runs and runs[0].status == "failed"
+    assert "chưa đăng ký" in runs[0].note
+
+
+def test_sch062_overdue_runs_once(scheduler):
+    calls = []
+    scheduler.register_trigger(
+        ScheduleTrigger(id="t1", kind=TriggerKind.INTERVAL, interval_s=60.0),
+        lambda: calls.append("x"),
+    )
+    scheduler.run_due(now=0.0)
+    # quá hạn 10 chu kỳ → chỉ chạy 1 lần
+    runs = scheduler.run_due(now=700.0)
+    assert len(runs) == 1
+    assert calls == ["x", "x"]
+
+
+def test_sch062_duplicate_id_raises(scheduler):
+    scheduler.register_trigger(ScheduleTrigger(id="t1", kind=TriggerKind.INTERVAL, interval_s=10.0),
+                               lambda: None)
+    with pytest.raises(Exception):
+        scheduler.register_trigger(ScheduleTrigger(id="t1", kind=TriggerKind.INTERVAL, interval_s=10.0),
+                                   lambda: None)
+
+
+def test_sch062_validate_interval(scheduler):
+    with pytest.raises(Exception):
+        scheduler.register_trigger(ScheduleTrigger(id="t1", kind=TriggerKind.INTERVAL, interval_s=0),
+                                   lambda: None)
+
+
+def test_sch062_validate_hour(scheduler):
+    with pytest.raises(Exception):
+        scheduler.register_trigger(ScheduleTrigger(id="d1", kind=TriggerKind.DAILY, at_hour=24),
+                                   lambda: None)
+
+
+def test_sch062_empty_run(scheduler):
+    assert scheduler.run_due(now=0.0) == []
+
+
+def test_sch062_unregister(scheduler):
+    scheduler.register_trigger(ScheduleTrigger(id="t1", kind=TriggerKind.INTERVAL, interval_s=1.0),
+                               lambda: None)
+    scheduler.unregister_trigger("t1")
+    assert scheduler.run_due(now=0.0) == []
+    assert scheduler.list_triggers() == []

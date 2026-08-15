@@ -1538,3 +1538,142 @@ def test_m8_ecosystem_devkit_deterministic_no_overwrite():
 def test_arch_scan_ignores_future():
     _, aios_mods = collect_imports(SRC_ROOT, "aios_core/orchestrator/planner")
     assert "__future__" not in aios_mods
+
+
+# -- autonomous/ import allow-list + INV-030..034 (M9 — TASK-050..062) --------
+# Autonomy Layer đứng TRÊN Orchestrator (PLAN §M9-31/32): Autonomous →
+# Orchestrator → Runtime. autonomous/ KHÔNG chạm tools/agents (Worker Plane —
+# act qua injectable, INV-030) và KHÔNG import memory/knowledge trực tiếp
+# (World ≠ Memory, TASK-052; memory autonomous là store riêng TASK-057).
+
+AUTONOMOUS_DIR = AIOS / "autonomous"
+
+_AUTONOMOUS_ALLOWED_AIOS = {
+    "aios_core.kernel.events",
+    "aios_core.kernel.services",
+}
+_AUTONOMOUS_ALLOWED_EXTERNAL = {
+    "pydantic", "typing", "enum", "dataclasses", "datetime", "time",
+    "uuid", "hashlib", "json", "collections", "abc", "threading",
+    "functools", "re", "copy", "math", "pathlib", "sqlite3", "contextlib",
+    "calendar",  # test daily trigger hour (tests/ không nằm trong scan)
+}
+
+
+@pytest.mark.skipif(not AUTONOMOUS_DIR.is_dir(), reason="autonomous/ chưa tồn tại (M9)")
+def test_m9_autonomous_import_allowlist():
+    """autonomous/ chỉ import kernel.events + kernel.services (aios) — CẤM
+    tools/agents/models/memory/knowledge/orchestrator/harness/enterprise/
+    capabilities/workflow/contracts kể cả TYPE_CHECKING. Loop rglob."""
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(AUTONOMOUS_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.autonomous")}
+    bad_aios = aios_mods - _AUTONOMOUS_ALLOWED_AIOS
+    bad_external = external - _AUTONOMOUS_ALLOWED_EXTERNAL
+    assert not bad_aios, f"autonomous/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"autonomous/ import ngoài allow-list (external): {bad_external}"
+
+
+@pytest.mark.skipif(not AUTONOMOUS_DIR.is_dir(), reason="autonomous/ chưa tồn tại (M9)")
+def test_m9_autonomous_no_worker_plane():
+    """Autonomy Layer không chạm Worker Plane: không import tools/agents
+    (INV-030 — hành động qua governor + injectable, không tool trực tiếp)."""
+    hits = dir_imports(AUTONOMOUS_DIR, ["aios_core.tools", "aios_core.agents"])
+    assert hits == [], f"INV-030 vi phạm (autonomous chạm Worker): {hits}"
+
+
+@pytest.mark.skipif(not AUTONOMOUS_DIR.is_dir(), reason="autonomous/ chưa tồn tại (M9)")
+def test_m9_world_not_memory():
+    """TASK-052: World State ≠ Memory — world.py không import memory/knowledge."""
+    hits = dir_imports(AUTONOMOUS_DIR / "world.py", ["aios_core.memory", "aios_core.knowledge"])
+    assert hits == [], f"World ≠ Memory vi phạm: {hits}"
+
+
+@pytest.mark.skipif(not AUTONOMOUS_DIR.is_dir(), reason="autonomous/ chưa tồn tại (M9)")
+def test_inv030_governor_gate_call_site():
+    """INV-030 (hard): loop.py PHẢI gọi governor.check_action trước Act —
+    literal `governor.check_action(` + guard `decision.decision` STOP."""
+    loop_src = (AUTONOMOUS_DIR / "loop.py").read_text(encoding="utf-8")
+    assert "governor.check_action(" in loop_src, \
+        "INV-030 vi phạm: loop.py thiếu governor.check_action("
+    assert "AutonomyDecision.STOP" in loop_src
+    # governor.py là nơi duy nhất trả AutonomyDecision — loop không tự quyết
+    governor_src = (AUTONOMOUS_DIR / "governor.py").read_text(encoding="utf-8")
+    assert "def check_action(" in governor_src
+    assert "GovernorDecision(" in governor_src
+
+
+@pytest.mark.skipif(not AUTONOMOUS_DIR.is_dir(), reason="autonomous/ chưa tồn tại (M9)")
+def test_inv031_budget_enforce_literals():
+    """INV-031 (hard): governor.py enforce đủ 7 budget limits — literal
+    max_steps/max_cost/max_duration_s/max_tool_calls/max_llm_calls/max_retries/
+    max_parallel_agents + reason 'budget.' prefix."""
+    src = (AUTONOMOUS_DIR / "governor.py").read_text(encoding="utf-8")
+    for field in ("max_steps", "max_cost", "max_duration_s", "max_tool_calls",
+                  "max_llm_calls", "max_retries", "max_parallel_agents"):
+        assert f"self._budget.{field}" in src, f"INV-031 thiếu {field}"
+    assert '"budget.' in src
+
+
+@pytest.mark.skipif(not AUTONOMOUS_DIR.is_dir(), reason="autonomous/ chưa tồn tại (M9)")
+def test_inv032_checkpoint_resume_literals():
+    """INV-032 (hard): long_horizon.py phải có checkpoint() + resume() +
+    persist — execution dài hạn checkpoint/resume được."""
+    src = (AUTONOMOUS_DIR / "long_horizon.py").read_text(encoding="utf-8")
+    assert "def checkpoint(" in src
+    assert "def resume(" in src
+    assert "INSERT INTO autonomous_checkpoints" in src
+    assert "UPDATE autonomous_sessions" in src
+
+
+@pytest.mark.skipif(not AUTONOMOUS_DIR.is_dir(), reason="autonomous/ chưa tồn tại (M9)")
+def test_inv033_experiment_via_evidence():
+    """INV-033 (hard): experimentation.py verdict CHỈ từ evidence — literal
+    `evidence` + `_evaluate` + INCONCLUSIVE khi thiếu; deploy chỉ khi ACCEPTED."""
+    src = (AUTONOMOUS_DIR / "experimentation.py").read_text(encoding="utf-8")
+    assert "self._evaluate(" in src
+    assert "INCONCLUSIVE" in src
+    assert "if not evidence or metric is None" in src
+    assert "ExperimentVerdict.ACCEPTED" in src
+    assert "raise ExperimentError" in src
+
+
+@pytest.mark.skipif(not AUTONOMOUS_DIR.is_dir(), reason="autonomous/ chưa tồn tại (M9)")
+def test_inv034_memory_promote_gate():
+    """INV-034 (hard): memory.py promote phải double gate — literal
+    `not entry.validated` + `_PROMOTE_MIN_CONFIDENCE` + raise
+    MemoryPromotionError."""
+    src = (AUTONOMOUS_DIR / "memory.py").read_text(encoding="utf-8")
+    assert "INV-034" in src
+    assert "not entry.validated" in src
+    assert "_PROMOTE_MIN_CONFIDENCE" in src
+    assert "raise MemoryPromotionError" in src
+
+
+@pytest.mark.skipif(not AUTONOMOUS_DIR.is_dir(), reason="autonomous/ chưa tồn tại (M9)")
+def test_m9_autonomous_no_god_object():
+    """autonomous/ không God Object: facade AutonomyManager điều phối; mỗi
+    module không định nghĩa execute( (chỉ loop chạy pipeline); contracts leaf."""
+    init_src = (AUTONOMOUS_DIR / "__init__.py").read_text(encoding="utf-8")
+    for module in ("goal", "planner", "world", "loop", "governor", "recovery",
+                   "long_horizon", "memory", "stuck", "experimentation",
+                   "evaluation", "multi_agent", "scheduler"):
+        assert f"from .{module} import" in init_src, f"facade thiếu .{module}"
+    # goal.py execute() = lifecycle transition (EXECUTING) — không phải
+    # execution pipeline; các module khác không định nghĩa execute(
+    for name in ("planner.py", "world.py", "governor.py", "recovery.py",
+                 "long_horizon.py", "memory.py", "stuck.py", "experimentation.py",
+                 "evaluation.py", "multi_agent.py", "scheduler.py"):
+        src = (AUTONOMOUS_DIR / name).read_text(encoding="utf-8")
+        assert "def execute(" not in src, f"{name} không được định nghĩa execute"
+    contracts_src = (AUTONOMOUS_DIR / "contracts.py").read_text(encoding="utf-8")
+    tree = ast.parse(contracts_src)
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            mod = getattr(node, "module", None) or ""
+            assert not mod.startswith("aios_core"), \
+                f"contracts.py không được import aios_core: {mod}"

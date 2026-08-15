@@ -16,7 +16,7 @@
 | M6 | AIOS Harness (P11: harness kernel, verification, test & simulation, evaluation, benchmark, doctor & readiness) | `done` ✅ (1521 tests, 95.35%) |
 | M7 | Enterprise (P12: identity, tenancy, distributed runtime, distributed scheduler, governance, security, operations, dashboard) | `done` ✅ (1560 tests, 95.05%) |
 | M8 | Ecosystem (P13: Public SDK, Plugin Runtime, Extension Contracts, Registry, Developer Kit, Hub, Certification) | `done` ✅ (1639 tests) |
-| M9 | Autonomous (P14: goal engine, planner, world model, loop, governor, recovery, long-horizon, memory, experimentation, multi-agent, evaluation, stuck, scheduler) | `in-progress` 🔄 (13 task TASK-050..062, INV-030..034) |
+| M9 | Autonomous (P14: goal engine, planner, world model, loop, governor, recovery, long-horizon, memory, experimentation, multi-agent, evaluation, stuck, scheduler) | `done` ✅ (**1780 tests, coverage 94.46%**) |
 
 ## Hạ tầng bổ sung (bypass)
 
@@ -305,13 +305,16 @@
 | TASK-056 | Long-Horizon Execution — ExecutionSession + Checkpoint + context compaction + resume (INV-032) | `done` ✅ | `autonomous/long_horizon.py` (2026-08-15) |
 | TASK-057 | Autonomous Memory — Working/Episodic/Semantic/Procedural/Failure/Goal + Learning Loop (candidate→dedup→validate→confidence→promote); INV-034 | `done` ✅ | `autonomous/memory.py` (2026-08-15) |
 | TASK-058 | Autonomous Experimentation — Hypothesis→Design→Sandbox→Execute→Evaluate→Compare→Accept/Reject (qua Harness — INV-033) | `done` ✅ | `autonomous/experimentation.py` (2026-08-15) |
-| TASK-059 | Multi-Agent Autonomy — mode single/parallel/sequential/hierarchical + delegation (owner/deadline/budget/output contract) | `todo` | `autonomous/multi_agent.py` |
+| TASK-059 | Multi-Agent Autonomy — mode single/parallel/sequential/hierarchical + delegation (owner/deadline/budget/output contract) | `done` ✅ | `autonomous/multi_agent.py` (2026-08-15) |
 | TASK-060 | Autonomous Evaluation — correctness/quality/cost/risk/progress/confidence → decision (continue/retry/replan/stop/ask) + ProgressEstimator | `done` ✅ | `autonomous/evaluation.py` (2026-08-15) |
 | TASK-061 | Advanced Stuck Detection — 7 signals (repeated tool/errors, no state change/progress, oscillation, budget burn, contradictory) | `done` ✅ | `autonomous/stuck.py` (2026-08-15) |
-| TASK-062 | Autonomous Scheduler — proactive triggers (interval/daily) chạy workflow/goal tự động | `todo` | `autonomous/scheduler.py` |
-| INV-030..034 | 5 invariant enforced bằng arch tests `test_m9_*` (governor gate, budget, checkpoint/resume, experiment qua harness, memory promote có kiểm chứng) | `todo` | trong `tests/test_architecture.py` |
+| TASK-062 | Autonomous Scheduler — proactive triggers (interval/daily) chạy workflow/goal tự động | `done` ✅ | `autonomous/scheduler.py` (2026-08-15) |
+| INV-030..034 | 5 invariant enforced bằng arch tests `test_m9_*` (governor gate, budget, checkpoint/resume, experiment qua harness, memory promote có kiểm chứng) | `done` ✅ | 10 arch tests trong `tests/test_architecture.py` |
 
-**Deliverable M9 (dự kiến)**: `backend/src/aios_core/autonomous/` ~16 file + config (`AutonomousSettings`) + wiring (`AutonomyManager` trong RuntimeKernel.create) + events `autonomy.*` + `tests/test_autonomous.py` (~70 tests) + `tests/test_architecture.py` (test_m9_*, ~10 tests).
+**Deliverable M9 (13/13)**: `backend/src/aios_core/autonomous/` 16 file (contracts, errors, goal, planner, world, loop, governor, recovery, long_horizon, memory, stuck, experimentation, evaluation, multi_agent, scheduler, __init__) + config `AutonomousSettings` + `config.yaml` + wiring (`AutonomyManager` trong RuntimeKernel.create) + 10 EventType `autonomy.*` + `tests/test_autonomous.py` (129 tests) + `tests/test_architecture.py` (test_m9_* — 10 arch tests INV-030..034).
+**1780 passed (baseline 1639 + 141 mới), coverage 94.46%, 13/13 AC (TASK-050..062) — M9 HOÀN TẤT**.
+
+> Autonomy Layer định hướng Orchestrator (Autonomy → Orchestrator → Runtime); INV-030..034 enforced: governor gate duy nhất (loop gọi check_action), 7 budget limits, checkpoint/resume SQLite, experiment evidence-first, memory promote double gate.
 
 ## Log gần nhất
 

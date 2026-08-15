@@ -557,3 +557,103 @@ class ProgressEstimate(BaseModel):
     budget_remaining: float = 1.0
     progress_stuck: bool = False
     trajectory_warning: bool = False
+
+
+# ---------------------------------------------------------------------------
+# TASK-059 — Multi-Agent Autonomy
+# ---------------------------------------------------------------------------
+
+class AgentMode(str, Enum):
+    """4 mode delegation (PLAN §M9-23)."""
+
+    SINGLE = "single"
+    PARALLEL = "parallel"
+    SEQUENTIAL = "sequential"
+    HIERARCHICAL = "hierarchical"
+
+
+class AgentTask(BaseModel):
+    """Task cho delegation — contract đầu vào."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    title: str
+    required_capabilities: list[str] = Field(default_factory=list)
+    output_contract: str = ""
+    depends_on: list[str] = Field(default_factory=list)  # C1-01 v1
+    hierarchical: bool = False  # C1-01 v1
+    subtasks: list["AgentTask"] = Field(default_factory=list)
+
+
+AgentTask.model_rebuild()
+
+
+class DelegationStatus(str, Enum):
+    """Lifecycle delegation (C1-05 v1 + SKIPPED C2-03 v2)."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+
+
+class Delegation(BaseModel):
+    """Autonomous Delegation (PLAN §M9-24): owner/deadline/budget/output."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    task_id: str
+    agent_id: str
+    owner: str = "autonomy"
+    deadline: str = ""
+    budget: float = 0.0
+    status: DelegationStatus = DelegationStatus.PENDING
+
+
+class DelegationResult(BaseModel):
+    """Kết quả delegation."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    task_id: str
+    agent_id: str = ""
+    status: DelegationStatus
+    result: Any = None
+    error: str = ""
+
+
+# ---------------------------------------------------------------------------
+# TASK-062 — Autonomous Scheduler
+# ---------------------------------------------------------------------------
+
+class TriggerKind(str, Enum):
+    """2 loại trigger (PLAN §M9-28)."""
+
+    INTERVAL = "interval"
+    DAILY = "daily"
+
+
+class ScheduleTrigger(BaseModel):
+    """Trigger proactive (persist metadata)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    kind: TriggerKind
+    interval_s: float = 0.0  # INTERVAL
+    at_hour: int = 0  # DAILY 0-23
+    target_id: str = ""
+    enabled: bool = True
+
+
+class TriggerRun(BaseModel):
+    """Một lần chạy trigger."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    trigger_id: str
+    at: float = 0.0
+    status: str = "ok"  # ok | failed
+    note: str = ""
