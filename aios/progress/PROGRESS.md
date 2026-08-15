@@ -11,11 +11,12 @@
 | M1 | Core Runtime (P0–P2: infra, kernel, model/memory/knowledge, workflow/capability/catalog) | `done` ✅ (review độc lập PASS) |
 | M2 | Developer Edition (P3–P4: orchestrator v1 + assistants, tools/skills/sandbox) | `done` ✅ (669 tests, 95.51%) |
 | M3 | Desktop Edition (P5–P6: dashboard, VS Code extension) | `done` ✅ (689 pytest + 12+19 vitest) — **review độc lập ACCEPTED** (V1–V6,V8 PASS; V7 P2 → đã bổ sung đủ 8-file hard gate TASK-017/018/019) |
-| M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `done` ✅ (809 tests, 94.92%) |
+| M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `done` ✅ (809 tests, 94.92%) — **review độc lập + 1 P1 fix (F1 arch-health scanner)** |
 | M5 | Core Intelligence (P9–P10: memory/context/model/planning/graph/scheduler) | `done` ✅ (1086 tests, 95.22%) |
 | M6 | AIOS Harness (P11: harness kernel, verification, test & simulation, evaluation, benchmark, doctor & readiness) | `done` ✅ (1521 tests, 95.35%) |
-| M7 | Enterprise (P12: identity, tenancy, distributed runtime, distributed scheduler, governance, security, operations, dashboard) | `in-progress` 🔄 (1560 tests, 95.05%) |
+| M7 | Enterprise (P12: identity, tenancy, distributed runtime, distributed scheduler, governance, security, operations, dashboard) | `done` ✅ (1560 tests, 95.05%) |
 | M8 | Ecosystem (P13: Public SDK, Plugin Runtime, Extension Contracts, Registry, Developer Kit, Hub, Certification) | `done` ✅ (1639 tests) |
+| M9 | Autonomous (P14: goal engine, planner, world model, loop, governor, recovery, long-horizon, memory, experimentation, multi-agent, evaluation, stuck, scheduler) | `in-progress` 🔄 (13 task TASK-050..062, INV-030..034) |
 
 ## Hạ tầng bổ sung (bypass)
 
@@ -199,6 +200,12 @@
 - Critic ×2: 24 vấn đề (7 P1) resolved; Review: APPROVED có điều kiện → 1 R2 + 3 R3 resolved (+1 bypass fix `_metrics` suffix)
 - **809 passed + 0 skipped, coverage 94.92%, 8/8 AC — P8 HOÀN TẤT → M4 HOÀN TẤT**
 
+### M4 — Review độc lập (self-review, 2026-08-15)
+- Đọc thực tế code TASK-020/021/022 + spec + chạy test thật + chạy scanner trên cây thật `SRC_ROOT`.
+- **F1 (P1)**: `ArchitectureHealth.scan()` bỏ qua TOÀN BỘ layer/contract check trên cây thật — `target = package_dir / sub` với `package_dir = backend/src`, nhưng `agents/` nằm dưới `backend/src/aios_core/agents` → `is_dir()` False → skip silent; chỉ policy check chạy. Thêm nữa: `rel` truyền dot-form vào `collect_imports` (hàm expects slash-form) → relative import phân giải sai. **→ ĐÃ TỰ SỬA**: tính `aios_root = package_dir/"aios_core"` nếu tồn tại; truyền `rel` slash-form; exempt slash-form. Thêm 2 test regresi (nested layout).
+- F2 (P3): `orchestrator/__init__.py` không export module M4 mới (inconsistency, không phải bug). F3 (P3): advisor rule 1+5 dedup collapse (đúng spec).
+- Kết quả: **M4 ĐẠT** V1–V8 (sau fix F1); full suite `1636 passed, 0 fail`. Xem `reviews/M4-review.md` + `reviews/M4-review-brief.md`.
+
 ## M5 — Core Intelligence (in-progress) — 2026-08-14
 
 > PLAN.md §M5: nâng cấp "bộ não vận hành" — không thêm agent/UI. Trả lời: Memory (nhớ gì?), Context (đưa gì vào?), Model Router (dùng model nào?), Planning (làm bước nào?), Execution Graph (phụ thuộc thế nào?), Scheduler (chạy khi nào/song song?).
@@ -273,6 +280,32 @@
 **1639 passed (baseline 1584 + 55 mới), 7/7 AC (E1–E7) — M8 HOÀN TẤT**.
 
 > M8 KHÔNG thêm architecture invariant (đúng PLAN); arch tests `test_m8_*` (13 tests: 4 plugins + 3 extension + 6 ecosystem) bảo vệ import allow-list + literal gates.
+
+## M9 — Autonomous (in-progress) — 2026-08-15
+
+> PLAN.md §M9: đưa AIOS từ "nhận task và thực hiện task" thành "tự phát hiện mục tiêu, lập kế hoạch dài hạn, tự thực hiện, tự kiểm chứng, tự phục hồi, tự học trong giới hạn Policy".
+> `Autonomous = Goal-driven + Bounded + Observable + Reversible + Evaluated`. Autonomy Layer KHÔNG thay Orchestrator — nó định hướng Orchestrator (Autonomy → Orchestrator → Runtime).
+> 13 task (TASK-050..062), 5 invariant mới (INV-030..034). 4 phase: P1 Foundation (050-054) → P2 Long-running (055,056,057,061) → P3 Adaptive (058,060) → P4 Ecosystem (059,062).
+> Approach: 1 package `backend/src/aios_core/autonomous/` (Autonomy Layer, offline-first, DI injectable, facade `AutonomyManager`), mỗi task = 1 module; behavioral tests `tests/test_autonomous.py`, invariant tests `tests/test_architecture.py` (test_m9_*).
+
+| Task | Nội dung | Trạng thái | Ghi chú |
+|------|----------|------------|---------|
+| TASK-050 | Autonomous Goal Engine — Goal contract (objective/success/constraints/permissions/autonomy) + lifecycle PROPOSED→VALIDATING→APPROVED→PLANNING→EXECUTING→EVALUATING→COMPLETED (+BLOCKED/RECOVERY/REPLANNING/ESCALATED) | `done` ✅ | `autonomous/goal.py` (2026-08-15) |
+| TASK-051 | Autonomous Planner — Goal→World→Constraints→Capabilities→History→Plan; assumptions/steps/success_conditions/rollback; dynamic replanning | `done` ✅ | `autonomous/planner.py` (2026-08-15) |
+| TASK-052 | World Model — WorldState (System/Runtime/Goals/Tasks/Environment/Constraints/History) + Fact (source/timestamp/confidence/freshness); World ≠ Memory | `done` ✅ | `autonomous/world.py` (2026-08-15) |
+| TASK-053 | Autonomous Loop — Observe→Understand→Decide→Plan→Policy→Act→Verify→Learn; mọi action qua Governor (INV-030) | `done` ✅ | `autonomous/loop.py` (2026-08-15) |
+| TASK-054 | Autonomy Governor — CONTINUE/PAUSE/ASK_HUMAN/REPLAN/ROLLBACK/STOP + budget (steps/llm/cost/duration/tool/retries/parallel) + risk budget; INV-030/031 | `done` ✅ | `autonomous/governor.py` (2026-08-15) |
+| TASK-055 | Autonomous Recovery — Detect→Classify→Diagnose→Strategies→Score→Policy→Execute→Verify; fingerprint + circuit breaker + cooldown + escalation | `todo` | `autonomous/recovery.py` |
+| TASK-056 | Long-Horizon Execution — ExecutionSession + Checkpoint + context compaction + resume (INV-032) | `todo` | `autonomous/long_horizon.py` |
+| TASK-057 | Autonomous Memory — Working/Episodic/Semantic/Procedural/Failure/Goal + Learning Loop (candidate→dedup→validate→confidence→promote); INV-034 | `todo` | `autonomous/memory.py` |
+| TASK-058 | Autonomous Experimentation — Hypothesis→Design→Sandbox→Execute→Evaluate→Compare→Accept/Reject (qua Harness — INV-033) | `todo` | `autonomous/experimentation.py` |
+| TASK-059 | Multi-Agent Autonomy — mode single/parallel/sequential/hierarchical + delegation (owner/deadline/budget/output contract) | `todo` | `autonomous/multi_agent.py` |
+| TASK-060 | Autonomous Evaluation — correctness/quality/cost/risk/progress/confidence → decision (continue/retry/replan/stop/ask) + ProgressEstimator | `todo` | `autonomous/evaluation.py` |
+| TASK-061 | Advanced Stuck Detection — 7 signals (repeated tool/errors, no state change/progress, oscillation, budget burn, contradictory) | `todo` | `autonomous/stuck.py` |
+| TASK-062 | Autonomous Scheduler — proactive triggers (interval/daily) chạy workflow/goal tự động | `todo` | `autonomous/scheduler.py` |
+| INV-030..034 | 5 invariant enforced bằng arch tests `test_m9_*` (governor gate, budget, checkpoint/resume, experiment qua harness, memory promote có kiểm chứng) | `todo` | trong `tests/test_architecture.py` |
+
+**Deliverable M9 (dự kiến)**: `backend/src/aios_core/autonomous/` ~16 file + config (`AutonomousSettings`) + wiring (`AutonomyManager` trong RuntimeKernel.create) + events `autonomy.*` + `tests/test_autonomous.py` (~70 tests) + `tests/test_architecture.py` (test_m9_*, ~10 tests).
 
 ## Log gần nhất
 

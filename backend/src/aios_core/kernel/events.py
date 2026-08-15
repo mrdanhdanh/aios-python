@@ -59,6 +59,17 @@ class EventType(str, Enum):
     PLUGIN_INSTALLED = "plugin.installed"
     PLUGIN_UPDATED = "plugin.updated"
     PLUGIN_REMOVED = "plugin.removed"
+    # M9 (TASK-050..062): autonomous layer events.
+    AUTONOMY_GOAL_CREATED = "autonomy.goal_created"
+    AUTONOMY_GOAL_STATE = "autonomy.goal_state"
+    AUTONOMY_LOOP_STEP = "autonomy.loop_step"
+    AUTONOMY_DECISION = "autonomy.decision"
+    AUTONOMY_RECOVERY = "autonomy.recovery"
+    AUTONOMY_CHECKPOINT = "autonomy.checkpoint"
+    AUTONOMY_MEMORY_PROMOTED = "autonomy.memory_promoted"
+    AUTONOMY_EXPERIMENT = "autonomy.experiment"
+    AUTONOMY_DELEGATED = "autonomy.delegated"
+    AUTONOMY_SCHEDULE = "autonomy.schedule"
 
 
 @dataclass

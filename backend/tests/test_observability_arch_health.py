@@ -76,3 +76,38 @@ def test_policy_missing_detected(tmp_path):
     )
     report = ArchitectureHealth().scan(package_dir=pkg)
     assert any(v.kind == "policy" for v in report.violations)
+
+
+def test_nested_aios_core_layout_scans_layer_violations(tmp_path):
+    """Regresi (review M4): scanner phải chạy trên layout thật backend/src/aios_core.
+
+    Trước fix, scan() dùng target = package_dir / sub → trên cây thật (agents/
+    nằm dưới aios_core/, không phải dưới package_dir) mọi layer/contract check
+    bị skip silently. Test này giả lập layout lồng nhau và chứng minh violation
+    ở tầng sâu vẫn bị phát hiện.
+    """
+    pkg = tmp_path / "src"                       # ~ backend/src
+    aios = pkg / "aios_core"                    # ~ backend/src/aios_core
+    _write(
+        aios,
+        "agents/evil",
+        "from aios_core.kernel.services import ExecutionService\n",
+    )
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    kinds = {v.kind for v in report.violations}
+    assert "layer" in kinds
+    assert any("kernel.services" in v.message for v in report.violations)
+
+
+def test_nested_aios_core_layout_policy_check(tmp_path):
+    """Regresi: policy check cũng chạy được trên layout lồng nhau."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(
+        aios,
+        "kernel/services/execution",
+        "x = 1\n",  # thiếu self._policy.evaluate
+    )
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert any(v.kind == "policy" for v in report.violations)
