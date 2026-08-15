@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Yuniebel — Cuộc phiêu lưu của mèo con</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="game" width="480" height="270"></canvas>
+
+    <!-- Khung nhiệm vụ (góc trên trái) -->
+    <div id="task-box" class="hidden">
+      <button id="task-close" title="Về màn hình chính">✕</button>
+      <div id="task-title">NHIỆM VỤ</div>
+      <div id="task-text"></div>
+    </div>
+
+    <!-- Nút bật/tắt UI (góc trên phải) -->
+    <button id="ui-toggle" title="Bật/tắt UI">UI</button>
+
+    <!-- Hội thoại -->
+    <div id="dialogue" class="hidden"></div>
+
+    <!-- Hộp lựa chọn (cảnh 3) -->
+    <div id="choice-box" class="hidden">
+      <div class="choice-title">Có tiếng gọi từ vùng tối...</div>
+      <button id="choice-1" class="choice-btn">[1] Bỏ chạy</button>
+      <button id="choice-2" class="choice-btn">[2] Nghe theo lời gọi</button>
+    </div>
+
+    <!-- Counter hù (cảnh 5) -->
+    <div id="scare-counter" class="hidden"></div>
+
+    <!-- Hint điều khiển -->
+    <div id="hint">WASD di chuyển · 1/2 chọn lựa</div>
+
+    <!-- D-pad ảo (mobile) -->
+    <div id="dpad" class="hidden">
+      <button id="pad-up" class="pad">▲</button>
+      <button id="pad-left" class="pad">◀</button>
+      <button id="pad-down" class="pad">▼</button>
+      <button id="pad-right" class="pad">▶</button>
+    </div>
+
+    <!-- Màn hình chính -->
+    <div id="title-screen" class="overlay">
+      <h1 class="pixel-title">YUNIEBEL</h1>
+      <p class="subtitle">Một câu chuyện mèo con</p>
+      <button id="btn-start" class="big-btn">START</button>
+      <p class="tiny">WASD di chuyển · 1/2 chọn lựa</p>
+    </div>
+
+    <!-- Game over -->
+    <div id="gameover-screen" class="overlay hidden">
+      <h1 class="pixel-title over-title">GAME OVER</h1>
+      <p class="subtitle">Mèo Yuniebel đã đi vào bóng tối...</p>
+      <button id="btn-replay-1" class="big-btn">Chơi lại</button>
+    </div>
+
+    <!-- Kết thúc -->
+    <div id="end-screen" class="overlay hidden">
+      <h1 class="pixel-title end-title">🎂 Chúc mừng sinh nhật Yuniebel! 🎂</h1>
+      <p class="subtitle">Happy Birthday Yuniebel!</p>
+      <button id="btn-replay-2" class="big-btn">Chơi lại</button>
+    </div>
+  </div>
+
+  <!-- Script classic + relative path (AC1/C1-01: chạy được cả file:// lẫn GitHub Pages) -->
+  <script src="src/core.js"></script>
+  <script src="src/sprites.js"></script>
+  <script src="src/audio.js"></script>
+  <script src="src/game.js"></script>
+</body>
+</html>

@@ -3,6 +3,13 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## ✅ TASK-077 — Webgame 2D Pixel "Yuniebel" (2026-08-15)
+
+- **Kết quả**: tạo `games/yuniebel/` — webgame 2D pixel 100% static (HTML/CSS/JS, 0 dependency). Sprites canvas primitives (mèo orange可爱 tóc hồng, chủ, ma, bướm, bánh kem) + 7 backgrounds pre-rendered. 6 cảnh + title/game over/end, 17 AC PASS.
+- **Cấu trúc**: `index.html` + `style.css` + `src/` (core.js logic thuần 58/58 PASS + sprites.js canvas primitives + audio.js WebAudio + game.js loop/render/input) + `test/` (core.test.js 58 PASS + smoke.test.js 28 PASS)
+- **Deploy**: `.github/workflows/pages.yml` (GitHub Pages, paths: games/**)
+- Xem chi tiết: `aios/progress/tasks/TASK-077/` (spec + critique×2 + tasks + review + test + evaluation)
+
 ## ✅ TASK-076 — Architecture v3 (Mermaid): AIOS 1.0 Final (2026-08-15)
 
 - **Kết quả**: tạo `docs/architecture-v3.md` — bản **hiện hành** (AIOS 1.0 Final, **Mermaid** — theo yêu cầu người dùng phương án "2 và 3"), 12 khối sơ đồ (10 flowchart + stateDiagram-v2 Safety chain + sequenceDiagram Kill Switch), 7 tầng L1..L7 theo `layer-model.md` **frozen** (Autonomous = L2 — sửa điểm v2 sai; Harness/Enterprise/Ecosystem = L7; M10 = nhóm đảm bảo không phải L8), bảng tasks M10 13/13 done (đúng ánh xạ id PROGRESS), INV-001..034 frozen + 5 release gates + AIOS 1.0 READY/CERTIFIED. `architecture-v2.md` đánh dấu **LỊCH SỬ** (header/§0/§14); README link → v3.

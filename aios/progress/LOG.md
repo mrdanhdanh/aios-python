@@ -4,6 +4,18 @@
 > Entry `[bypass]` = fix nhỏ làm nhanh, có lý do.
 > Entry mới ghi LÊN ĐẦU file (mới nhất trước).
 
+| 2026-08-15 | TASK-077 | evaluate | **TASK-077 DONE** — Webgame 2D pixel "Yuniebel": 6 cảnh + title/game over/end. Sprites canvas primitives (mèo orange, chủ, ma, bướm, bánh kem) + 7 backgrounds pre-rendered. Core 58/58 PASS + smoke 28/28 PASS. 17/17 AC PASS. | **DONE** | `games/yuniebel/`, `aios/progress/tasks/TASK-077/` |
+
+| 2026-08-15 | TASK-077 | implement+test | Viết lại sprites.js (canvas primitives — mèo orange可爱, chủ, ma, bướm, bánh kem, 7 backgrounds pre-rendered) + game.js (render mới, camera follow, darkness overlay). Core.js giữ nguyên 58/58 PASS. Smoke test 28/28 PASS. | Sprites mới đẹp hơn nhiều | `games/yuniebel/src/` |
+
+| 2026-08-15 | TASK-077 | implement | Viết lại sprites.js (ma trận ký tự 16×16) + game.js (render + input + UI wiring) + audio.js (WebAudio SFX) + index.html + style.css. Core.js: state machine 6 cảnh + sub-states, collision slide, bướm AI, knockback, 5 scare zones. Node test 58/58 PASS. | **17/17 AC PASS** | `games/yuniebel/` |
+
+| 2026-08-15 | TASK-077 | hard-gate | Spec + critique ×2 (critique-1: C1-01..04 P1 resolved; critique-2: C2-11..22 P1+P2 resolved) + review APPROVED. | **PASS — được phép implement** | `aios/progress/tasks/TASK-077/` |
+
+| 2026-08-15 | TASK-077 | plan | Yêu cầu người dùng: webgame 2D pixel "Yuniebel" (mèo tìm chủ, 6 cảnh, sin nhật). Tạo TASK-077: games/yuniebel/, 0 dependency, GitHub Pages. | **todo** | `aios/progress/tasks/TASK-077/` |
+
+| 2026-08-15 | — | [bypass] research | Yêu cầu người dùng: chuẩn bị webgame đơn giản chạy GitHub Pages (thư mục riêng, xem có cần skill/MCP/API không). **KHẢO SÁT**: (1) `skills/` workspace TRỐNG (chỉ .gitkeep) — không có skill game; (2) backend `McpTool` là STUB (fake registry `MCP_SERVERS`, không kết nối thật — `tools/mcp_tool.py`); (3) repo `mrdanhdanh/aios-python` PUBLIC, chỉ có workflow `secret-scan.yml`, CHƯA bật GitHub Pages; (4) dashboard React+Vite có proxy /api → localhost:8000 (chỉ dev local, không liên quan game). **KẾT LUẬN**: webgame static KHÔNG cần MCP/API — 0 dependency (HTML/CSS/JS thuần), lưu điểm bằng localStorage; deploy bằng GitHub Actions `pages.yml` → URL `https://mrdanhdanh.github.io/aios-python/games/<tên>/`. Chờ user chốt nội dung game | **SẴN SÀNG** — chờ nội dung chi tiết | — |
+
 | 2026-08-15 | — | [bypass] git | Yêu cầu người dùng: "tạo 1 nhánh mới là verify từ master, chuyển nhánh operation/test-A sang là con của verify" — thao tác git thuần túy, không đổi code. **ĐÃ LÀM**: (1) tạo nhánh `verify` từ `master` @ 7737098 (không checkout, vẫn ở operation/test-A); (2) `git rebase verify` → "up to date" (operation/test-A @ 505ad87 đã có parent = 7737098 = tip verify). **Cây nhánh: `master` → `verify` → `operation/test-A`**. Verify: `git log --graph --all` + `merge-base --is-ancestor verify operation/test-A` = 0 | **Xong — operation/test-A là con của verify** | `git branch verify master` + `git rebase verify` |
 
 | 2026-08-15 | — | [bypass] git | Yêu cầu người dùng: "tạo nhánh mới operation test A" — thao tác git thuần túy, không đổi code, không cần hard gate. **ĐÃ LÀM**: tạo nhánh `operation/test-A` từ `master` @ 7737098 (working tree sạch) — dùng cho chạy thử nghiệm operation A | **Nhánh mới sẵn sàng** — `git branch -vv` xác nhận | `git checkout -b operation/test-A` |
