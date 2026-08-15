@@ -116,6 +116,7 @@
 | Remote | Chuyển origin → repo GitHub mới `mrdanhdanh/aios-python` (PUBLIC) | `done` | commit e42bae4 (2026-08-14) |
 | DoD checklist | **Definition of Done — Closing Checklist** (AGENTS.md §3.1 + PLAN.md): bắt buộc cập nhật LOG.md + PROGRESS.md + PLAN.md + STATS.md + task folder + commit sau MỖI task — tránh quên ghi tài liệu | `done` | theo yêu cầu người dùng 2026-08-15 |
 | README docs | `[bypass]` — cập nhật `docs/README.md` (GitHub fallback render khi root không có README.md) khớp trạng thái AIOS 1.0: mô tả 7 tầng + CERTIFIED, bảng M0–M10, mục kiểm tra sức khỏe (`aiagent doctor/conformance/arch-health`), link constitution-1.0.md; không tạo README root mới | `done` | theo yêu cầu người dùng 2026-08-15 |
+| PR #1 | `[bypass]` — tạo Pull Request `operation/test-A` → `verify` (theo ADR-0005: feature → verify → master): 158 files, +13,527/-1, 12 commits (TASK-077..081 + bypass fixes) | `done` | theo yêu cầu người dùng 2026-08-16; https://github.com/mrdanhdanh/aios-python/pull/1 |
 
 
 ## M0 — Development Foundation ✅
