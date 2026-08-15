@@ -463,3 +463,97 @@ class StuckReport(BaseModel):
     counts: dict[str, int] = Field(default_factory=dict)
     verdict: str = "normal"  # "stuck" | "normal"
     window_size: int = 0
+
+
+# ---------------------------------------------------------------------------
+# TASK-058 — Autonomous Experimentation
+# ---------------------------------------------------------------------------
+
+class ExperimentVerdict(str, Enum):
+    """Verdict experiment (PLAN §M9-21)."""
+
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    INCONCLUSIVE = "inconclusive"
+
+
+class Hypothesis(BaseModel):
+    """Giả thuyết cải thiện (PLAN §M9-21/§M9-33)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    statement: str
+    baseline: float  # giá trị hiện tại
+    target_metric: str
+    target_value: float
+    direction: str = "higher"  # "higher" | "lower" (C1-01 v1)
+
+
+class Experiment(BaseModel):
+    """Kết quả 1 experiment — evidence bắt buộc (INV-033)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    hypothesis_id: str
+    params: dict[str, Any] = Field(default_factory=dict)
+    result: Any = None
+    metric_value: float | None = None
+    evidence: dict[str, Any] = Field(default_factory=dict)
+    verdict: ExperimentVerdict = ExperimentVerdict.INCONCLUSIVE
+    deployed: bool = False
+    canary: bool = False
+    at: str = ""
+
+
+# ---------------------------------------------------------------------------
+# TASK-060 — Autonomous Evaluation
+# ---------------------------------------------------------------------------
+
+class AutonomousVerdict(str, Enum):
+    """5 quyết định evaluation (PLAN §M9-25)."""
+
+    CONTINUE = "continue"
+    RETRY = "retry"
+    REPLAN = "replan"
+    STOP = "stop"
+    ASK_HUMAN = "ask_human"
+
+
+class EvaluationDimensions(BaseModel):
+    """6 chiều đánh giá (PLAN §M9-25)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    correctness: float = 0.0
+    quality: float = 0.0
+    cost: float = 0.0  # tỷ lệ dùng/budget (C2-01 v2)
+    risk: float = 0.0
+    progress: float = 0.0
+    confidence: float = 0.0
+    trajectory_evidence: dict[str, Any] = Field(default_factory=dict)  # C1-02
+
+
+class EvaluationConfig(BaseModel):
+    """Thresholds injectable (C2-03 v2)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    correctness_min: float = 0.7
+    risk_max: float = 0.8
+    cost_max: float = 1.0
+    stuck_iterations: int = 3
+
+
+class ProgressEstimate(BaseModel):
+    """Ước lượng tiến độ (PLAN §M9-26)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    completion: float = 0.0  # % hoàn thành
+    confidence: float = 0.0
+    risk: float = 0.0
+    budget_remaining: float = 1.0
+    progress_stuck: bool = False
+    trajectory_warning: bool = False

@@ -974,3 +974,225 @@ def test_stuck061_progress_clears_no_progress(detector):
     detector.record("PROGRESS", "g1", {"progress": 0.5})
     report = detector.detect("g1")
     assert "no_progress" not in report.signals
+
+
+# ---------------------------------------------------------------------------
+# TASK-058 — Autonomous Experimentation
+# ---------------------------------------------------------------------------
+
+from aios_core.autonomous import (
+    AutonomousEvaluator,
+    AutonomousVerdict,
+    EvaluationConfig,
+    EvaluationDimensions,
+    ExperimentVerdict,
+    ExperimentationEngine,
+    Hypothesis,
+    ProgressEstimator,
+)
+
+
+@pytest.fixture()
+def hypothesis():
+    return Hypothesis(
+        id="h1", statement="retry=5 improves success",
+        baseline=0.91, target_metric="success", target_value=0.96,
+        direction="higher",
+    )
+
+
+def _engine(evaluate_fn, tmp_path, **kw):
+    return ExperimentationEngine(
+        evaluate_fn=evaluate_fn,
+        db_path=tmp_path / "autonomous.db",
+        **kw,
+    )
+
+
+def test_exp058_accepted_higher(hypothesis, tmp_path):
+    def evaluate(_h, evidence_hint):
+        return {"metric_value": 0.97, "result": "ok"}
+
+    engine = _engine(evaluate, tmp_path)
+    exp = engine.run(hypothesis, {"retry": 5})
+    assert exp.verdict == ExperimentVerdict.ACCEPTED
+    assert exp.metric_value == 0.97
+    assert exp.evidence
+
+
+def test_exp058_rejected_lower(hypothesis, tmp_path):
+    def evaluate(_h, evidence_hint):
+        return {"metric_value": 0.85}
+
+    engine = _engine(evaluate, tmp_path)
+    exp = engine.run(hypothesis, {})
+    assert exp.verdict == ExperimentVerdict.REJECTED
+
+
+def test_exp058_inconclusive_no_evidence(hypothesis, tmp_path):
+    engine = _engine(lambda _h, _eh: {}, tmp_path)
+    exp = engine.run(hypothesis, {})
+    assert exp.verdict == ExperimentVerdict.INCONCLUSIVE
+
+
+def test_exp058_inconclusive_between(hypothesis, tmp_path):
+    def evaluate(_h, _eh):
+        return {"metric_value": 0.94}  # giữa baseline 0.91 và target 0.96
+
+    engine = _engine(evaluate, tmp_path)
+    exp = engine.run(hypothesis, {})
+    assert exp.verdict == ExperimentVerdict.INCONCLUSIVE
+
+
+def test_exp058_direction_lower(tmp_path):
+    h = Hypothesis(id="h2", statement="reduce cost", baseline=0.20,
+                   target_metric="cost", target_value=0.10, direction="lower")
+
+    def evaluate(_h, _eh):
+        return {"metric_value": 0.08}
+
+    engine = _engine(evaluate, tmp_path)
+    assert engine.run(h, {}).verdict == ExperimentVerdict.ACCEPTED
+
+
+def test_exp058_evaluate_fn_required():
+    with pytest.raises(Exception):
+        ExperimentationEngine(evaluate_fn=None)
+
+
+def test_exp058_deploy_only_accepted(hypothesis, tmp_path):
+    def evaluate(_h, _eh):
+        return {"metric_value": 0.97}
+
+    engine = _engine(evaluate, tmp_path)
+    exp = engine.run(hypothesis, {})
+    deployed = engine.deploy(exp.id)
+    assert deployed.deployed is True
+    assert deployed.canary is True
+
+
+def test_exp058_deploy_rejected_raises(hypothesis, tmp_path):
+    def evaluate(_h, _eh):
+        return {"metric_value": 0.85}
+
+    engine = _engine(evaluate, tmp_path)
+    exp = engine.run(hypothesis, {})
+    with pytest.raises(Exception):
+        engine.deploy(exp.id)
+
+
+def test_exp058_persist_cross_instance(hypothesis, tmp_path):
+    db = tmp_path / "autonomous.db"
+    engine = ExperimentationEngine(lambda _h, _eh: {"metric_value": 0.97}, db_path=db)
+    exp = engine.run(hypothesis, {"retry": 5})
+    engine2 = ExperimentationEngine(lambda _h, _eh: {"metric_value": 0.97}, db_path=db)
+    loaded = engine2.get(exp.id)
+    assert loaded.verdict == ExperimentVerdict.ACCEPTED
+    assert loaded.params == {"retry": 5}
+    assert len(engine2.list_experiments(hypothesis_id="h1")) == 1
+
+
+def test_exp058_sandbox_used(hypothesis, tmp_path):
+    calls = []
+
+    def sandbox(params):
+        calls.append(params)
+        return {"ran": True}
+
+    def evaluate(_h, _eh):
+        return {"metric_value": 0.98, "result": _eh["result"]}
+
+    engine = ExperimentationEngine(evaluate, db_path=tmp_path / "autonomous.db",
+                                   sandbox_fn=sandbox)
+    exp = engine.run(hypothesis, {"retry": 5})
+    assert calls == [{"retry": 5}]
+    assert exp.result == {"ran": True}
+
+
+# ---------------------------------------------------------------------------
+# TASK-060 — Autonomous Evaluation
+# ---------------------------------------------------------------------------
+
+@pytest.fixture()
+def evaluator():
+    return AutonomousEvaluator()
+
+
+def test_ev060_continue(evaluator):
+    verdict, estimate = evaluator.evaluate("g1", EvaluationDimensions(
+        correctness=0.9, quality=0.9, confidence=0.9, progress=0.5))
+    assert verdict == AutonomousVerdict.CONTINUE
+    assert estimate.completion == 0.5
+    assert estimate.confidence == 0.9
+    assert estimate.budget_remaining == 1.0
+
+
+def test_ev060_stop_cost(evaluator):
+    verdict, _ = evaluator.evaluate("g1", EvaluationDimensions(
+        correctness=0.9, cost=1.0))
+    assert verdict == AutonomousVerdict.STOP
+
+
+def test_ev060_ask_human_risk(evaluator):
+    verdict, _ = evaluator.evaluate("g1", EvaluationDimensions(
+        correctness=0.9, risk=0.9))
+    assert verdict == AutonomousVerdict.ASK_HUMAN
+
+
+def test_ev060_retry_low_correctness(evaluator):
+    verdict, _ = evaluator.evaluate("g1", EvaluationDimensions(correctness=0.5))
+    assert verdict == AutonomousVerdict.RETRY
+
+
+def test_ev060_replan_stuck(evaluator):
+    for _ in range(3):
+        evaluator.evaluate("g1", EvaluationDimensions(
+            correctness=0.9, progress=0.3))
+    verdict, estimate = evaluator.evaluate("g1", EvaluationDimensions(
+        correctness=0.9, progress=0.3))
+    assert verdict == AutonomousVerdict.REPLAN
+    assert estimate.progress_stuck is True
+
+
+def test_ev060_not_stuck_when_progress_moves(evaluator):
+    for i in range(3):
+        evaluator.evaluate("g1", EvaluationDimensions(
+            correctness=0.9, progress=0.1 + i * 0.1))
+    verdict, estimate = evaluator.evaluate("g1", EvaluationDimensions(
+        correctness=0.9, progress=0.4))
+    assert estimate.progress_stuck is False
+    assert verdict == AutonomousVerdict.CONTINUE
+
+
+def test_ev060_trajectory_warning(evaluator):
+    _, estimate = evaluator.evaluate("g1", EvaluationDimensions(
+        correctness=0.9, trajectory_evidence={"tool_failures": 2}))
+    assert estimate.trajectory_warning is True
+
+
+def test_ev060_trajectory_clean(evaluator):
+    _, estimate = evaluator.evaluate("g1", EvaluationDimensions(
+        correctness=0.9, trajectory_evidence={}))
+    assert estimate.trajectory_warning is False
+
+
+def test_ev060_confidence_min(evaluator):
+    _, estimate = evaluator.evaluate("g1", EvaluationDimensions(
+        correctness=0.8, quality=0.6, confidence=0.9))
+    assert estimate.confidence == 0.6  # min(0.8, 0.6, 0.9)
+
+
+def test_ev060_estimator_reset(evaluator):
+    for _ in range(3):
+        evaluator.evaluate("g1", EvaluationDimensions(correctness=0.9, progress=0.3))
+    evaluator._estimator.reset("g1")
+    verdict, estimate = evaluator.evaluate("g1", EvaluationDimensions(
+        correctness=0.9, progress=0.3))
+    assert estimate.progress_stuck is False
+    assert verdict == AutonomousVerdict.CONTINUE
+
+
+def test_ev060_thresholds_injectable():
+    ev = AutonomousEvaluator(config=EvaluationConfig(correctness_min=0.5))
+    verdict, _ = ev.evaluate("g1", EvaluationDimensions(correctness=0.6))
+    assert verdict == AutonomousVerdict.CONTINUE

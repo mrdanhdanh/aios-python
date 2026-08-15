@@ -17,19 +17,26 @@ from .contracts import (
     AutonomyDecision,
     AutonomyLevel,
     AutonomyPlan,
+    AutonomousVerdict,
     Checkpoint,
+    EvaluationConfig,
+    EvaluationDimensions,
     ExecutionSession,
+    Experiment,
+    ExperimentVerdict,
     FailureEvent,
     GoalConstraints,
     GoalContract,
     GoalLifecycleState,
     GovernorDecision,
+    Hypothesis,
     Lesson,
     LoopFinalState,
     LoopResult,
     MemoryEntry,
     MemoryEntryKind,
     PlanStep,
+    ProgressEstimate,
     RecoveryOutcome,
     RecoveryStrategy,
     RiskClass,
@@ -57,6 +64,8 @@ from .errors import (
     ScheduleError,
     StuckError,
 )
+from .evaluation import AutonomousEvaluator, ProgressEstimator
+from .experimentation import ExperimentationEngine, new_experiment_id
 from .goal import AutonomousGoalEngine, new_goal_id
 from .governor import AutonomyGovernor
 from .long_horizon import LongHorizonManager, new_session_id
@@ -108,11 +117,10 @@ class AutonomyManager:
             event_service=event_service, db_path=db_path
         )
         self.stuck_detector = stuck_detector or StuckDetector()
-        self.experimentation = None  # TASK-058 (Batch 3)
-        self.evaluator = None  # TASK-060 (Batch 3)
+        self.evaluator = AutonomousEvaluator(event_service=event_service)
+        self.experimentation = None  # TASK-058: cần evaluate_fn (wiring cấp)
         self.multi_agent = None  # TASK-059 (Batch 4)
-        self.scheduler = None  # TASK-062 (Batch 4)
-    def propose_goal(self, objective: str, **kwargs: object) -> GoalContract:
+        self.scheduler = None  # TASK-062 (Batch 4)    def propose_goal(self, objective: str, **kwargs: object) -> GoalContract:
         """Tiện ích: tạo + propose goal từ objective."""
         goal = GoalContract(id=new_goal_id(), objective=objective, **kwargs)
         return self.goal_engine.propose(goal)
@@ -133,15 +141,34 @@ __all__ = [
     "AutonomyDecision",
     "AutonomyLevel",
     "AutonomyPlan",
+    "AutonomousVerdict",
+    "Checkpoint",
+    "EvaluationConfig",
+    "EvaluationDimensions",
+    "ExecutionSession",
+    "Experiment",
+    "ExperimentVerdict",
+    "FailureEvent",
     "GoalConstraints",
     "GoalContract",
     "GoalLifecycleState",
     "GovernorDecision",
+    "Hypothesis",
+    "Lesson",
     "LoopFinalState",
     "LoopResult",
+    "MemoryEntry",
+    "MemoryEntryKind",
     "PlanStep",
+    "ProgressEstimate",
+    "RecoveryOutcome",
+    "RecoveryStrategy",
     "RiskClass",
     "RollbackSpec",
+    "SessionStatus",
+    "STRATEGY_SCORES",
+    "StuckReport",
+    "StuckSignal",
     "UsageSnapshot",
     "VerificationResult",
     "WorldFact",
@@ -161,11 +188,22 @@ __all__ = [
     "StuckError",
     # modules
     "ACTION_KEYWORDS",
+    "AutonomousEvaluator",
     "AutonomousGoalEngine",
     "AutonomyGovernor",
     "AutonomousLoop",
+    "AutonomousMemory",
     "AutonomousPlanner",
+    "AutonomousRecovery",
+    "CircuitBreaker",
+    "ExperimentationEngine",
+    "LongHorizonManager",
+    "ProgressEstimator",
+    "StuckDetector",
     "WorldModel",
     "AutonomyManager",
+    "fingerprint_of",
+    "new_experiment_id",
     "new_goal_id",
+    "new_session_id",
 ]
