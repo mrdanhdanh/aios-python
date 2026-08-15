@@ -86,6 +86,11 @@ aios/progress/
 
 **Bypass hợp lệ** (fix nhỏ): quy trình rút gọn nhưng BẮT BUỘC ghi LOG.md + đánh dấu `[bypass]` trong PROGRESS.md. Mọi task khác đều hard gate.
 
+**Branching Model (BẮT BUỘC — chi tiết [ADR-0005](adr/0005-branching-model.md))**:
+- `master` = ổn định, CHỈ nhận từ `verify` (không commit/merge trực tiếp).
+- Nhánh chức năng tạo TỪ `verify` (tiền tố: `feature/`, `fix/`, `docs/`, `operation/`, `refactor/`, `test/`...).
+- Chuỗi: nhánh chức năng → merge vào `verify` → kiểm tra (test + hard gate + review) → PASS → merge `verify` → `master`.
+
 **Definition of Done — Closing Checklist (bắt buộc sau MỖI task/yêu cầu xử lý xong)**:
 Trước khi đánh dấu task `done` hoặc kết thúc phiên, đối chiếu đủ (chi tiết: AGENTS.md §3.1):
 1. `LOG.md` — entry mới (thời gian | task | bước | việc đã làm | kết quả | artifact)
@@ -242,7 +247,7 @@ Pool tái sử dụng container theo ngôn ngữ (python/node/go...), warm-start
 ## AIOS SDK (đồng bộ từ đầu)
 
 ## Architecture Decisions (ADR)
-Xem [`docs/adr/`](adr/): 0001-engine-independence, 0002-capability-first, 0003-policy-first, 0004-architecture-invariants.
+Xem [`docs/adr/`](adr/): 0001-engine-independence, 0002-capability-first, 0003-policy-first, 0004-architecture-invariants, 0005-branching-model.
 
 ## Architecture Health (kế hoạch M4 — P8)
 Ngoài health hạ tầng (Docker/model/memory), M4 bổ sung **Architecture Health**: contract violations, layer violations, dependency violations, capability bypass, permission bypass, orphan components, broken registrations, circular dependencies, deprecated contracts — phù hợp hướng System Doctor + System Evolution Engine (TASK-016 đã ghi nhận, chưa enforce).
