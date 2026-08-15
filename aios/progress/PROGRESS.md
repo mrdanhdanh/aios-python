@@ -3,6 +3,14 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## ✅ Review toàn diện M0–M9 (2026-08-15)
+
+- **Kết quả**: M0–M9 ĐẠT — backend 1793 pass + dashboard 12 + extension 19; CLI deliverable chạy thật (doctor/arch-health/run --simulate); **ALL 62 TASK đủ 8-file hard gate**.
+- **Đã sửa (process/hồ sơ, không code)**:
+  - Bổ sung file hard-gate thiếu cho 24 task: `test.md` (TASK-011/020/021/022), `review.md` (TASK-033/034/046/047/048/049), `evaluation.md` (TASK-045..049), `implementation/README.md` (23 task — pointer tới code thật).
+  - PROGRESS.md: 8 header milestone sai `(in-progress)` → `✅` (M1/M2/M4/M5/M6/M7/M8/M9); ghi chú INV-022 lỗi thời → cập nhật theo M7 F3 đã resolve (nhãn canonical `test_inv022..inv029`).
+- Xem chi tiết: `LOG.md` entry 2026-08-15 "M0-M9 review+fix".
+
 ## Tổng quan
 
 | Milestone | Mô tả | Trạng thái |
@@ -40,7 +48,7 @@
 | B7 | **Review brief M1** (điền từ template, 7 tiêu chí AC từ PLAN.md) | `done` | xem `reviews/M1-review-brief.md` |
 | B7 | **Fix review findings** (F-001..F-004 P3) — bypass fixes + commit | `done` | commits 92f1321 + 3b7d8b6; working tree clean |
 
-## M1 — Core Runtime (in-progress)
+## M1 — Core Runtime ✅ (2026-08-12)
 
 ### P0 — Infrastructure (TASK-002) ✅
 | Bước | Nội dung | Trạng thái | Ghi chú |
@@ -122,7 +130,7 @@
 | TASK-014 | M2-P4 — Tools 6 loại (Python/Docker/REST/MCP/Shell/Git) + Tool Registry + capability binding | M2 | `done` ✅ | AIOS Orchestrator |
 | TASK-015 | M2-P4 — Skills lifecycle 10 trạng thái + Skill Manager (zip/git/pip) + Sandbox Pool | M2 | `done` ✅ | AIOS Orchestrator |
 
-## M2 — Developer Edition (in-progress)
+## M2 — Developer Edition ✅ (2026-08-13)
 
 **TASK-012 — M2-P3b: Goal Manager + Task Queue + Permission Broker + Failure Recovery** ✅ (2026-08-13)- `orchestrator/goals/` package mới: goal.py (GoalManager, state machine, cascade cancel), task_queue.py (dequeue atomic RETURNING, reorder 2 pha, recover stale), permission_broker.py (ask_scopes, default-deny no-approver), failure_recovery.py (retry→fallback→report), errors.py, schema.py (shared DDL), `__init__.py` (build_goal_modules factory)
 - Kernel additive: EventType +6 (`goal.*`, `queue.updated`, `recovery.*`), `PolicyDecision.ask_scopes` (5 nhánh), `GoalsSettings` + config.yaml
@@ -173,7 +181,7 @@
 - **vitest 19/19 pass + tsc clean + build emit out/extension.js — M3 HOÀN TẤT**
 
 **TASK-017 / TASK-018 — bổ sung hard-gate files (F1 review M3, 2026-08-15)**: TASK-017 thiếu critique-2/tasks/review/test/implementation → đã tạo đủ; TASK-018 thiếu tasks/review/test/implementation → đã tạo đủ. Cả 3 task TASK-017/018/019 nay đủ 8-file hard gate (spec, critique-1, critique-2, tasks, review, test, evaluation, implementation/).
-## M4 — Platform Edition (in-progress)
+## M4 — Platform Edition ✅ (2026-08-13)
 
 ### P7 — TASK-020: Upgrade Pipeline ✅ (2026-08-13)
 - `upgrade/` package: dependency.py (ComponentSpec/Dependency frozen, DependencyResolver — DFS post-order, sort (name,version), missing/cycle/conflict, deterministic), backup.py (BackupStore SQLite — backup/restore/list, persist cross-instance), migrator.py (Migrator Protocol + DictMigrator + SkillMigrator wrap SkillManager — payload = model_dump JSON), pipeline.py (6 bước: read current → skip check → compatibility → dependencies → backup → migrate → health → complete; dry-run 0→2; rollback best-effort: migrator.rollback ưu tiên, fallback write_current backup; 9 UPGRADE_* events), errors.py (UpgradeError)
@@ -206,7 +214,7 @@
 - F2 (P3): `orchestrator/__init__.py` không export module M4 mới (inconsistency, không phải bug). F3 (P3): advisor rule 1+5 dedup collapse (đúng spec).
 - Kết quả: **M4 ĐẠT** V1–V8 (sau fix F1); full suite `1636 passed, 0 fail`. Xem `reviews/M4-review.md` + `reviews/M4-review-brief.md`.
 
-## M5 — Core Intelligence (in-progress) — 2026-08-14
+## M5 — Core Intelligence ✅ (2026-08-15)
 
 > PLAN.md §M5: nâng cấp "bộ não vận hành" — không thêm agent/UI. Trả lời: Memory (nhớ gì?), Context (đưa gì vào?), Model Router (dùng model nào?), Planning (làm bước nào?), Execution Graph (phụ thuộc thế nào?), Scheduler (chạy khi nào/song song?).
 > Thứ tự: Phase 1 (023→024) → Phase 2 (025) → Phase 3 (026→027→028). Mỗi task qua hard gate đầy đủ (spec → critique ×2 → tasks → review → implement → test → evaluate).
@@ -227,7 +235,7 @@
 - **F2 (P3)**: M5 thiếu milestone review doc (M0/M3/M4 có). **→ ĐÃ TỰ SỬA**: viết `reviews/M5-review.md` + `reviews/M5-review-brief.md`.
 - Kết quả: **M5 ĐẠT** V1–V8 (sau F1); không P1. Xem `reviews/M5-review.md` + `reviews/M5-review-brief.md`.
 
-## M6 — AIOS Harness (in-progress) — 2026-08-15
+## M6 — AIOS Harness ✅ (2026-08-15)
 
 > PLAN.md §M6: subsystem `harness/` giúp AIOS tự kiểm thử/xác minh/quan sát/cải tiến (H1-H5). Không sửa Runtime/Orchestrator — chỉ gọi qua API. INV-017..021.
 
@@ -241,7 +249,7 @@
 | TASK-034 | H5 Doctor & Readiness — Doctor architecture + Readiness Score | `done` ✅ | 1521 pass, coverage 95.35%, 11/11 AC (2026-08-15) — **M6 HOÀN TẤT** |
 | INV-011..016 | Enforcement tests (AST) trong `tests/test_architecture.py` + observability metrics M5 | `todo` | tích hợp trong các task |
 
-## M7 — Enterprise (in-progress) — 2026-08-15
+## M7 — Enterprise ✅ (2026-08-15)
 
 > PLAN.md §M7: đưa AIOS từ single-instance thành nền tảng vận hành an toàn quy mô doanh nghiệp. 7 nhóm (E1–E7), 8 invariant (INV-022..INV-029). Không biến AIOS thành cloud/distributed platform — chỉ định nghĩa contract + governance.
 > Dependency: TASK-035 → TASK-036 → ┬ TASK-037 ┐ → TASK-038 → TASK-039 → TASK-041 → TASK-042; └ TASK-040 ┘ song song với TASK-037.
@@ -259,14 +267,14 @@
 | TASK-042 | Enterprise Operations + Dashboard — EnterpriseDashboard aggregate tenant metrics từ audit | `done` ✅ | `enterprise/dashboard.py` |
 | TASK-043 | M8-E1 — Public AIOS SDK | `done` ✅ | 5 SDK tests pass; backend regression có 1 flaky timing failure không liên quan |
 | TASK-044 | M8-E2 — Plugin Runtime | `done` ✅ | 1584 tests (baseline 1560 + 24), 1 flaky timing có sẵn |
-| INV-022..029 | 8 architecture invariant enforced bằng import allow-list + source-literal tests trong `tests/test_architecture.py` (m7_*) | `done` ✅ | 79 arch tests pass (chung) |
+| INV-022..029 | 8 architecture invariant enforced bằng import allow-list + source-literal tests trong `tests/test_architecture.py` (`test_inv022..inv029_*` — canonical, rename từ `test_m7_*` sau M7 F3) | `done` ✅ | 79 arch tests pass (chung) |
 
 **Deliverable M7 (batch)**: `backend/src/aios_core/enterprise/` 10 file (contracts, identity, tenancy, runtime, scheduler, governance, security, operations, dashboard, __init__) + config (`EnterpriseSettings` trong `config.py` + `config.yaml`) + wiring (`RuntimeKernel.create` register `EnterpriseManager`) + `tests/test_enterprise.py` (29 tests) + `tests/test_architecture.py` (8 m7_* invariant tests).
 **1560 passed + 0 skipped, coverage 95.05%, 8/8 AC (E1–E7) — M7 CORE HOÀN TẤT**.
 
-> ⚠️ Ghi chú đánh số: PLAN định M7 = INV-022..INV-029, nhưng TASK-034 (M6-H5) đã dùng nhãn `test_inv022_*` trong `test_architecture.py` (trôi thực tế). Để không phá test cũ, M7 invariant tests đặt tên `test_m7_*` (vẫn bao phủ INV-022..INV-029 theo semantics).
+> ✅ Ghi chú đánh số (đã resolve M7 review F3, 2026-08-15): nhãn INV chuẩn hóa — M6 = `test_inv017..inv021` (4 test M6-H5 đã rename khỏi nhãn inv022), M7 = `test_inv022..inv029` (canonical, đã rename từ `test_m7_*`), M9 = `test_inv030..inv034`. Không còn xung đột nhãn.
 
-## M8 — Ecosystem (in-progress) — 2026-08-15
+## M8 — Ecosystem ✅ (2026-08-15)
 
 > PLAN.md §M8: đưa AIOS từ nền tảng vận hành (M7) thành hệ sinh thái mở rộng được bởi bên thứ ba. E1–E4 = Core Ecosystem, E5–E7 = hệ sinh thái bên ngoài. M8 KHÔNG thêm architecture invariant (tập invariant giữ nguyên tại M8).
 > Dependency: TASK-043 → ┬ TASK-044 ┐ → TASK-046 Registry → TASK-047 DevKit → TASK-049 Certification → TASK-048 Marketplace; └ TASK-045 ┘
@@ -287,7 +295,7 @@
 
 > M8 KHÔNG thêm architecture invariant (đúng PLAN); arch tests `test_m8_*` (13 tests: 4 plugins + 3 extension + 6 ecosystem) bảo vệ import allow-list + literal gates.
 
-## M9 — Autonomous (in-progress) — 2026-08-15
+## M9 — Autonomous ✅ (2026-08-15)
 
 > PLAN.md §M9: đưa AIOS từ "nhận task và thực hiện task" thành "tự phát hiện mục tiêu, lập kế hoạch dài hạn, tự thực hiện, tự kiểm chứng, tự phục hồi, tự học trong giới hạn Policy".
 > `Autonomous = Goal-driven + Bounded + Observable + Reversible + Evaluated`. Autonomy Layer KHÔNG thay Orchestrator — nó định hướng Orchestrator (Autonomy → Orchestrator → Runtime).
