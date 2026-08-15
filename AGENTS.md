@@ -38,6 +38,19 @@ Chuỗi bắt buộc — task chỉ được đánh dấu `done` khi ĐỦ TẤT
 - **`aios/progress/PROGRESS.md`**: cập nhật trạng thái mỗi task sau mỗi thay đổi (todo/in-progress/done/blocked).
 - **`aios/progress/STATS.md`**: tổng hợp khi kết thúc milestone.
 
+## 3.1. Definition of Done — Closing Checklist (bắt buộc, KHÔNG bỏ qua)
+
+Sau khi xử lý XONG mỗi yêu cầu/task (kể cả bypass fix nhỏ), TRƯỚC khi tuyên bố hoàn thành hoặc chuyển sang việc khác, phải đóng đủ checklist sau — đối chiếu lần lượt, thiếu cái nào bổ sung cái đó:
+
+- [ ] **`aios/progress/LOG.md`** — ghi entry mới đúng format (thời gian | task | bước | việc đã làm | kết quả | artifact)
+- [ ] **`aios/progress/PROGRESS.md`** — cập nhật trạng thái task/milestone/phase (todo/in-progress/done/blocked) + bảng tasks nếu có
+- [ ] **`docs/PLAN.md`** — cập nhật nếu milestone/phase/plan/ADR bị ảnh hưởng (trạng thái, ghi chú, quyết định mới)
+- [ ] **`aios/progress/STATS.md`** — cập nhật nếu kết thúc milestone hoặc cần tổng hợp số liệu
+- [ ] **Task folder `aios/progress/tasks/TASK-xxx/`** — đủ 8-file hard gate + artifact (implementation/, test.md, evaluation.md...)
+- [ ] **Commit** — sau mỗi bước hoàn chỉnh; chắc chắn working tree sạch trước khi kết thúc phiên
+
+Quy tắc: KHÔNG được nói "xong" khi checklist chưa đóng đủ. Nếu quên giữa chừng (phát hiện khi đã chuyển việc khác) → quay lại đóng checklist ngay trước khi tiếp tục, ghi rõ trong LOG.md.
+
 ## 4. Commit
 
 - Commit sau mỗi bước hoàn chỉnh (không gộp lung tung).

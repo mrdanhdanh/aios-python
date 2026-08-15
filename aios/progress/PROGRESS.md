@@ -32,6 +32,7 @@
 |-----|----------|------------|---------|
 | Secret scan | GitHub Actions Gitleaks — quét secret trên push/PR master + manual trigger | `done` | `.github/workflows/secret-scan.yml` (2026-08-14) |
 | Remote | Chuyển origin → repo GitHub mới `mrdanhdanh/aios-python` (PUBLIC) | `done` | commit e42bae4 (2026-08-14) |
+| DoD checklist | **Definition of Done — Closing Checklist** (AGENTS.md §3.1 + PLAN.md): bắt buộc cập nhật LOG.md + PROGRESS.md + PLAN.md + STATS.md + task folder + commit sau MỖI task — tránh quên ghi tài liệu | `done` | theo yêu cầu người dùng 2026-08-15 |
 
 
 ## M0 — Development Foundation ✅

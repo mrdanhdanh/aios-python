@@ -86,6 +86,15 @@ aios/progress/
 
 **Bypass hợp lệ** (fix nhỏ): quy trình rút gọn nhưng BẮT BUỘC ghi LOG.md + đánh dấu `[bypass]` trong PROGRESS.md. Mọi task khác đều hard gate.
 
+**Definition of Done — Closing Checklist (bắt buộc sau MỖI task/yêu cầu xử lý xong)**:
+Trước khi đánh dấu task `done` hoặc kết thúc phiên, đối chiếu đủ (chi tiết: AGENTS.md §3.1):
+1. `LOG.md` — entry mới (thời gian | task | bước | việc đã làm | kết quả | artifact)
+2. `PROGRESS.md` — cập nhật trạng thái task/milestone/phase (todo/in-progress/done/blocked)
+3. `docs/PLAN.md` — cập nhật nếu milestone/phase/plan/ADR bị ảnh hưởng
+4. `STATS.md` — cập nhật nếu kết thúc milestone
+5. Task folder — đủ 8-file hard gate + artifact
+6. Commit — sau mỗi bước hoàn chỉnh, working tree sạch khi kết thúc
+
 **Đặt ở milestone**: Phase M0 (Development Foundation) — tạo ngay khi khởi động dự án, TRƯỚC M1. Đây cũng là nơi "dogfood" triết lý Orchestrator (offline-first, deterministic, có log) trước khi có hệ thống thật.
 
 ## AIOS Orchestrator (Control Plane — bộ não hệ thống)
