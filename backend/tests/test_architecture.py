@@ -1229,6 +1229,129 @@ def test_arch_scan_resolves_relative():
     assert "aios_core.models.errors" in aios_mods
 
 
+# -- enterprise/ import allow-list (M7 — TASK-035..TASK-042) ------------------
+# NOTE: PLAN §M7 defines INV-022..INV-029 for the Enterprise milestone. The
+# actual test labels INV-022..INV-029 were already consumed by TASK-034 (M6-H5)
+# doctor tests, so M7 invariants are named test_m7_* below to avoid collision
+# while keeping the same semantic coverage (Identity First, Tenant Isolation,
+# Credential Isolation, Resource Fairness, Distributed Execution Safety, Audit
+# Completeness, Sandbox Boundary, Control Plane Isolation).
+
+ENTERPRISE_DIR = AIOS / "enterprise"
+
+_ENTERPRISE_ALLOWED_AIOS = set()  # self-contained: only intra-package imports
+_ENTERPRISE_ALLOWED_EXTERNAL = {
+    "pydantic", "typing", "enum", "dataclasses", "datetime", "time",
+    "uuid", "hashlib", "json", "collections", "abc", "threading",
+    "functools", "re", "copy", "math",
+}
+
+
+@pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
+def test_m7_enterprise_import_allowlist():
+    """enterprise/ (Control Plane — Enterprise) chỉ import intra-package +
+    pydantic/stdlib. KHÔNG import kernel/services/orchestrator/models/memory/
+    knowledge/tools/agents/capabilities/workflow/harness — giữ control-plane
+    isolation (INV-029) và không God Object."""
+    aios_mods: set[str] = set()
+    external: set[str] = set()
+    for py in sorted(ENTERPRISE_DIR.rglob("*.py")):
+        rel = py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+        ext, mods = collect_imports(SRC_ROOT, rel)
+        external |= ext
+        aios_mods |= {m for m in mods if not m.startswith("aios_core.enterprise")}
+    bad_aios = aios_mods - _ENTERPRISE_ALLOWED_AIOS
+    bad_external = external - _ENTERPRISE_ALLOWED_EXTERNAL
+    assert not bad_aios, f"enterprise/ import ngoài allow-list (aios): {bad_aios}"
+    assert not bad_external, f"enterprise/ import ngoài allow-list (external): {bad_external}"
+
+
+@pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
+def test_m7_inv022_identity_first_call_site():
+    """INV-022 Identity First: identity.py phải reject execution thiếu Principal
+    — literal `raise NoPrincipalError` trong require()."""
+    src = (ENTERPRISE_DIR / "identity.py").read_text(encoding="utf-8")
+    assert "raise NoPrincipalError" in src
+    assert "def require(" in src
+
+
+@pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
+def test_m7_inv023_tenant_isolation_deny_default():
+    """INV-023 Tenant Isolation: tenancy.py deny-by-default — literal
+    `CrossTenantAccessDenied` được raise khi scope mismatch."""
+    src = (ENTERPRISE_DIR / "tenancy.py").read_text(encoding="utf-8")
+    assert "class CrossTenantAccessDenied" in src
+    assert "raise CrossTenantAccessDenied" in src
+
+
+@pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
+def test_m7_inv024_credential_isolation_scope_check():
+    """INV-024 Credential Isolation: security.py kiểm scope trước khi resolve —
+    literal `CredentialError` + `_assert_scope`."""
+    src = (ENTERPRISE_DIR / "security.py").read_text(encoding="utf-8")
+    assert "class CredentialError" in src
+    assert "_assert_scope" in src
+    assert "raise CredentialError" in src
+
+
+@pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
+def test_m7_inv025_resource_fairness_quota_gate():
+    """INV-025 Resource Fairness: governance.py deny khi vượt quota (no override)
+    — literal `QuotaExceeded` + `check_fairness`."""
+    src = (ENTERPRISE_DIR / "governance.py").read_text(encoding="utf-8")
+    assert "class QuotaExceeded" in src
+    assert "def check_fairness" in src
+    assert "raise QuotaExceeded" in src
+
+
+@pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
+def test_m7_inv026_distributed_lease_single_active():
+    """INV-026 Distributed Execution Safety: scheduler.py một execution chỉ một
+    active lease — literal `LeaseError` khi acquire trùng."""
+    src = (ENTERPRISE_DIR / "scheduler.py").read_text(encoding="utf-8")
+    assert "class LeaseError" in src
+    assert "already has active lease" in src
+
+
+@pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
+def test_m7_inv027_audit_completeness_chain():
+    """INV-027 Audit Completeness: operations.py audit tamper-evident (hash
+    chain) + action nhạy cảm phải có evidence — literal `verify_integrity`."""
+    src = (ENTERPRISE_DIR / "operations.py").read_text(encoding="utf-8")
+    assert "class CentralAuditStore" in src
+    assert "def verify_integrity" in src
+    assert "previous_hash" in src
+
+
+@pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
+def test_m7_inv028_sandbox_boundary_untrusted():
+    """INV-028 Sandbox Boundary: security.py untrusted tool phải qua sandbox —
+    literal `SandboxBypassError`."""
+    src = (ENTERPRISE_DIR / "security.py").read_text(encoding="utf-8")
+    assert "class SandboxBypassError" in src
+    assert "untrusted tool requires a sandbox profile" in src
+
+
+@pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
+def test_m7_inv029_control_plane_isolation_router():
+    """INV-029 Control Plane Isolation: runtime.py router gate tenant_class —
+    literal `tenant_classes` + `ControlPlaneIsolationError` handling."""
+    src = (ENTERPRISE_DIR / "runtime.py").read_text(encoding="utf-8")
+    assert "tenant_classes" in src
+    assert "class ControlPlaneIsolationError" in src
+
+
+@pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
+def test_m7_enterprise_no_god_object():
+    """enterprise/ không God Object: facade EnterpriseManager điều phối các
+    module con; mỗi module tập trung 1 nhóm (identity/tenancy/runtime/scheduler/
+    governance/security/operations/dashboard)."""
+    init_src = (ENTERPRISE_DIR / "__init__.py").read_text(encoding="utf-8")
+    for module in ("identity", "tenancy", "runtime", "scheduler",
+                   "governance", "security", "operations", "dashboard"):
+        assert f"from .{module} import" in init_src, f"thiếu import .{module}"
+
+
 def test_arch_scan_ignores_future():
     _, aios_mods = collect_imports(SRC_ROOT, "aios_core/orchestrator/planner")
     assert "__future__" not in aios_mods

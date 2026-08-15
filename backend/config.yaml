@@ -85,3 +85,23 @@ doctor:
   strict: true
   min_overall: 0.0
   policy_gate: true
+
+enterprise:
+  enabled: true
+  isolation:
+    default_tier: standard
+  quota:
+    concurrent_executions: 20
+    cpu: 8.0
+    memory_gb: 16.0
+    llm_tokens_per_day: 5000000
+    storage_gb: 100
+    tool_calls_per_day: 100000
+    sandbox_seconds_per_day: 10000
+  sandbox:
+    network: false
+    cpu: 1.0
+    memory_mb: 512
+    timeout_s: 60.0
+  lease_ttl_s: 60.0
+  heartbeat_timeout_s: 30.0

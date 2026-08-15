@@ -243,6 +243,52 @@ class DoctorSettings(BaseModel):
     policy_gate: bool = True  # policy violation > 0 → RELEASE BLOCKED
 
 
+class EnterpriseIsolationSettings(BaseModel):
+    """M7 E2: default isolation tier applied to new tenants."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    default_tier: str = "standard"  # development|standard|secure|enterprise
+
+
+class EnterpriseQuotaSettings(BaseModel):
+    """M7 E5: default per-tenant quota when none is explicitly set."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    concurrent_executions: int = 20
+    cpu: float = 8.0
+    memory_gb: float = 16.0
+    llm_tokens_per_day: int = 5_000_000
+    storage_gb: int = 100
+    tool_calls_per_day: int = 100_000
+    sandbox_seconds_per_day: int = 10_000
+
+
+class EnterpriseSandboxSettings(BaseModel):
+    """M7 E6: default sandbox profile for untrusted execution (INV-028)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    network: bool = False
+    cpu: float = 1.0
+    memory_mb: int = 512
+    timeout_s: float = 60.0
+
+
+class EnterpriseSettings(BaseModel):
+    """M7 — Enterprise package tuning (E1–E7)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    isolation: EnterpriseIsolationSettings = EnterpriseIsolationSettings()
+    quota: EnterpriseQuotaSettings = EnterpriseQuotaSettings()
+    sandbox: EnterpriseSandboxSettings = EnterpriseSandboxSettings()
+    lease_ttl_s: float = 60.0
+    heartbeat_timeout_s: float = 30.0
+
+
 class Settings(BaseSettings):
     """Application settings. Env vars use `AIOS_` prefix, nested via `__`."""
 
@@ -272,6 +318,7 @@ class Settings(BaseSettings):
     evaluation: EvaluationSettings = EvaluationSettings()
     benchmark: BenchmarkSettings = BenchmarkSettings()
     doctor: DoctorSettings = DoctorSettings()
+    enterprise: EnterpriseSettings = EnterpriseSettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:

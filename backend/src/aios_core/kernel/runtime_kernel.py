@@ -272,4 +272,13 @@ class RuntimeKernel:
         container.register_instance(DoctorHarness, doctor_harness)
         container.register_instance(ReadinessHarness, readiness_harness)
 
+        # Enterprise (M7): Identity + Tenancy + Distributed Runtime + Governance
+        # + Security + Operations behind a single facade (INV-022..INV-029).
+        # Default wiring uses in-memory subsystems (offline-first); external
+        # services (Vault, K8s) plug in via injected dependencies.
+        from ..enterprise import EnterpriseManager
+
+        enterprise = EnterpriseManager()
+        container.register_instance(EnterpriseManager, enterprise)
+
         return cls(container, bus)

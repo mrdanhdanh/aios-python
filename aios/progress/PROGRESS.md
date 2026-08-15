@@ -14,6 +14,7 @@
 | M4 | Platform Edition (P7–P8: upgrade pipeline, observability) | `done` ✅ (809 tests, 94.92%) |
 | M5 | Core Intelligence (P9–P10: memory/context/model/planning/graph/scheduler) | `done` ✅ (1086 tests, 95.22%) |
 | M6 | AIOS Harness (P11: harness kernel, verification, test & simulation, evaluation, benchmark, doctor & readiness) | `done` ✅ (1521 tests, 95.35%) |
+| M7 | Enterprise (P12: identity, tenancy, distributed runtime, distributed scheduler, governance, security, operations, dashboard) | `in-progress` 🔄 (1560 tests, 95.05%) |
 
 ## Hạ tầng bổ sung (bypass)
 
@@ -222,6 +223,29 @@
 | TASK-033 | H4 Benchmark + Regression Gate — INV-021 | `done` ✅ | 1450 pass, coverage 95.31%, 11/11 AC (2026-08-15) |
 | TASK-034 | H5 Doctor & Readiness — Doctor architecture + Readiness Score | `done` ✅ | 1521 pass, coverage 95.35%, 11/11 AC (2026-08-15) — **M6 HOÀN TẤT** |
 | INV-011..016 | Enforcement tests (AST) trong `tests/test_architecture.py` + observability metrics M5 | `todo` | tích hợp trong các task |
+
+## M7 — Enterprise (in-progress) — 2026-08-15
+
+> PLAN.md §M7: đưa AIOS từ single-instance thành nền tảng vận hành an toàn quy mô doanh nghiệp. 7 nhóm (E1–E7), 8 invariant (INV-022..INV-029). Không biến AIOS thành cloud/distributed platform — chỉ định nghĩa contract + governance.
+> Dependency: TASK-035 → TASK-036 → ┬ TASK-037 ┐ → TASK-038 → TASK-039 → TASK-041 → TASK-042; └ TASK-040 ┘ song song với TASK-037.
+> Approach: gom 8 task thành 1 package `backend/src/aios_core/enterprise/` (offline-first, DI injectable, không God Object), mỗi nhóm = 1 module, facade `EnterpriseManager` trong `runtime_kernel`. Behavioral tests trong `tests/test_enterprise.py`, structural invariant tests trong `tests/test_architecture.py` (m7_*).
+
+| Task | Nội dung | Trạng thái | Ghi chú |
+|------|----------|------------|---------|
+| TASK-035 | E1 Identity & Access — Principal (user/agent/service), RBAC + ABAC, delegation + capability attenuation; INV-022 | `done` ✅ | `enterprise/identity.py` + `contracts.py`; 29 enterprise tests pass (chung) |
+| TASK-036 | E2 Multi-Tenancy — Tenant model + TenantBoundary (deny-by-default) + MemoryNamespace isolation; INV-023 | `done` ✅ | `enterprise/tenancy.py` |
+| TASK-037 | E3 Distributed Runtime — RuntimeNodeInfo + NodeRegistry + RuntimeRouter (tenant/region/capability/capacity/cost/health), tenant_class gate; INV-029 | `done` ✅ | `enterprise/runtime.py` |
+| TASK-038 | E4 Distributed Scheduler + Lease — single-active lease (INV-026) + failover/resume snapshot | `done` ✅ | `enterprise/scheduler.py` |
+| TASK-039 | E5 Resource Governance — QuotaManager (fairness INV-025) + CostGovernor (budget deny / cheaper route) | `done` ✅ | `enterprise/governance.py` |
+| TASK-040 | E6 Security & Data Isolation — CredentialBroker (scoped INV-024) + NetworkPolicy (default-deny) + SandboxBoundary (INV-028) | `done` ✅ | `enterprise/security.py` |
+| TASK-041 | E7 Operations — CentralAuditStore (tamper-evident INV-027) + HealthMonitor failover + RecoveryManager | `done` ✅ | `enterprise/operations.py` |
+| TASK-042 | Enterprise Operations + Dashboard — EnterpriseDashboard aggregate tenant metrics từ audit | `done` ✅ | `enterprise/dashboard.py` |
+| INV-022..029 | 8 architecture invariant enforced bằng import allow-list + source-literal tests trong `tests/test_architecture.py` (m7_*) | `done` ✅ | 79 arch tests pass (chung) |
+
+**Deliverable M7 (batch)**: `backend/src/aios_core/enterprise/` 10 file (contracts, identity, tenancy, runtime, scheduler, governance, security, operations, dashboard, __init__) + config (`EnterpriseSettings` trong `config.py` + `config.yaml`) + wiring (`RuntimeKernel.create` register `EnterpriseManager`) + `tests/test_enterprise.py` (29 tests) + `tests/test_architecture.py` (8 m7_* invariant tests).
+**1560 passed + 0 skipped, coverage 95.05%, 8/8 AC (E1–E7) — M7 CORE HOÀN TẤT**.
+
+> ⚠️ Ghi chú đánh số: PLAN định M7 = INV-022..INV-029, nhưng TASK-034 (M6-H5) đã dùng nhãn `test_inv022_*` trong `test_architecture.py` (trôi thực tế). Để không phá test cũ, M7 invariant tests đặt tên `test_m7_*` (vẫn bao phủ INV-022..INV-029 theo semantics).
 
 ## Log gần nhất
 
