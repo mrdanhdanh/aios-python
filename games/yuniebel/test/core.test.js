@@ -1,271 +1,273 @@
-/* core.test.js — Node test cho core.js (TASK-077)
- * Chạy: node test/core.test.js — exit code 0 = PASS
+/* core.test.js — TASK-078 — node test/core.test.js
+ * Test logic thuần: state machine, 13 câu thoại canonical, task §6.1, bướm, scare 5/5, choice.
  */
 "use strict";
-const core = require("../src/core.js");
+var assert = require("assert");
+var core = require("../src/core.js");
 
-let passed = 0, failed = 0;
-function assert(cond, name) {
-  if (cond) { passed++; }
-  else { failed++; console.error("  ✗ FAIL: " + name); }
+var pass = 0, fail = 0;
+function T(name, fn) {
+  try { fn(); pass++; console.log("  ✓ " + name); }
+  catch (e) { fail++; console.log("  ✗ " + name + " — " + e.message); }
 }
-function close(a, b, eps) { return Math.abs(a - b) < (eps || 0.001); }
-function step(state, dt, input) { core.updateGame(state, dt, input || {}); }
+function near(a, b, eps) { return Math.abs(a - b) < (eps || 1e-6); }
 
-// Di chuyển mèo tới gần target (đường ngắn; dừng khi có transition — tránh đi lung tung từ spawn mới)
-function walkTo(state, tx, ty, dt) {
-  const maxT = 30; let t = 0;
-  const scene0 = state.scene, phase0 = state.phase;
-  while (t < maxT) {
-    if (state.scene !== scene0 || state.phase !== phase0) break; // dừng khi chuyển phase/scene
-    const dx = tx - state.player.x, dy = ty - state.player.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 4) break;
-    const input = {};
-    if (Math.abs(dx) > 4) { input.right = dx > 0; input.left = dx < 0; }
-    if (Math.abs(dy) > 4) { input.down = dy > 0; input.up = dy < 0; }
-    step(state, dt, input);
-    t += dt;
-  }
-}
-// Đặt mèo cạnh cửa GARDEN rồi bước vào → G_BUTTERFLY
-function enterDoorZone(s) {
-  s.player = { x: 818, y: 180, dir: 1, moving: false };
-  for (let i = 0; i < 10 && s.phase === "G_INIT"; i++) step(s, 0.016, { right: true });
-  return s.phase === "G_BUTTERFLY";
-}
-// Chạy hết chuỗi GARDEN tới LIVING
-function passGarden(s) {
-  enterDoorZone(s);                       // G_BUTTERFLY
-  for (let i = 0; i < 110 && s.phase === "G_BUTTERFLY"; i++) step(s, 0.016, {}); // → G_CHASE
-  if (s.butterfly) s.butterfly = { x: s.player.x + 10, y: s.player.y, alive: true }; // chạm bướm
-  step(s, 0.016, {});                     // → G_DARK
-  for (let i = 0; i < 420; i++) step(s, 0.016, {}); // tối 5s → G_DOOR → (mèo trong zone) LIVING
-  return s.scene === "LIVING" && s.phase === "L_SEARCH";
-}
-// GARDEN + LIVING → KITCHEN/K_INIT
-function passToKitchen(s) {
-  if (!passGarden(s)) return false;
-  walkTo(s, 35, 108, 0.016);              // cửa bếp (18..52, 85..131)
-  step(s, 0.016, {});
-  return s.scene === "KITCHEN" && s.phase === "K_INIT";
-}
-// Tới phase K_CHOICE
-function toChoice(s) {
-  if (!passToKitchen(s)) return false;
-  walkTo(s, 375, 245, 0.016);             // vết máu (350..400, 235..255)
-  step(s, 0.016, {});
-  for (let i = 0; i < 120 && s.phase === "K_BLOOD"; i++) step(s, 0.016, {});
-  for (let i = 0; i < 160 && s.phase === "K_VOICE"; i++) step(s, 0.016, {});
-  return s.phase === "K_CHOICE";
-}
+console.log("=== core.test.js — TASK-078 ===");
 
-console.log("=== TASK-077 core tests ===");
-
-// ---- 1. resetGame / startGame ----
-{
-  const s = core.resetGame();
-  assert(s.scene === "TITLE" && s.phase === "TITLE", "resetGame → TITLE");
-  assert(s.scareCount === 0 && s.darkness === 0 && !s.butterfly, "resetGame fields clean");
-  const s2 = core.startGame();
-  assert(s2.scene === "GARDEN" && s2.phase === "G_INIT", "startGame → GARDEN/G_INIT");
-  const s3 = core.resetGame();
-  const s4 = core.resetGame();
-  assert(JSON.stringify(s3) === JSON.stringify(s4), "resetGame 2 lần liên tục không lỗi, giống nhau");
-}
-
-// ---- 2. Di chuyển 4 hướng + biên map + collision ----
-{
-  const s = core.startGame();
-  const y0 = s.player.y;
-  step(s, 0.016, { right: true });
-  assert(s.player.x > 420, "move right");
-  step(s, 0.016, { left: true });
-  assert(s.player.x < 420 + 2, "move left quay lại");
-  step(s, 0.016, { down: true });
-  assert(s.player.y > y0, "move down");
-  const s2 = core.startGame();
-  for (let i = 0; i < 300; i++) step(s2, 0.016, { left: true });
-  assert(s2.player.x >= 0, "clamp biên trái (không âm)");
-  const s3 = core.startGame();
-  s3.player = { x: 330, y: 100, dir: 1, moving: false };
-  for (let i = 0; i < 60; i++) step(s3, 0.016, { right: true });
-  assert(s3.player.x < 350, "vật cản chặn (không xuyên bụi cây)");
-}
-
-// ---- 3. Chuỗi GARDEN: cửa khóa → bướm → tối → LIVING ----
-{
-  const s = core.startGame();
-  assert(enterDoorZone(s), "chạm cửa ở G_INIT → G_BUTTERFLY (cửa khóa, mèo không vào được)");
-  assert(s.butterfly && s.butterfly.alive, "bướm spawn");
-  for (let i = 0; i < 110 && s.phase === "G_BUTTERFLY"; i++) step(s, 0.016, {});
-  assert(s.phase === "G_CHASE", "G_BUTTERFLY → G_CHASE sau 1.5s");
-  s.butterfly = { x: s.player.x + 10, y: s.player.y, alive: true };
-  step(s, 0.016, {});
-  assert(s.phase === "G_DARK" && !s.butterfly, "chạm bướm → G_DARK, bướm despawn");
-  assert(close(s.darkness, 0, 0.02), "darkness bắt đầu ~0");
-  s.player.x = 300; // mèo rời khỏi cửa (kiểm tra phase G_DOOR rõ ràng)
-  for (let i = 0; i < 400; i++) step(s, 0.016, {});
-  assert(s.darkness >= 1, "darkness đạt 1 sau 5s");
-  assert(s.phase === "G_DOOR", "darkness=1 → G_DOOR (cửa mở)");
-  walkTo(s, 845, 180, 0.016); // mèo quay lại cửa
-  step(s, 0.016, {});
-  assert(s.scene === "LIVING" && s.phase === "L_SEARCH", "vào cửa → LIVING/L_SEARCH");
-}
-
-// ---- 4. LIVING → KITCHEN ----
-{
-  const s = core.startGame();
-  assert(passGarden(s), "passGarden → LIVING");
-  walkTo(s, 35, 108, 0.016);
-  step(s, 0.016, {});
-  assert(s.scene === "KITCHEN" && s.phase === "K_INIT", "vào bếp → KITCHEN/K_INIT");
-}
-
-// ---- 5. KITCHEN: máu → lời gọi → chọn [1] → HAUNTED ----
-{
-  const s = core.startGame();
-  assert(passToKitchen(s), "passToKitchen → KITCHEN/K_INIT");
-  walkTo(s, 375, 245, 0.016);
-  step(s, 0.016, {});
-  assert(s.phase === "K_BLOOD", "chạm máu → K_BLOOD");
-  for (let i = 0; i < 120 && s.phase === "K_BLOOD"; i++) step(s, 0.016, {});
-  assert(s.phase === "K_VOICE", "K_BLOOD → K_VOICE sau 1.5s");
-  for (let i = 0; i < 160 && s.phase === "K_VOICE"; i++) step(s, 0.016, {});
-  assert(s.phase === "K_CHOICE", "K_VOICE → K_CHOICE sau 2s");
-  // vùng tối = tường vô hình trước K_CHOICE
-  const sBlock = core.startGame();
-  assert(passToKitchen(sBlock), "sBlock tới KITCHEN");
-  sBlock.player = { x: 100, y: 30, dir: -1, moving: false };
-  step(sBlock, 0.016, { left: true });
-  assert(sBlock.player.x >= 100 - 3, "vùng tối = tường vô hình trước K_CHOICE");
-  // chọn [1] → chạy về phòng khách
-  step(s, 0.016, { choice1: 1 });
-  assert(s.phase === "K_RUN", "chọn 1 → K_RUN");
-  for (let i = 0; i < 200; i++) step(s, 0.016, {});
-  assert(s.scene === "HAUNTED" && s.phase === "H_SEARCH", "K_RUN → HAUNTED");
-}
-
-// ---- 6. KITCHEN: chọn [2] → GAMEOVER; đi vào vùng tối = GAMEOVER ----
-{
-  const s = core.startGame();
-  assert(toChoice(s), "tới K_CHOICE (nhánh 2)");
-  step(s, 0.016, { choice2: 2 });
-  assert(s.phase === "K_OBEY", "chọn 2 → K_OBEY");
-  for (let i = 0; i < 250; i++) step(s, 0.016, {});
-  assert(s.scene === "GAMEOVER", "K_OBEY → GAMEOVER");
-
-  const s2 = core.startGame();
-  assert(toChoice(s2), "tới K_CHOICE (nhánh 3)");
-  walkTo(s2, 65, 60, 0.016); // đi vào vùng tối (20..112, 20..120)
-  step(s2, 0.016, {});
-  assert(s2.phase === "K_OBEY", "đi vào vùng tối khi K_CHOICE → K_OBEY");
-}
-
-// ---- 7. HAUNTED: cửa trước knockback (lặp lại được), cửa hành lang → HALLWAY ----
-{
-  const s = core.startGame();
-  core.setPhase(s, "H_SEARCH");
-  s.scene = "HAUNTED";
-  // Lần 1: mèo tiến sát cửa trước → knockback lùi, không chuyển cảnh
-  s.player = { x: 416, y: 150, dir: 1, moving: false };
-  step(s, 0.016, { right: true });
-  assert(s.scene === "HAUNTED", "cửa trước không chuyển cảnh");
-  assert(s.player.x < 400, "cửa trước → knockback lùi");
-  assert(s.knockbackCd > 0, "knockback cooldown set");
-  // spam trong cooldown: không bị đẩy lùi liên tục (không jitter)
-  const xBefore = s.player.x;
-  for (let i = 0; i < 40; i++) step(s, 0.016, { right: true });
-  assert(s.player.x >= xBefore, "cooldown: không đẩy lùi tiếp");
-  // Lần 2 sau cooldown: quay lại cửa → bị đẩy lần nữa
-  s.knockbackCd = 0;
-  s.player = { x: 416, y: 150, dir: 1, moving: false };
-  step(s, 0.016, { right: true });
-  assert(s.player.x < 400, "quay lại cửa → knockback lần 2");
-  // cửa hành lang (205..245, 16..50)
-  s.player = { x: 210, y: 30, dir: 1, moving: false };
-  step(s, 0.016, {});
-  assert(s.scene === "HALLWAY" && s.phase === "W_WALK", "cửa hành lang → HALLWAY/W_WALK");
-}
-
-// ---- 8. HALLWAY: 5 scare fire-once + mở cửa + one-way ----
-{
-  const s = core.startGame();
+// ===== 1. Hội thoại canonical (AC-1): 13 câu khớp brief =====
+console.log("\n[AC-1] 13 câu thoại canonical");
+T("G_INIT có 2 câu đúng brief", function () {
+  var d = core.DIALOGUES.G_INIT;
+  assert.strictEqual(d.length, 2);
+  assert.strictEqual(d[0].text, "Yuniebel! Vào nhà đi!");
+  assert.strictEqual(d[0].thought, false);
+  assert.strictEqual(d[0].speaker, "owner");
+  assert.strictEqual(d[1].text, "Meow~ Nhưng ngoài này vui quá…");
+  assert.strictEqual(d[1].thought, true);
+  assert.strictEqual(d[1].speaker, "cat");
+});
+T("L_SEARCH đúng brief", function () {
+  var d = core.DIALOGUES.L_SEARCH;
+  assert.strictEqual(d[0].text, "Meow? Chủ nhân đâu rồi?");
+});
+T("K_INIT + K_BLOOD đúng brief", function () {
+  assert.strictEqual(core.DIALOGUES.K_INIT[0].text, "Meow… có gì đó lạ…");
+  var d = core.DIALOGUES.K_BLOOD;
+  assert.strictEqual(d[0].text, "Meow?! Đây là gì vậy?");
+  assert.strictEqual(d[1].text, "Đến đây đi… Meow…");
+  assert.strictEqual(d[1].speaker, "dark");
+});
+T("H_INIT đúng brief", function () {
+  var d = core.DIALOGUES.H_INIT;
+  assert.strictEqual(d[0].text, "Meow… căn phòng này… khác rồi…");
+  assert.strictEqual(d[1].text, "Không được rời đi…");
+  assert.strictEqual(d[1].speaker, "ghost");
+});
+T("W_INIT đúng brief", function () {
+  assert.strictEqual(core.DIALOGUES.W_INIT[0].text, "Meow… mình phải đi tiếp…");
+});
+T("D_END 3 câu đúng brief", function () {
+  var d = core.DIALOGUES.D_END;
+  assert.strictEqual(d[0].text, "Happy Birthday Yuniebel!");
+  assert.strictEqual(d[0].speaker, "owner");
+  assert.strictEqual(d[1].text, "Meow~");
+  assert.strictEqual(d[1].speaker, "cat");
+  assert.strictEqual(d[2].text, "Chúc Mừng Sinh Nhật!");
+  assert.strictEqual(d[2].speaker, "owner");
+});
+T("Tổng 12 câu trong DIALOGUES + 'Meow!!' khi hù = 13 (C1-05)", function () {
+  var total = 0;
+  for (var k in core.DIALOGUES) total += core.DIALOGUES[k].length;
+  assert.strictEqual(total, 12);
+  // câu 13 "Meow!!" được đặc tả trong W_WALK khi scare — kiểm tra qua simulate
+  var s = core.startGame();
   core.setPhase(s, "W_WALK");
-  s.scene = "HALLWAY";
-  s.player = { x: 100, y: 135, dir: 1, moving: false };
-  walkTo(s, 180, 135, 0.016);
-  assert(s.scareCount === 1, "scare1 fire");
-  assert(s.scareFlash, "scare flash set");
-  walkTo(s, 150, 135, 0.016);
-  walkTo(s, 180, 135, 0.016);
-  assert(s.scareCount === 1, "scare1 không fire lặp (fire-once)");
-  walkTo(s, 340, 135, 0.016);
-  assert(s.scareCount === 2, "scare2 fire");
-  walkTo(s, 500, 135, 0.016);
-  assert(s.scareCount === 3, "scare3 fire");
-  walkTo(s, 660, 135, 0.016);
-  assert(s.scareCount === 4, "scare4 fire");
-  walkTo(s, 820, 135, 0.016);
-  assert(s.scareCount === 5 && s.phase === "W_DONE", "scare5 → W_DONE (mở cửa)");
-  walkTo(s, 920, 135, 0.016);
-  step(s, 0.016, {});
-  assert(s.scene === "DINING" && s.phase === "D_APPROACH", "cửa phòng ăn → DINING");
-  // one-way: wall chặn cửa vào (0..28, 100..170)
-  s.player = { x: 30, y: 135, dir: -1, moving: false };
-  step(s, 0.016, { left: true });
-  assert(s.player.x >= 24, "cửa vào đóng (one-way)");
-}
+  s.player.x = 160; s.player.y = 130; // scare zone 1
+  core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.dialogue.text, "Meow!!");
+});
 
-// ---- 9. DINING cutscene ----
-{
-  const s = core.startGame();
-  core.setPhase(s, "D_APPROACH");
-  s.scene = "DINING";
-  s.player = { x: 150, y: 220, dir: 1, moving: false };
-  for (let i = 0; i < 10 && s.phase === "D_APPROACH"; i++) step(s, 0.016, { right: true });
-  assert(s.phase === "D_JUMP", "approach → D_JUMP (cutscene, lock input)");
-  const x0 = s.player.x;
-  step(s, 0.016, { right: true });
-  assert(Math.abs(s.player.x - x0) < 0.1, "input lock trong D_JUMP");
-  for (let i = 0; i < 100; i++) step(s, 0.016, {});
-  assert(s.phase === "D_HUG" && s.chimeFlag, "D_JUMP → D_HUG + chime flag");
-  for (let i = 0; i < 140; i++) step(s, 0.016, {});
-  assert(s.phase === "D_CAKE", "D_HUG → D_CAKE");
-  for (let i = 0; i < 220; i++) step(s, 0.016, {});
-  assert(s.scene === "END", "D_CAKE → END");
-}
+// ===== 2. Task canonical (§6.1 — AC-2) =====
+console.log("\n[AC-2] Task text canonical");
+T("Bảng phase→task đúng §6.1", function () {
+  var expect = {
+    G_INIT: "Đuổi theo con bướm!", G_CHASE: "Đuổi theo con bướm!",
+    G_DARK: "Hãy vào nhà!", G_DOOR: "Hãy vào nhà!",
+    L_SEARCH: "Tìm chủ nhân ở nhà bếp.",
+    K_INIT: "Kiểm tra vết máu!", K_BLOOD: "Kiểm tra vết máu!", K_CHOICE: "Kiểm tra vết máu!",
+    H_INIT: "Tìm người chủ!",
+    H_BLOCK: "Phải đi qua phòng khác!", H_EXIT: "Phải đi qua phòng khác!",
+    W_INIT: "Đi qua hành lang.", W_WALK: "Đi qua hành lang.",
+    W_DONE: "Đã đến phòng ăn.",
+    D_END: "Hoàn thành nhiệm vụ: Tìm chủ nhân."
+  };
+  for (var p in expect) {
+    assert.strictEqual(core.PHASES[p].task, expect[p], "phase " + p);
+  }
+});
 
-// ---- 10. Không dt → không transition ----
-{
-  const s = core.startGame();
-  step(s, 0, {});
-  assert(s.phase === "G_INIT", "dt=0 → không transition");
-}
+// ===== 3. Chuỗi kịch bản (AC-10/AC-14) =====
+console.log("\n[AC-10/14] Chuỗi kịch bản");
+T("Bắt đầu: START → G_INIT + dialogue chủ gọi", function () {
+  var s = core.startGame();
+  assert.strictEqual(s.phase, "G_INIT");
+  assert.strictEqual(s.scene, "GARDEN");
+  assert.strictEqual(s.player.x, core.SCENES.GARDEN.spawn.x);
+});
+T("R-01: dialogue G_INIT hiển thị NGAY sau startGame (câu 1 'Yuniebel! Vào nhà đi!')", function () {
+  var s = core.startGame();
+  assert.ok(s.dialogue, "dialogue phải active");
+  assert.strictEqual(s.dialogue.text, "Yuniebel! Vào nhà đi!");
+  assert.strictEqual(s.dialogue.speaker, "owner");
+  // sau 1 frame vẫn hiển thị (chưa advance)
+  core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.dialogue.text, "Yuniebel! Vào nhà đi!");
+  // hết dur → câu 2
+  for (var i = 0; i < 200; i++) core.updateGame(s, 0.016, {});
+  assert.ok(s.dialogue, "câu 2 hiển thị");
+  assert.strictEqual(s.dialogue.text, "Meow~ Nhưng ngoài này vui quá…");
+  assert.strictEqual(s.dialogue.thought, true);
+});
+T("R-02: startGame set soundFlags.start (resetStats màn chơi mới)", function () {
+  var s = core.startGame();
+  assert.strictEqual(s.soundFlags.start, true);
+});
+T("Mèo tiến gần cửa (x>780) → bướm xuất hiện + ting", function () {
+  var s = core.startGame();
+  s.player.x = 790; s.player.y = 150;
+  core.updateGame(s, 0.016, {});
+  assert.ok(s.butterfly, "bướm phải xuất hiện");
+  assert.strictEqual(s.soundFlags.ting, true);
+});
+T("Bắt bướm → G_DARK + darkness ramp 5s (R7)", function () {
+  var s = core.startGame();
+  s.butterfly = { x: s.player.x + 5, y: s.player.y + 5, wp: 0, stayT: 0, flap: 0 };
+  core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.phase, "G_DARK");
+  assert.ok(s.timers.dark > 0);
+  assert.strictEqual(s.darkness, 0);
+  // sau 5s → G_DOOR
+  for (var i = 0; i < 400; i++) core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.phase, "G_DOOR");
+});
+T("Vào cửa (G_DOOR) → L_SEARCH + dialogue 'Meow? Chủ nhân đâu rồi?'", function () {
+  var s = core.startGame();
+  core.setPhase(s, "G_DOOR");
+  s.player.x = 860; s.player.y = 160;
+  core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.phase, "L_SEARCH");
+  assert.strictEqual(s.dialogue.text, "Meow? Chủ nhân đâu rồi?");
+});
+T("Phòng khách → cửa bếp → K_INIT", function () {
+  var s = core.startGame();
+  core.setPhase(s, "L_SEARCH");
+  s.player.x = 20; s.player.y = 100;
+  core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.phase, "K_INIT");
+  assert.strictEqual(s.dialogue.text, "Meow… có gì đó lạ…");
+});
+T("Chạm vết máu → K_BLOOD → hết dialogue → K_CHOICE", function () {
+  var s = core.startGame();
+  core.setPhase(s, "K_INIT");
+  s.player.x = 190; s.player.y = 240;
+  core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.phase, "K_BLOOD");
+  assert.strictEqual(s.dialogue.text, "Meow?! Đây là gì vậy?");
+  // advance dialogue rồi chạm vùng tối
+  for (var i = 0; i < 10; i++) core.updateGame(s, 0.016, {});
+  s.dialogue = null; s.dialogueQueue = [];
+  s.player.x = 40; s.player.y = 40;
+  core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.phase, "K_CHOICE");
+});
+T("Chọn 2 → GAME_OVER + swoosh + painMeow (AC-10)", function () {
+  var s = core.startGame();
+  core.setPhase(s, "K_CHOICE");
+  core.updateGame(s, 0.016, { choice2: true });
+  assert.strictEqual(s.phase, "GAME_OVER");
+  assert.strictEqual(s.choice, 2);
+  assert.strictEqual(s.soundFlags.swoosh, true);
+  assert.strictEqual(s.soundFlags.painMeow, true);
+});
+T("Chọn 1 → H_INIT + rush (AC-10)", function () {
+  var s = core.startGame();
+  core.setPhase(s, "K_CHOICE");
+  core.updateGame(s, 0.016, { choice1: true });
+  assert.strictEqual(s.phase, "H_INIT");
+  assert.strictEqual(s.choice, 1);
+  assert.strictEqual(s.soundFlags.rush, true);
+});
+T("H_INIT hết dialogue → H_BLOCK + ma đẩy lùi + đổi task (C1-14)", function () {
+  var s = core.startGame();
+  core.setPhase(s, "H_INIT");
+  s.dialogue = null;
+  s.dialogueQueue = []; // R-01: queue cũ không được advance vào H_INIT
+  core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.phase, "H_BLOCK");
+  // cố ra cửa chính → knockback
+  s.player.x = 430; s.player.y = 150;
+  var x0 = s.player.x;
+  core.updateGame(s, 0.016, {});
+  assert.ok(s.player.x < x0, "mèo bị đẩy lùi");
+  assert.strictEqual(s.ghostBlocked, true);
+  assert.strictEqual(core.PHASES[s.phase].task, "Phải đi qua phòng khác!");
+});
+T("Cửa phụ trái → W_INIT (không deadlock — C2-03)", function () {
+  var s = core.startGame();
+  core.setPhase(s, "H_EXIT");
+  s.player.x = 10; s.player.y = 100;
+  core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.phase, "W_INIT");
+  assert.strictEqual(s.scene, "HALLWAY");
+});
+T("5 scare zone → W_DONE + 'Meow!!' mỗi lần (AC-8)", function () {
+  var s = core.startGame();
+  core.setPhase(s, "W_WALK");
+  var zones = core.SCENES.HALLWAY.scareZones;
+  for (var i = 0; i < zones.length; i++) {
+    s.player.x = zones[i].x + 10; s.player.y = zones[i].y + 10;
+    core.updateGame(s, 0.016, {});
+    if (i < 4) {
+      assert.strictEqual(s.phase, "W_WALK", "scare " + (i + 1) + " chưa kết thúc");
+      assert.strictEqual(s.scareActive, i + 1, "scareActive = " + (i + 1));
+      assert.strictEqual(s.dialogue.text, "Meow!!");
+      // R-04: scare hết hạn sau ~1.5s
+      for (var j = 0; j < 120; j++) core.updateGame(s, 0.016, {});
+      assert.strictEqual(s.scareActive, 0, "scare phải hết hạn sau 1.5s");
+    }
+  }
+  assert.strictEqual(s.scareCount, 5);
+  assert.strictEqual(s.phase, "W_DONE");
+});
+T("W_DONE → cửa → D_END + 3 câu thoại sinh nhật (AC-9)", function () {
+  var s = core.startGame();
+  core.setPhase(s, "W_DONE");
+  s.player.x = 910; s.player.y = 130;
+  core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.phase, "D_END");
+  assert.strictEqual(s.dialogue.text, "Happy Birthday Yuniebel!");
+});
+T("D_END hết thoại + 3s → END + bell (R6)", function () {
+  var s = core.startGame();
+  core.setPhase(s, "D_END");
+  s.dialogue = null; s.dialogueQueue = [];
+  for (var i = 0; i < 300; i++) core.updateGame(s, 0.016, {});
+  assert.strictEqual(s.phase, "END");
+  assert.strictEqual(s.soundFlags.bell, true);
+});
+T("GAME OVER → START lại → G_INIT (reset)", function () {
+  var s = core.startGame();
+  core.setPhase(s, "GAME_OVER");
+  core.updateGame(s, 0.016, { start: true });
+  assert.strictEqual(s.phase, "G_INIT");
+  assert.ok(s.dialogue, "dialogue mới hiển thị sau reset (R-01)");
+});
 
-// ---- 11. Light radius ----
-{
-  const s = core.startGame();
-  core.setPhase(s, "H_SEARCH");
-  s.scene = "HAUNTED";
-  assert(core.hasDark(s), "HAUNTED → hasDark");
-  s.player = { x: 240, y: 135, dir: 1, moving: false };
-  assert(core.inLight(s, 240, 135), "tại mèo → inLight");
-  assert(!core.inLight(s, 240 + core.LIGHT_RADIUS + 10, 135), "ngoài bán kính → không inLight");
-  const s2 = core.startGame();
-  assert(!core.hasDark(s2), "GARDEN G_INIT → không tối");
-}
+// ===== 4. Collision (AC-14) =====
+console.log("\n[Collision]");
+T("Không xuyên tường nhà (GARDEN)", function () {
+  var s = core.startGame();
+  s.player.x = 790; s.player.y = 50;
+  var x0 = s.player.x;
+  core.updateGame(s, 0.016, { right: true });
+  assert.ok(s.player.x <= x0 + 2);
+});
+T("Không ra ngoài biên map", function () {
+  var s = core.startGame();
+  s.player.x = 0; s.player.y = 0;
+  core.updateGame(s, 0.1, { left: true, up: true });
+  assert.ok(s.player.x >= 0 && s.player.y >= 0);
+});
 
-// ---- 12. reset qua input.start (Game Over → chơi lại) ----
-{
-  const s = core.startGame();
-  s.scene = "GAMEOVER"; s.phase = "GAMEOVER";
-  step(s, 0.016, { start: true });
-  assert(s.scene === "GARDEN" && s.phase === "G_INIT", "input.start từ GAMEOVER → chơi lại");
-}
+// ===== 5. Debug API =====
+console.log("\n[Debug API]");
+T("freeze(true) đóng băng state.time (R1)", function () {
+  var s = core.startGame();
+  var t0 = s.time;
+  s.frozen = true;
+  core.updateGame(s, 0.5, {});
+  assert.strictEqual(s.time, t0);
+});
 
-console.log("PASS: " + passed + " / " + (passed + failed));
-if (failed > 0) {
-  console.error("FAILED: " + failed);
-  process.exit(1);
-}
+console.log("\n===== KẾT QUẢ: " + pass + " pass / " + fail + " fail =====");
+process.exit(fail > 0 ? 1 : 0);

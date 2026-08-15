@@ -4,6 +4,10 @@
 > Entry `[bypass]` = fix nhỏ làm nhanh, có lý do.
 > Entry mới ghi LÊN ĐẦU file (mới nhất trước).
 
+| 2026-08-15 | TASK-078 | evaluate | **TASK-078 DONE** — Làm lại hoàn toàn game "Yuniebel's Cat": 8 file game + 5 test files + 3 brief files. 13 câu thoại nguyên văn brief, 9 task text, 10 mood nhạc, 27 SFX, 7 cảnh theo 5 ảnh tham khảo (trời động ngày→hoàng hôn→đêm, 5 kiểu hù, ma xanh đầu lâu, vết máu lớn). Test: **54/54 PASS** (core 27 + smoke 4 + Playwright 23) — gồm 17 ảnh chụp đối chiếu brief (COMPARISON.md 17/17 khớp) + 2 test chơi thật không hook (title→sinh nhật 42.7s, title→game over 21.4s). Post-review R-01..R-12 resolved. 14/14 AC ĐẠT. | **DONE** | `games/yuniebel/`, `aios/progress/tasks/TASK-078/` |
+
+| 2026-08-15 | TASK-078 | hard-gate | Yêu cầu người dùng: làm LẠI game Yuniebel từ đầu (bản TASK-077 xấu) + test phải CHỤP ẢNH MÀN HÌNH so với brief. Hoàn tất hard gate: plan + spec (theo kịch bản + 5 ảnh tham khảo, nhúng brief-scenario.md + brief-visuals.md vào repo) + critique-1 (17 vấn đề resolved) + critique-2 (19 vấn đề resolved, không còn P1) + tasks (P0 core/P1 visual/P2 audio/P3 test) + review **APPROVED WITH NOTES** (R1-R12 resolved). | **PASS — được phép implement** | `aios/progress/tasks/TASK-078/` |
+
 | 2026-08-15 | TASK-077 | evaluate | **TASK-077 DONE** — Webgame 2D pixel "Yuniebel": 6 cảnh + title/game over/end. Sprites canvas primitives (mèo orange, chủ, ma, bướm, bánh kem) + 7 backgrounds pre-rendered. Core 58/58 PASS + smoke 28/28 PASS. 17/17 AC PASS. | **DONE** | `games/yuniebel/`, `aios/progress/tasks/TASK-077/` |
 
 | 2026-08-15 | TASK-077 | implement+test | Viết lại sprites.js (canvas primitives — mèo orange可爱, chủ, ma, bướm, bánh kem, 7 backgrounds pre-rendered) + game.js (render mới, camera follow, darkness overlay). Core.js giữ nguyên 58/58 PASS. Smoke test 28/28 PASS. | Sprites mới đẹp hơn nhiều | `games/yuniebel/src/` |

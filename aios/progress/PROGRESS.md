@@ -3,6 +3,12 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## ✅ TASK-078 — Làm lại hoàn toàn game "Yuniebel's Cat" theo kịch bản + 5 ảnh tham khảo (2026-08-15)
+
+- **Kết quả**: **DONE** — viết lại từ đầu `games/yuniebel/` (bản cũ TASK-077 bị chê xấu). 13 câu thoại nguyên văn brief-scenario.md, 9 task text, 10 mood nhạc nền + 27 SFX WebAudio, 7 cảnh vẽ theo 5 ảnh tham khảo (trời động ngày→hoàng hôn→đêm + đèn hiên, 5 kiểu hù riêng biệt, ma xanh đầu lâu chặn cửa, vết máu lớn + mắt sáng, lò sưởi + bánh kem sinh nhật).
+- **Test (theo yêu cầu "chụp ảnh so brief")**: **54/54 PASS** — core 27 + smoke 4 + Playwright 23 (2 test chơi thật không hook: title→sinh nhật 42.7s, title→game over 21.4s; 17 ảnh chụp màn hình đối chiếu brief → COMPARISON.md **17/17 khớp**). Post-review R-01..R-12 resolved. **14/14 AC ĐẠT**.
+- Xem chi tiết: `aios/progress/tasks/TASK-078/` (plan + spec + critique×2 + tasks + review + review-post + test + evaluation + shots/ 17 ảnh)
+
 ## ✅ TASK-077 — Webgame 2D Pixel "Yuniebel" (2026-08-15)
 
 - **Kết quả**: tạo `games/yuniebel/` — webgame 2D pixel 100% static (HTML/CSS/JS, 0 dependency). Sprites canvas primitives (mèo orange可爱 tóc hồng, chủ, ma, bướm, bánh kem) + 7 backgrounds pre-rendered. 6 cảnh + title/game over/end, 17 AC PASS.

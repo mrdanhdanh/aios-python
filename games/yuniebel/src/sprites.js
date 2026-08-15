@@ -1,269 +1,632 @@
-/* sprites.js — Pixel art "Yuniebel" (canvas primitives → cache offscreen)
- * Browser only. Vẽ chi tiết từng sprite bằng fillRect/arc → cache 1 lần.
+/* sprites.js — Yuniebel's Cat (TASK-078) — vẽ lại hoàn toàn theo 5 ảnh tham khảo
+ * Canvas primitives (fillRect) trên pixel grid 3px. 100% static, 0 asset.
+ * MỌI animation nhận tham số time (dựa state.time — R1: freeze deterministic).
  */
 (function (root) {
   "use strict";
-  var CACHE = {};
-  function C(w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c.getContext("2d"); }
-  function R(g, x, y, w, h, c) { g.fillStyle = c; g.fillRect(x, y, w, h); }
-  function P(g, x, y, c) { R(g, x, y, 1, 1, c); }
-  function flip(s, w, h) { var c = C(w, h); c.scale(-1, 1); c.drawImage(s, -w, 0); return c.canvas; }
 
-  /* ===== MÈO (14×16) ===== */
-  function cat(frame, dir) {
-    var g = C(14, 16);
-    R(g,4,0,2,3,"#d97735"); R(g,8,0,2,3,"#d97735"); // ears
-    R(g,4,1,2,1,"#ff6fb5"); R(g,8,1,2,1,"#ff6fb5"); // inner ear
-    R(g,3,3,8,6,"#e8893a"); R(g,4,3,6,1,"#c96d28"); // head
-    R(g,5,5,2,2,"#fff"); R(g,7,5,2,2,"#fff");        // eye whites
-    P(g,6,5,"#1a1a2e"); P(g,8,5,"#1a1a2e");           // pupils
-    P(g,6,4,"#c96d28"); P(g,8,4,"#c96d28");           // brows
-    P(g,6,7,"#ff6fb5");                                // nose
-    P(g,5,8,"#c96d28"); P(g,7,8,"#c96d28");           // mouth
-    P(g,2,6,"#fff"); P(g,1,5,"#fff");                  // whisker L
-    P(g,11,6,"#fff"); P(g,12,5,"#fff");                // whisker R
-    R(g,3,9,8,5,"#e8893a"); R(g,4,10,6,3,"#f5c49a");  // body+belly
-    if (frame===0) { R(g,4,14,2,2,"#d97735"); R(g,8,14,2,2,"#d97735"); }
-    else if (frame===1) { R(g,3,14,2,2,"#d97735"); R(g,9,13,2,3,"#d97735"); }
-    else { R(g,9,14,2,2,"#d97735"); R(g,3,13,2,3,"#d97735"); }
-    R(g,11,10,2,1,"#d97735"); P(g,12,11,"#d97735");   // tail
-    R(g,7,0,3,2,"#ff6fb5"); P(g,9,2,"#ff6fb5");       // hair ribbon
-    var cv = g.canvas;
-    return dir < 0 ? flip(cv, 14, 16) : cv;
-  }
+  // ===== Palette (brief-visuals.md — Tổng hợp palette chính) =====
+  var C = {
+    skyDayTop: "#2f7de0", skyDayBot: "#a8dcff", skyDuskTop: "#ff9a3c", skyDuskBot: "#b04fd6",
+    skyNightTop: "#0b1d4d", skyNightBot: "#1d3a8a", star: "#ffffff",
+    sun: "#ffd93b", sunGlow: "#fff3b0",
+    cloud: "#ffffff", cloudShade: "#dce9f7",
+    grass: "#3fae4a", grassDark: "#2a6b33", grassLight: "#58c95f",
+    dirt: "#8a5a33", wood: "#7a5230", woodDark: "#5a3a24", woodLight: "#9a6b42",
+    wallCream: "#e8d9b8", wallCreamDark: "#d9c49a", roofRed: "#c0392b", roofDark: "#8e2b1f",
+    fence: "#f2ede2", fenceShade: "#d4cbb8",
+    sofaRed: "#c0483a", sofaRedDark: "#9c3629", cushion: "#e07b54",
+    rug: "#d9b98a", rugStripe: "#c49b62",
+    plant: "#2e8b57", pot: "#8b5a2b",
+    blood: "#d92626", bloodDark: "#8f1010",
+    cabWhite: "#e8e8ea", cabShade: "#c2c2c8", handle: "#3a3a44",
+    oven: "#b8bcc4", fridge: "#d9dce2",
+    ghostBlue: "#8ec9ff", ghostBlueDark: "#5f9ad1", skull: "#f4f6f8", skullDark: "#b8c0c8",
+    ghostWhite: "#e8ecf2", ghostWhiteDark: "#c3ccd8",
+    eyeYellow: "#ffd93b",
+    catBody: "#f5a623", catWhite: "#ffffff", catDark: "#d98f1d", catPink: "#ffb6c1",
+    ownerShirt: "#2e86de", ownerHair: "#7a4a21", ownerSkin: "#ffc9a3",
+    cake: "#fff6e0", cakeFrost: "#ffc4e3", candle: "#ff6b3d", flame: "#ffd93b",
+    fire: "#ff7b1c", fireHot: "#ffd93b",
+    darkOverlay: "rgba(8,10,30,", // + alpha
+    textYellow: "#ffd93b", boxBlack: "#101018", boxBorder: "#ffd93b"
+  };
 
-  /* ===== BƯỚM (8×6) ===== */
-  function butterfly(fr) {
-    var g = C(8, 6);
-    R(g,1,0,2,2,"#9b7bff"); R(g,5,0,2,2,"#9b7bff");
-    R(g,0,1,3,2,"#c4a8ff"); R(g,5,1,3,2,"#c4a8ff");
-    if (fr===0) { R(g,1,2,2,1,"#d4c5ff"); R(g,5,2,2,1,"#d4c5ff"); }
-    P(g,3,2,"#1a1a2e"); P(g,4,2,"#1a1a2e");
-    R(g,3,3,2,3,"#1a1a2e");
-    return g.canvas;
-  }
+  // Pixel grid: vẽ logical 160×90, scale 3 → 480×270
+  var GX = 3, GW = 160, GH = 90;
 
-  /* ===== CHỦ (12×18) ===== */
-  function owner(fr) {
-    var g = C(12, 18);
-    R(g,3,0,6,3,"#5a3520"); R(g,2,2,8,4,"#6b4226"); // hair
-    R(g,4,3,4,4,"#ffb28a");                           // face
-    P(g,5,4,"#1a1a2e"); P(g,7,4,"#1a1a2e");           // eyes
-    P(g,6,5,"#ff6fb5"); P(g,5,6,"#c96d28"); P(g,6,6,"#c96d28");
-    if (fr===0) {
-      R(g,3,7,6,6,"#7ec8ff"); R(g,4,7,4,5,"#8fd8ff"); // shirt
-      R(g,3,13,6,3,"#3d5a80");                         // pants
-      R(g,4,16,2,2,"#5a3520"); R(g,7,16,2,2,"#5a3520");
-    } else {
-      R(g,1,8,3,3,"#7ec8ff"); R(g,8,8,3,3,"#7ec8ff"); // arms
-      P(g,0,10,"#ffb28a"); P(g,11,10,"#ffb28a");       // hands
-      R(g,3,7,6,6,"#7ec8ff"); R(g,4,7,4,5,"#8fd8ff");
-      R(g,3,13,6,3,"#3d5a80");
-      R(g,4,16,2,2,"#5a3520"); R(g,7,16,2,2,"#5a3520");
+  function toRgb(h) {
+    if (h[0] === "r") { // "rgb(r,g,b)" từ mix trước
+      var m = h.match(/(\d+)/g);
+      return [+m[0], +m[1], +m[2]];
     }
-    return g.canvas;
+    var n = parseInt(h.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function mix(a, b, t) {
+    var ca = toRgb(a), cb = toRgb(b);
+    return "rgb(" + Math.round(ca[0] + (cb[0] - ca[0]) * t) + "," +
+      Math.round(ca[1] + (cb[1] - ca[1]) * t) + "," +
+      Math.round(ca[2] + (cb[2] - ca[2]) * t) + ")";
   }
 
-  /* ===== CHỦ NGỒI (12×14) ===== */
-  function ownerSit() {
-    var g = C(12, 14);
-    R(g,3,0,6,3,"#5a3520"); R(g,2,2,8,3,"#6b4226");
-    R(g,4,2,4,4,"#ffb28a");
-    P(g,5,3,"#1a1a2e"); P(g,7,3,"#1a1a2e");
-    P(g,6,4,"#ff6fb5"); P(g,5,5,"#c96d28"); P(g,6,5,"#c96d28");
-    R(g,3,6,6,4,"#7ec8ff"); R(g,4,6,4,3,"#8fd8ff");
-    R(g,3,10,6,2,"#3d5a80"); R(g,2,12,8,2,"#5a3520");
-    return g.canvas;
-  }
+  // ===== Helpers =====
+  function R(ctx, x, y, w, h, col) { ctx.fillStyle = col; ctx.fillRect(x * GX, y * GX, w * GX, h * GX); }
+  function P(ctx, x, y, col) { R(ctx, x, y, 1, 1, col); }
 
-  /* ===== HỒN MA (10×14, 2 frames) ===== */
-  function ghost(fr) {
-    var g = C(10, 14);
-    R(g,2,0,6,3,"rgba(180,170,220,0.75)");
-    R(g,1,2,8,5,"rgba(180,170,220,0.8)");
-    R(g,2,7,6,3,"rgba(180,170,220,0.7)");
-    P(g,3,4,"#ff3b3b"); P(g,6,4,"#ff3b3b"); // red eyes
-    R(g,4,6,2,1,"#1a1a2e");                  // mouth
-    var wy = fr===0 ? [1,0,1,0] : [0,1,0,1];
-    for (var i=0;i<4;i++) R(g,1+i*2,10+wy[i],2,2,"rgba(180,170,220,0.6)");
-    return g.canvas;
-  }
-
-  /* ===== BÁNH KEM (14×12, 2 frames) ===== */
-  function cake(fr) {
-    var g = C(14, 12);
-    R(g,4,0,1,3,"#ffd93d"); R(g,6,0,1,3,"#ffd93d");
-    R(g,8,0,1,3,"#ffd93d"); R(g,10,0,1,3,"#ffd93d");
-    var fd=fr===0?0:1;
-    P(g,4+fd,0,"#ff6b3d"); P(g,6+fd,0,"#ff6b3d");
-    P(g,9,0,"#ff6b3d"); P(g,11,0,"#ff6b3d");
-    R(g,2,3,10,2,"#fff"); R(g,1,4,12,1,"#ffc4e3");
-    R(g,2,5,10,4,"#e8893a"); R(g,3,6,8,2,"#f5c49a");
-    R(g,1,9,12,1,"#d4d4d4"); R(g,0,10,14,2,"#aaa");
-    return g.canvas;
-  }
-
-  /* ===== HEART (6×6) ===== */
-  function heart(fr) {
-    var g = C(6, 6);
-    R(g,0,0,3,2,"#ff3b5c"); R(g,3,0,3,2,"#ff3b5c");
-    R(g,0,1,6,2,"#ff3b5c"); R(g,1,3,4,1,"#ff3b5c"); R(g,2,4,2,1,"#ff3b5c");
-    return g.canvas;
-  }
-
-  /* ===== MŨI TÊN (10×6) ===== */
-  function arrow() {
-    var g = C(10, 6);
-    R(g,3,0,4,1,"#ffd93d"); R(g,2,1,6,1,"#ffd93d");
-    R(g,1,2,8,2,"#ffd93d"); R(g,3,4,4,1,"#ffd93d");
-    return g.canvas;
-  }
-
-  /* ===== MINI SPRITES ===== */
-  function bush() { var g=C(10,6); R(g,1,0,8,2,"#3cc060"); R(g,0,2,10,2,"#2eaa4f"); R(g,1,4,8,2,"#1e7a35"); return g.canvas; }
-  function tree() { var g=C(14,26); R(g,5,14,4,12,"#6b4226"); R(g,1,0,12,5,"#3cc060"); R(g,0,4,14,5,"#2eaa4f"); R(g,2,8,10,3,"#1e7a35"); return g.canvas; }
-  function flower() { var g=C(4,5); P(g,1,0,"#ff6fb5"); P(g,2,0,"#ff6fb5"); P(g,0,1,"#ff6fb5"); P(g,3,1,"#ff6fb5"); P(g,1,2,"#ffd93d"); P(g,2,2,"#ffd93d"); R(g,1,3,2,2,"#2eaa4f"); return g.canvas; }
-  function blood() { var g=C(14,5); R(g,1,0,12,1,"#cc2233"); R(g,0,1,14,2,"#aa1122"); R(g,2,3,10,1,"#881122"); return g.canvas; }
-
-  /* ===== CỬA (8×14) ===== */
-  function door(open) {
-    var g = C(8, 14);
-    R(g,0,0,8,14, open?"#2b2b2b":"#8a6a45");
-    if (!open) { R(g,1,1,6,13,"#a07848"); R(g,2,2,4,4,"#c9d8ff"); R(g,2,7,4,6,"#a07848"); P(g,6,9,"#ffd93d"); }
-    return g.canvas;
-  }
-
-  /* ===== BACKGROUNDS (480×270) ===== */
-  function bgTitle() {
-    var g=C(480,270);
-    var gr=g.createLinearGradient(0,0,0,270);
-    gr.addColorStop(0,"#4a9fff"); gr.addColorStop(0.5,"#7ec8ff"); gr.addColorStop(0.85,"#bfe6ff"); gr.addColorStop(1,"#e8f7ff");
-    g.fillStyle=gr; g.fillRect(0,0,480,270);
-    g.fillStyle="#ffe066"; g.beginPath(); g.arc(390,48,24,0,Math.PI*2); g.fill();
-    g.fillStyle="#fff5cc"; g.beginPath(); g.arc(390,48,16,0,Math.PI*2); g.fill();
-    cloud(g,60,50,1); cloud(g,200,30,0.8); cloud(g,350,70,1.1);
-    R(g,0,200,480,70,"#6abe30"); R(g,0,210,480,60,"#58a828");
-    for(var i=0;i<24;i++) R(g,i*20,202,10,2,"#7ed957");
-    g.drawImage(tree(),20,174); g.drawImage(tree(),390,174);
-    g.drawImage(bush(),100,204); g.drawImage(bush(),300,208);
-    for(var f=0;f<8;f++) g.drawImage(flower(),60+f*42,212+(f%3)*8);
-    return g.canvas;
-  }
-  function cloud(g,x,y,s) {
-    g.fillStyle="#fff"; g.beginPath(); g.arc(x,y,14*s,0,Math.PI*2); g.fill();
-    g.beginPath(); g.arc(x+14*s,y-4*s,10*s,0,Math.PI*2); g.fill();
-    g.beginPath(); g.arc(x+26*s,y,12*s,0,Math.PI*2); g.fill();
-    g.fillRect(x-4*s,y-2,34*s,8*s);
-  }
-  function bgGarden() {
-    var g=C(480,270);
-    var gr=g.createLinearGradient(0,0,0,270);
-    gr.addColorStop(0,"#3a6fbf"); gr.addColorStop(0.35,"#e88a40"); gr.addColorStop(0.55,"#f5a855"); gr.addColorStop(0.7,"#c96d28"); gr.addColorStop(1,"#5a8a28");
-    g.fillStyle=gr; g.fillRect(0,0,480,270);
-    g.fillStyle="#ffe066"; g.beginPath(); g.arc(80,130,22,0,Math.PI*2); g.fill();
-    cloud(g,50,40,1); cloud(g,160,60,0.8); cloud(g,300,45,1.1);
-    R(g,0,190,480,80,"#6abe30"); for(var i=0;i<24;i++) R(g,i*20,192,10,2,"#7ed957");
-    for(var fx=0;fx<480;fx+=28) { R(g,fx,176,4,14,"#a07848"); R(g,fx+4,180,24,3,"#a07848"); R(g,fx+4,186,24,3,"#a07848"); }
-    R(g,320,110,160,80,"#c98a4b"); R(g,320,110,160,10,"#a06a35");
-    g.fillStyle="#d4574e"; g.beginPath(); g.moveTo(310,114); g.lineTo(400,70); g.lineTo(490,114); g.fill();
-    R(g,388,144,24,46,"#6b4226"); R(g,390,146,20,42,"#8a6a45"); P(g,407,170,"#ffd93d");
-    R(g,340,130,28,22,"#c9d8ff"); R(g,341,131,12,10,"#7ec8ff"); R(g,354,131,12,10,"#7ec8ff");
-    g.drawImage(bush(),260,196); g.drawImage(bush(),340,198);
-    for(var f=0;f<6;f++) g.drawImage(flower(),180+f*30,214+(f%2)*8);
-    g.drawImage(tree(),40,164);
-    return g.canvas;
-  }
-  function bgKitchen() {
-    var g=C(480,270);
-    R(g,0,0,480,270,"#e0d4bc"); R(g,0,180,480,90,"#c4b494");
-    for(var i=0;i<16;i++) R(g,i*30,182,28,86,i%2?"#b8a888":"#c4b494");
-    R(g,0,176,480,4,"#a09070");
-    R(g,360,100,120,80,"#7d6242"); R(g,362,102,56,36,"#5a3e28"); R(g,424,102,54,36,"#5a3e28"); R(g,362,144,116,32,"#5a3e28");
-    R(g,380,70,50,30,"#4a4a5a"); R(g,384,74,18,12,"#1a1a2e"); R(g,408,74,18,12,"#1a1a2e");
-    R(g,440,70,30,30,"#b8c4cc"); R(g,444,74,22,20,"#8aa0aa");
-    g.fillStyle="rgba(10,10,20,0.8)"; g.fillRect(0,0,80,100);
-    R(g,140,150,100,30,"#8a6a45"); R(g,142,152,96,6,"#a07848");
-    g.drawImage(blood(),175,235);
-    R(g,10,120,28,60,"#6b4226"); R(g,12,122,24,56,"#8a6a45");
-    return g.canvas;
-  }
-  function bgLiving() {
-    var g=C(480,270);
-    R(g,0,0,480,270,"#e8d8b8"); R(g,0,190,480,80,"#c9b48a");
-    for(var i=0;i<16;i++) R(g,i*30,192,28,76,i%2?"#b8a888":"#c9b48a");
-    R(g,0,186,480,4,"#a09070");
-    R(g,60,36,48,40,"#c9d8ff"); R(g,62,38,20,36,"#7ec8ff"); R(g,86,38,20,36,"#7ec8ff");
-    R(g,56,32,6,48,"#d4574e"); R(g,108,32,6,48,"#d4574e");
-    R(g,20,148,90,42,"#7a5c8a"); R(g,22,150,86,14,"#9b7bff"); R(g,20,148,90,4,"#5a4570");
-    R(g,140,180,60,12,"#a07848");
-    R(g,350,60,60,45,"#1a1a2e"); R(g,354,64,52,37,"#101018"); R(g,376,105,8,10,"#3a3a4a");
-    R(g,10,100,28,80,"#6b4226"); R(g,12,102,24,76,"#8a6a45");
-    R(g,438,100,32,80,"#6b4226"); R(g,440,102,28,76,"#8a6a45"); P(g,464,145,"#ffd93d");
-    return g.canvas;
-  }
-  function bgHaunted() {
-    var g=C(480,270);
-    R(g,0,0,480,270,"#1e1523"); R(g,0,190,480,80,"#16101a");
-    for(var i=0;i<16;i++) R(g,i*30,192,28,76,i%2?"#120d16":"#16101a");
-    R(g,0,186,480,4,"#0a0810");
-    R(g,60,36,48,40,"#0d0a12"); R(g,56,32,6,48,"#3a2040"); R(g,108,32,6,48,"#3a2040");
-    R(g,20,148,90,42,"#3a2f45"); R(g,22,150,86,14,"#4a3f55");
-    R(g,350,60,60,45,"#0a0810"); R(g,354,64,52,37,"#050408");
-    R(g,10,100,28,80,"#3a2040"); R(g,12,102,24,76,"#2a1830");
-    R(g,438,100,32,80,"#3a2040"); R(g,440,102,28,76,"#2a1830");
-    R(g,210,10,50,30,"#3a2040"); R(g,212,12,46,26,"#2a1830");
-    candle(g,180,170); candle(g,280,170);
-    g.fillStyle="rgba(140,130,170,0.06)"; g.fillRect(0,50,480,30); g.fillRect(0,130,480,25);
-    return g.canvas;
-  }
-  function candle(g,x,y) {
-    R(g,x,y,6,10,"#8a6a45"); R(g,x+1,y-4,4,4,"#ffd93d");
-    g.fillStyle="rgba(255,200,80,0.3)"; g.beginPath(); g.arc(x+3,y-6,10,0,Math.PI*2); g.fill();
-  }
-  function bgHallway() {
-    var g=C(480,270);
-    R(g,0,0,480,80,"#2a2036"); R(g,0,80,480,110,"#241d30"); R(g,0,190,480,80,"#2a2036");
-    for(var i=0;i<16;i++) R(g,i*30,82,28,106,i%2?"#1e1726":"#241d30");
-    R(g,0,78,480,2,"#0e0b14");
-    R(g,0,100,18,60,"#3a2040"); R(g,450,100,30,60,"#3a2040");
-    for(var c=0;c<5;c++) { var cx=80+c*80; candle(g,cx,70); g.fillStyle="rgba(255,200,80,0.15)"; g.beginPath(); g.arc(cx+3,68,30,0,Math.PI*2); g.fill(); }
-    return g.canvas;
-  }
-  function bgDining() {
-    var g=C(480,270);
-    var gr=g.createLinearGradient(0,0,0,270);
-    gr.addColorStop(0,"#3a2a1e"); gr.addColorStop(1,"#2a1d14");
-    g.fillStyle=gr; g.fillRect(0,0,480,270);
-    R(g,0,200,480,70,"#4a3524"); for(var i=0;i<16;i++) R(g,i*30,202,28,66,i%2?"#3e2d1c":"#4a3524");
-    R(g,0,196,480,4,"#3a2818");
-    candle(g,80,60); candle(g,200,60); candle(g,320,60); candle(g,400,60);
-    R(g,130,130,220,50,"#7d5a38"); R(g,130,130,220,8,"#8f6a44");
-    R(g,150,180,10,14,"#6b4226"); R(g,320,180,10,14,"#6b4226");
-    R(g,130,178,220,2,"#ffc4e3");
-    R(g,180,30,120,80,"#1a1218"); R(g,184,34,112,72,"#2a1a12");
-    return g.canvas;
-  }
-
-  var BG={};
-  function getBG(n) {
-    if (!BG[n]) {
-      switch(n) {
-        case "title":BG[n]=bgTitle();break;
-        case "garden":BG[n]=bgGarden();break;
-        case "kitchen":BG[n]=bgKitchen();break;
-        case "living":BG[n]=bgLiving();break;
-        case "haunted":BG[n]=bgHaunted();break;
-        case "hallway":BG[n]=bgHallway();break;
-        case "dining":BG[n]=bgDining();break;
+  // ===== 1. TITLE — trời xanh gradient + dithering, mặt trời, mây, đồi, nước, nút START =====
+  function drawTitle(ctx, time) {
+    // sky gradient (dithering 3 bands)
+    var bands = 12;
+    for (var i = 0; i < bands; i++) {
+      var t = i / bands;
+      R(ctx, 0, i * 5, GW, 5, mix(C.skyDayTop, C.skyDayBot, t));
+    }
+    // dithering chấm
+    for (var y = 20; y < 55; y += 2) {
+      for (var x = (y % 4) / 2; x < GW; x += 4) {
+        P(ctx, x, y, "rgba(255,255,255,0.14)");
       }
     }
-    return BG[n];
+    // mặt trời + hào quang (phải trên)
+    var sg = 10 + Math.sin(time * 1.2) * 0.8;
+    R(ctx, 128, 6, 20, 20, C.sunGlow);
+    R(ctx, 134, 8, 14, 14, "rgba(255,243,176,0.55)");
+    R(ctx, 137, 10, 8, 8, C.sun);
+    // mây trắng trôi
+    var cdx = Math.sin(time * 0.35) * 3;
+    cloud(ctx, 14 + cdx, 12, 26, 8);
+    cloud(ctx, 66 - cdx * 0.6, 22, 18, 6);
+    cloud(ctx, 100 + cdx * 0.8, 8, 14, 5);
+    // đồi xanh lam xa
+    R(ctx, 0, 56, GW, 6, "#7fb3d9");
+    R(ctx, 0, 60, GW, 5, "#6ba3c9");
+    hill(ctx, 0, 62, 40, 10, "#5f97c4");
+    hill(ctx, 55, 62, 55, 10, "#5f97c4");
+    hill(ctx, 120, 62, 40, 10, "#5f97c4");
+    // bụi cây xanh đậm
+    R(ctx, 0, 72, GW, 5, "#2e6b3a");
+    bush(ctx, 8, 74, 22, 6, "#1f4f2a");
+    bush(ctx, 60, 74, 18, 6, "#1f4f2a");
+    bush(ctx, 118, 74, 24, 6, "#1f4f2a");
+    // mặt nước
+    for (i = 0; i < 13; i++) R(ctx, 0, 77 + i, GW, 1, mix("#1d4e89", "#163a63", i / 13));
+    // gợn nước
+    for (i = 0; i < 4; i++) {
+      var wx = ((time * 12 + i * 37) % 160);
+      R(ctx, wx, 80 + i * 3, 10, 1, "rgba(255,255,255,0.18)");
+    }
+    // mèo Yuniebel đứng cạnh nút START (brief ảnh 1)
+    drawCat(ctx, 66, 60, 1, Math.floor(time * 4) % 2, time);
   }
 
+  // ===== 2. GARDEN — nhà hiên, hàng rào, cây, bụi, hoa; trời ĐỘNG ngày→hoàng hôn→đêm =====
+  function sky(ctx, darkness, time) {
+    // darkness 0..0.5: day→dusk; 0.5..1: dusk→night — luôn mix 2 HEX gốc (tránh NaN)
+    var t1 = Math.min(darkness / 0.5, 1);
+    var t2 = Math.max((darkness - 0.5) / 0.5, 0);
+    var top, bot;
+    if (darkness < 0.5) {
+      top = mix(C.skyDayTop, C.skyDuskTop, t1);
+      bot = mix(C.skyDayBot, C.skyDuskBot, t1);
+    } else {
+      top = mix(C.skyDuskTop, C.skyNightTop, t2);
+      bot = mix(C.skyDuskBot, C.skyNightBot, t2);
+    }
+    for (var i = 0; i < 9; i++) {
+      R(ctx, 0, i * 6, GW, 6, mix(top, bot, i / 9));
+    }
+    // mặt trời lặn dần về phía chân trời (hoàng hôn)
+    var sy = 4 + t1 * 22;
+    if (t1 < 0.9) {
+      R(ctx, 126, sy, 12, 12, C.sunGlow);
+      R(ctx, 130, sy + 2, 8, 8, mix(C.sun, "#ff7b3c", t1));
+    }
+    // sao khi đêm
+    if (t2 > 0.3) {
+      for (i = 0; i < 18; i++) {
+        var sx = (i * 37 + 13) % 155, sxx = (i * 53) % 50;
+        var tw = Math.sin(time * 2 + i) > 0.6 ? 1 : 0;
+        if (tw) P(ctx, sx, 2 + (i * 7) % 20, C.star);
+        if (tw && t2 > 0.6) P(ctx, sxx + 100, 3 + (i * 11) % 16, "rgba(255,255,255,0.6)");
+      }
+    }
+    // mây
+    cloud(ctx, 20 + Math.sin(time * 0.3) * 3, 8, 20, 6, "rgba(255,255,255," + (0.9 - t1 * 0.5) + ")");
+    cloud(ctx, 90 - Math.sin(time * 0.25) * 3, 16, 16, 5, "rgba(255,255,255," + (0.85 - t1 * 0.5) + ")");
+  }
+
+  function cloud(ctx, x, y, w, h, col) {
+    col = col || C.cloud;
+    R(ctx, x, y + 2, w, h - 2, col);
+    R(ctx, x + 3, y, w - 6, 3, col);
+    R(ctx, x + Math.floor(w * 0.6), y - 1, Math.floor(w * 0.3), 2, col);
+  }
+
+  function hill(ctx, x, y, w, h, col) {
+    R(ctx, x, y, w, h, col);
+    P(ctx, x + Math.floor(w * 0.3), y, col); P(ctx, x + Math.floor(w * 0.6), y, col);
+  }
+  function bush(ctx, x, y, w, h, col) {
+    R(ctx, x, y + 1, w, h - 1, col);
+    R(ctx, x + 2, y, w - 4, 2, col);
+  }
+
+  function drawGarden(ctx, state, time) {
+    var d = state.darkness || 0;
+    sky(ctx, d, time);
+    // cỏ
+    R(ctx, 0, 66, GW, 24, mix(C.grass, C.grassDark, Math.min(d * 1.2, 1)));
+    // vệt cỏ sáng
+    for (var i = 0; i < 8; i++) P(ctx, (i * 23 + 5) % 160, 70 + (i % 5) * 3, C.grassLight);
+    // đường mòn đất
+    R(ctx, 40, 76, 90, 2, mix(C.dirt, "#4a2f16", d));
+    R(ctx, 60, 78, 60, 2, mix(C.dirt, "#4a2f16", d));
+    // hàng rào trắng (giữa)
+    for (i = 0; i < 8; i++) {
+      var fx = 8 + i * 18;
+      R(ctx, fx, 62, 2, 10, mix(C.fence, "#9a9386", d));
+      R(ctx, fx - 2, 63, 6, 2, mix(C.fence, "#9a9386", d));
+      R(ctx, fx - 2, 69, 6, 2, mix(C.fence, "#9a9386", d));
+    }
+    // bụi cây + hoa
+    bush(ctx, 30, 70, 16, 5, mix("#2e8b57", "#14402a", d));
+    bush(ctx, 96, 72, 14, 4, mix("#2e8b57", "#14402a", d));
+    R(ctx, 36, 68, 2, 2, "#ff6b9d"); R(ctx, 104, 70, 2, 2, "#ff6b9d");
+    R(ctx, 42, 74, 2, 2, "#ffd93b");
+    // quả bóng đỏ
+    R(ctx, 56, 72, 4, 4, "#e03030"); R(ctx, 57, 73, 1, 1, "rgba(255,255,255,0.5)");
+    // cây lớn (phải)
+    R(ctx, 150, 44, 3, 16, C.woodDark);
+    R(ctx, 143, 38, 17, 8, mix("#2e8b57", "#0f3020", d));
+    R(ctx, 146, 34, 11, 6, mix("#3aa05f", "#155030", d));
+    // ===== NGÔI NHÀ (phải, x~800..960 = logical 133..160) =====
+    // thân nhà (tường be)
+    R(ctx, 133, 30, 27, 36, mix(C.wallCream, "#8a7a58", d));
+    // mái đỏ
+    R(ctx, 131, 26, 31, 5, mix(C.roofRed, "#5e1c13", d));
+    R(ctx, 134, 24, 25, 3, mix(C.roofRed, "#5e1c13", d));
+    R(ctx, 137, 22, 19, 3, mix(C.roofRed, "#5e1c13", d));
+    // cửa gỗ
+    R(ctx, 143, 40, 7, 13, mix(C.wood, "#3c2716", d));
+    R(ctx, 144, 41, 5, 11, mix(C.woodDark, "#2a1a0e", d));
+    // cửa sổ
+    R(ctx, 135, 36, 5, 5, mix("#bfe8ff", "#20304a", d));
+    R(ctx, 153, 36, 5, 5, mix("#bfe8ff", "#20304a", d));
+    R(ctx, 137, 38, 1, 3, C.woodDark); R(ctx, 155, 38, 1, 3, C.woodDark);
+    // hiên nhà
+    R(ctx, 131, 66, 29, 2, mix(C.wood, "#3c2716", d));
+    R(ctx, 131, 65, 29, 1, mix(C.woodLight, "#5a3a24", d));
+    // đèn hiên bật khi darkness>0.15 (hoàng hôn, ảnh B panel 2)
+    if (d > 0.15) {
+      R(ctx, 142, 38, 2, 2, "#ffd93b");
+      R(ctx, 140, 39, 6, 1, "rgba(255,217,59,0.35)");
+    }
+    // chủ nhân đứng ở cửa khi G_INIT (gọi mèo)
+    if (state.phase === "G_INIT" && state.dialogue) {
+      drawOwner(ctx, 146, 42, 0, 1);
+    }
+  }
+
+  // ===== 3. LIVING — phòng khách ấm áp (ảnh C trái) =====
+  function drawLiving(ctx, time) {
+    // tường kem sọc mờ
+    R(ctx, 0, 0, GW, 62, C.wallCream);
+    for (var i = 0; i < 10; i++) R(ctx, (i * 16 + 6) % GW, 0, 2, 62, "rgba(190,170,130,0.35)");
+    // sàn gỗ
+    for (i = 0; i < 8; i++) R(ctx, 0, 62 + i * 4, GW, 4, mix(C.wood, "#6a4526", i / 8));
+    // viền chân tường
+    R(ctx, 0, 62, GW, 2, C.woodDark);
+    // sofa đỏ cam + gối (trái)
+    R(ctx, 4, 50, 30, 12, C.sofaRedDark);
+    R(ctx, 2, 48, 32, 5, C.sofaRed);
+    R(ctx, 6, 46, 10, 4, C.cushion);   // gối tựa
+    R(ctx, 18, 46, 8, 4, C.cushion);
+    R(ctx, 2, 58, 4, 4, C.sofaRedDark); // chân
+    R(ctx, 30, 58, 4, 4, C.sofaRedDark);
+    // bàn trà gỗ + thảm
+    R(ctx, 38, 52, 22, 2, C.woodLight);
+    R(ctx, 40, 54, 18, 4, C.wood);
+    R(ctx, 38, 58, 2, 2, C.woodDark); R(ctx, 58, 58, 2, 2, C.woodDark);
+    R(ctx, 42, 62, 20, 2, C.rug);
+    for (i = 0; i < 6; i++) R(ctx, 42 + i * 4, 62, 2, 2, C.rugStripe);
+    // đèn tường sconce
+    R(ctx, 12, 12, 2, 6, C.woodDark); R(ctx, 10, 10, 6, 3, "#ffd93b");
+    R(ctx, 10, 13, 6, 1, "rgba(255,217,59,0.3)");
+    R(ctx, 142, 12, 2, 6, C.woodDark); R(ctx, 138, 10, 6, 3, "#ffd93b");
+    // tranh treo tường
+    R(ctx, 40, 18, 14, 10, "#f4f0e6"); R(ctx, 42, 20, 10, 6, "#8ec9ff");
+    R(ctx, 42, 24, 10, 2, "#3fae4a");
+    R(ctx, 62, 18, 10, 10, "#f4f0e6"); R(ctx, 64, 20, 6, 6, "#ffc4a3");
+    // đồng hồ tròn
+    R(ctx, 82, 16, 10, 10, C.woodLight);
+    R(ctx, 84, 18, 6, 6, "#ffffff");
+    R(ctx, 86, 20, 1, 2, C.woodDark); R(ctx, 87, 21, 2, 1, C.woodDark);
+    // kệ sách + chậu cây (phải)
+    R(ctx, 124, 30, 20, 20, C.wood);
+    R(ctx, 126, 32, 16, 3, "#b04a3c"); R(ctx, 126, 38, 16, 3, "#3a6e4a");
+    R(ctx, 126, 44, 16, 3, "#b04a3c");
+    R(ctx, 138, 26, 6, 8, C.pot);
+    R(ctx, 139, 22, 4, 6, C.plant); R(ctx, 140, 20, 2, 3, C.plant);
+    // cửa tối hậu cảnh (bếp)
+    R(ctx, 96, 34, 12, 26, "#0a0a14");
+    R(ctx, 96, 34, 2, 26, C.woodDark); R(ctx, 106, 34, 2, 26, C.woodDark);
+    // cửa ra phòng khách — bên trái (đi tới bếp) + mũi tên
+    R(ctx, 0, 40, 4, 20, "#1a1a24");
+    arrow(ctx, 3, 46, 1);
+  }
+
+  // ===== 4. KITCHEN — bếp tối: tủ trắng, lò, tủ lạnh, vết máu LỚN, mắt sáng (ảnh C phải) =====
+  function drawKitchen(ctx, state, time) {
+    R(ctx, 0, 0, GW, 60, mix("#4a4a52", "#22222a", 0.25));
+    // sàn gạch nâu tối
+    for (var y = 60; y < 90; y += 6) {
+      for (var x = 0; x < GW; x += 8) {
+        R(ctx, x, y, 8, 6, ((x / 8 + y / 6) % 2 === 0) ? "#5a4530" : "#4e3c28");
+      }
+    }
+    // tủ bếp trắng trên
+    R(ctx, 0, 10, 80, 22, C.cabWhite);
+    R(ctx, 0, 10, 80, 3, C.cabShade);
+    for (var i = 0; i < 5; i++) {
+      R(ctx, 4 + i * 16, 16, 10, 12, "#f4f4f6");
+      R(ctx, 11 + i * 16, 20, 2, 3, C.handle);
+    }
+    // lò + nồi
+    R(ctx, 82, 24, 22, 20, C.oven);
+    R(ctx, 84, 26, 8, 6, "#2a2a32");
+    R(ctx, 84, 36, 8, 6, "#2a2a32");
+    R(ctx, 96, 28, 4, 4, C.handle);
+    // tủ lạnh (mặt đơn giản)
+    R(ctx, 108, 16, 16, 28, C.fridge);
+    R(ctx, 110, 18, 12, 2, "#c0c4cc");
+    P(ctx, 118, 30, "#8a8f98"); P(ctx, 116, 28, "#8a8f98"); P(ctx, 118, 28, "#8a8f98"); P(ctx, 116, 30, "#8a8f98");
+    // bàn bếp
+    R(ctx, 128, 44, 20, 3, C.woodLight);
+    R(ctx, 130, 47, 2, 10, C.woodDark); R(ctx, 144, 47, 2, 10, C.woodDark);
+    // cửa sổ
+    R(ctx, 60, 2, 16, 8, "#0d1526");
+    R(ctx, 62, 4, 12, 6, "#1a2a4a");
+    R(ctx, 68, 3, 1, 7, C.woodDark); R(ctx, 62, 6, 12, 1, C.woodDark);
+    // VẾT MÁU LỚN (giữa sàn, ảnh C)
+    R(ctx, 68, 66, 30, 6, C.blood);
+    R(ctx, 72, 72, 22, 4, C.blood);
+    R(ctx, 78, 76, 12, 3, C.bloodDark);
+    R(ctx, 66, 68, 6, 3, C.bloodDark); R(ctx, 98, 69, 5, 3, C.bloodDark);
+    // giọt máu anim (drip)
+    var drippy = Math.floor(time * 1.2) % 2 === 0;
+    if (drippy) P(ctx, 76, 78, C.bloodDark);
+    // VÙNG TỐI + 2 MẮT TRẮNG SÁNG (trái, DARK_RECT logical ~ (7,7,31,33))
+    R(ctx, 5, 5, 34, 38, "#05050c");
+    if (Math.floor(time * 2) % 2 === 0) {
+      R(ctx, 18, 20, 3, 2, "#ffffff"); R(ctx, 26, 20, 3, 2, "#ffffff");
+    }
+    // cửa ra (phải — quay về phòng khách ma ám)
+    R(ctx, 156, 40, 4, 20, "#0a0a14");
+    // nếu đang K_CHOICE: highlight vết máu
+    if (state.phase === "K_CHOICE") {
+      R(ctx, 68, 66, 30, 6, "rgba(255,255,255,0.25)");
+    }
+  }
+
+  // ===== 5. HAUNTED — phòng khách ma ám: tối xanh đen, ma XANH đầu lâu chặn cửa (ảnh D) =====
+  function drawHaunted(ctx, state, time) {
+    // tường tối
+    R(ctx, 0, 0, GW, 60, mix("#23203d", "#10101f", 0.4));
+    // dầm gỗ trần
+    R(ctx, 0, 4, GW, 3, "#0c0c18");
+    R(ctx, 20, 0, 3, 8, "#0c0c18"); R(ctx, 80, 0, 3, 8, "#0c0c18"); R(ctx, 140, 0, 3, 8, "#0c0c18");
+    // mạng nhện
+    R(ctx, 4, 8, 3, 1, "rgba(200,200,220,0.3)"); R(ctx, 8, 4, 1, 3, "rgba(200,200,220,0.3)");
+    R(ctx, 5, 5, 1, 1, "rgba(200,200,220,0.3)"); R(ctx, 6, 6, 1, 1, "rgba(200,200,220,0.3)");
+    // sàn gỗ tối
+    for (var i = 0; i < 8; i++) R(ctx, 0, 62 + i * 4, GW, 4, mix("#2a2038", "#171020", i / 8));
+    // sofa đỏ cũ
+    R(ctx, 4, 50, 28, 12, "#5c2430");
+    R(ctx, 2, 48, 30, 4, "#6e2a38");
+    // bàn nhỏ + chân nến
+    R(ctx, 130, 52, 12, 2, "#3c2a20");
+    R(ctx, 131, 48, 2, 4, "#7a5a2b"); R(ctx, 132, 46, 1, 2, "#ffd93b");
+    if (Math.floor(time * 3) % 2 === 0) P(ctx, 132, 45, "#ff8c1c");
+    // đồng hồ quả lắc (grandfather clock)
+    R(ctx, 120, 16, 10, 34, C.woodDark);
+    R(ctx, 122, 18, 6, 6, "#0c0c18"); R(ctx, 123, 20, 4, 3, "#8ec9ff");
+    R(ctx, 122, 26, 6, 16, "#1c1226"); R(ctx, 123, 28, 4, 12, "#0c0c18");
+    var pend = Math.sin(time * 2) * 2;
+    R(ctx, 125, 28 + Math.floor(pend), 1, 10, "#c8c8d0");
+    // ảnh treo nghiêng
+    ctx.save(); ctx.translate(60 * GX, 20 * GX); ctx.rotate(0.12);
+    R(ctx, -8, -6, 16, 12, "#3a2a20"); R(ctx, -6, -4, 12, 8, "#1a1020");
+    ctx.restore();
+    // CỬA CHÍNH GIỮA + MA XANH ĐẦU LÂU LỚN chặn (ảnh D)
+    R(ctx, 74, 20, 12, 40, "#0a0a16");
+    R(ctx, 74, 20, 2, 40, "#3c2a4a"); R(ctx, 84, 20, 2, 40, "#3c2a4a");
+    if (state.phase !== "H_INIT" || !state.dialogue) {
+      drawGhostSkull(ctx, 70, 16, time, state);
+    }
+    // cửa phụ trái
+    R(ctx, 0, 40, 4, 20, "#0a0a16");
+    arrow(ctx, 2, 46, 1);
+    // glow xanh quanh ma
+    R(ctx, 74, 34, 12, 20, "rgba(142,201,255,0.08)");
+  }
+
+  // ===== 6. HALLWAY — hành lang gỗ tối + 5 jump scare (ảnh E) =====
+  function drawHallway(ctx, state, time) {
+    // tường tối + sàn ván
+    R(ctx, 0, 0, GW, 54, "#17131f");
+    for (var i = 0; i < 6; i++) R(ctx, 0, 62 + i * 4, GW, 4, mix("#241a30", "#161020", i / 6));
+    R(ctx, 0, 60, GW, 2, "#0c0814");
+    // ván sàn
+    for (i = 0; i < 20; i++) P(ctx, i * 8, 64, "#2e2038"); P(ctx, i * 8 + 4, 70, "#2e2038");
+    // nến/đuốc tường
+    for (i = 0; i < 6; i++) {
+      var tx = 8 + i * 27;
+      R(ctx, tx, 12, 2, 8, "#3c2a20");
+      R(ctx, tx - 1, 10, 4, 3, "#ffd93b");
+      if (Math.floor(time * 4 + i) % 2 === 0) P(ctx, tx, 9, "#ff8c1c");
+      R(ctx, tx - 3, 12, 8, 1, "rgba(255,150,60,0.12)");
+    }
+    // cửa hai đầu
+    R(ctx, 0, 40, 4, 20, "#0a0a14");
+    R(ctx, 156, 40, 4, 20, "#0a0a14");
+    // 5 kiểu hù (mapping §6.2) — hiển thị khi scareActive = n
+    var sa = state.scareActive;
+    if (sa === 1) drawScareGhost(ctx, 130, 30, time);          // ma trắng ga
+    if (sa === 2) drawScarePortrait(ctx, 70, 12, time);        // chân dung hét
+    if (sa === 3) drawScareHands(ctx, 148, 34, time);          // tay zombie
+    if (sa === 4) drawScareShadow(ctx, 120, 20, time);         // bóng mắt vàng
+    if (sa === 5) drawScareSkull(ctx, 96, 26, time);           // mặt xương
+  }
+
+  // ===== 7. BIRTHDAY — sinh nhật: lò sưởi, bánh kem 4 nến, chủ, sparkle =====
+  function drawBirthday(ctx, state, time) {
+    // phòng ấm
+    R(ctx, 0, 0, GW, 60, "#f2d9b0");
+    for (var i = 0; i < 10; i++) R(ctx, (i * 16 + 6) % GW, 0, 2, 60, "rgba(220,190,140,0.4)");
+    for (i = 0; i < 8; i++) R(ctx, 0, 62 + i * 4, GW, 4, mix(C.wood, "#6a4526", i / 8));
+    R(ctx, 0, 62, GW, 2, C.woodDark);
+    // băng rôn "HAPPY BIRTHDAY"
+    R(ctx, 20, 8, 60, 6, "#e0709a");
+    R(ctx, 24, 10, 52, 3, "#ffffff");
+    ctx.fillStyle = "#e0709a"; ctx.font = "bold " + 3 * 3 + "px monospace";
+    ctx.fillText("HAPPY BIRTHDAY", 22 * 3, 12 * 3);
+    // lò sưởi (trái)
+    R(ctx, 8, 40, 26, 22, "#8a4a2e");
+    R(ctx, 10, 42, 22, 14, "#2a160c");
+    var fl = Math.floor(time * 6) % 3;
+    R(ctx, 13, 48 + fl * 0, 6, 4, C.fireHot);
+    R(ctx, 17, 46 + (fl % 2), 4, 4, C.fire);
+    R(ctx, 21, 48, 4, 3, C.fire);
+    R(ctx, 8, 62, 26, 2, "#5c2f1c");
+    // bánh kem 4 nến (giữa)
+    R(ctx, 70, 48, 20, 6, C.cake);
+    R(ctx, 72, 46, 16, 3, C.cakeFrost);
+    R(ctx, 76, 50, 8, 2, "#ff9db8");
+    for (i = 0; i < 4; i++) {
+      R(ctx, 74 + i * 4, 42, 1, 5, "#ff6b9d");
+      R(ctx, 74 + i * 4, 40, 1, 2, (Math.floor(time * 5 + i) % 2 === 0) ? C.flame : "#ff8c1c");
+    }
+    // chủ nhân đứng cạnh bánh
+    drawOwner(ctx, 96, 42, Math.floor(time * 4) % 2 === 0 ? 0 : 1, 1);
+    // sparkle
+    for (i = 0; i < 8; i++) {
+      var sx = (i * 29 + 10) % 150, sy = (i * 17) % 30;
+      if (Math.sin(time * 3 + i * 1.7) > 0.5) P(ctx, sx, sy + 34, "#ffd93b");
+    }
+    // text lớn "Chúc Mừng Sinh Nhật!" (canvas — C2-12 không emoji)
+    ctx.fillStyle = "#c0392b";
+    ctx.font = "bold " + 4 * 3 + "px monospace";
+    ctx.fillText("Chuc Mung Sinh Nhat!", 30 * 3, 40 * 3);
+  }
+
+  // ===== 8. GAME OVER / END =====
+  function drawGameOver(ctx) {
+    R(ctx, 0, 0, GW, GH, "#1a0508");
+    R(ctx, 0, 0, GW, GH, "rgba(120,10,20,0.25)");
+    ctx.fillStyle = "#ff3b3b";
+    ctx.font = "bold " + 8 * 3 + "px monospace";
+    ctx.fillText("GAME OVER", 36 * 3, 40 * 3);
+    ctx.fillStyle = "#d9c9a3";
+    ctx.font = 4 * 3 + "px monospace";
+    ctx.fillText("Yuniebel da di vao bong toi...", 20 * 3, 50 * 3);
+  }
+  function drawEnd(ctx, time) {
+    R(ctx, 0, 0, GW, GH, "#f2d9b0");
+    for (var i = 0; i < 8; i++) {
+      var sx = (i * 31 + 8) % 155, sy = (i * 23) % 80;
+      if (Math.sin(time * 3 + i) > 0.3) P(ctx, sx, sy, "#ffd93b");
+    }
+    R(ctx, 62, 44, 36, 8, C.cake);
+    R(ctx, 64, 41, 32, 4, C.cakeFrost);
+    for (i = 0; i < 4; i++) { R(ctx, 68 + i * 8, 38, 1, 4, "#ff6b9d"); R(ctx, 68 + i * 8, 36, 1, 2, C.flame); }
+    ctx.fillStyle = "#8a4a2e";
+    ctx.font = "bold " + 6 * 3 + "px monospace";
+    ctx.fillText("Chuc Mung Sinh Nhat", 16 * 3, 30 * 3);
+    ctx.fillText("Yuniebel!", 48 * 3, 38 * 3);
+  }
+
+  // ===== SPRITES =====
+  // Mèo cam-trắng (16×16 logical, 3×)
+  function drawCat(ctx, x, y, dir, frame, time) {
+    x = Math.round(x); y = Math.round(y);
+    var lx = dir >= 0 ? x : x + 16;
+    ctx.save();
+    if (dir < 0) { ctx.translate((x + 8) * GX, 0); ctx.scale(-1, 1); ctx.translate(-(x + 8) * GX, 0); }
+    // đuôi
+    var tw = Math.sin(time * 6) * 1.5;
+    R(ctx, lx + 12, y + 8 + Math.floor(tw), 3, 2, C.catDark);
+    // thân (trắng bụng)
+    R(ctx, lx + 3, y + 7, 9, 7, C.catBody);
+    R(ctx, lx + 5, y + 10, 5, 3, C.catWhite);
+    // chân (anim chạy)
+    var f = frame % 2;
+    R(ctx, lx + 3, y + 13, 2, 3, f === 0 ? C.catBody : C.catWhite);
+    R(ctx, lx + 9, y + 13, 2, 3, f === 1 ? C.catBody : C.catWhite);
+    // đầu
+    R(ctx, lx + 2, y + 1, 11, 7, C.catBody);
+    R(ctx, lx + 4, y + 3, 6, 3, C.catWhite); // mặt trắng
+    // tai
+    R(ctx, lx + 2, y - 1, 3, 3, C.catBody); R(ctx, lx + 10, y - 1, 3, 3, C.catBody);
+    R(ctx, lx + 3, y - 1, 2, 2, C.catPink); R(ctx, lx + 11, y - 1, 2, 2, C.catPink);
+    // mắt
+    R(ctx, lx + 4, y + 3, 2, 2, "#1a1a2e"); R(ctx, lx + 9, y + 3, 2, 2, "#1a1a2e");
+    P(ctx, lx + 4, y + 3, "#ffffff"); P(ctx, lx + 9, y + 3, "#ffffff");
+    // mũi
+    P(ctx, lx + 7, y + 5, C.catPink);
+    // ria
+    P(ctx, lx + 1, y + 4, "#ffffff"); P(ctx, lx, y + 5, "#ffffff");
+    P(ctx, lx + 13, y + 4, "#ffffff"); P(ctx, lx + 14, y + 5, "#ffffff");
+    ctx.restore();
+  }
+
+  // Chủ nhân (cậu bé: tóc nâu, áo xanh)
+  function drawOwner(ctx, x, y, frame, dir) {
+    R(ctx, x + 3, y, 5, 3, C.ownerHair);
+    R(ctx, x + 2, y + 2, 7, 3, C.ownerHair);
+    R(ctx, x + 4, y + 2, 4, 4, C.ownerSkin);
+    P(ctx, x + 5, y + 3, "#1a1a2e"); P(ctx, x + 7, y + 3, "#1a1a2e");
+    P(ctx, x + 6, y + 5, "#ff6b9d");
+    // áo xanh
+    R(ctx, x + 3, y + 6, 6, 5, C.ownerShirt);
+    if (frame === 1) { R(ctx, x + 1, y + 7, 3, 3, C.ownerShirt); R(ctx, x + 8, y + 7, 3, 3, C.ownerShirt); }
+    else { R(ctx, x + 3, y + 7, 2, 3, C.ownerShirt); R(ctx, x + 7, y + 7, 2, 3, C.ownerShirt); }
+    // quần + chân
+    R(ctx, x + 3, y + 11, 6, 3, "#3d5a80");
+    R(ctx, x + 3, y + 14, 2, 2, "#3c2716"); R(ctx, x + 7, y + 14, 2, 2, "#3c2716");
+  }
+
+  // Bướm vàng (8×6 logical)
+  function drawButterfly(ctx, x, y, time) {
+    var fr = Math.floor(time * 8) % 2 === 0 ? 0 : 3;
+    R(ctx, x - 2 - fr, y - 2, 3, 3, "#e8c93a");
+    R(ctx, x + 2, y - 2, 3 + fr, 3, "#e8c93a");
+    R(ctx, x - 1, y + 1, 2, 2, "#d4a61e");
+    R(ctx, x + 2, y + 1, 2, 2, "#d4a61e");
+    P(ctx, x, y, "#3c2a10");
+  }
+
+  // Ma xanh đầu lâu LỚN (ảnh D) — 12×20 logical
+  function drawGhostSkull(ctx, x, y, time, state) {
+    var bob = Math.sin(time * 2) * 1;
+    var a = state && state.darkness > 0.5 ? 0.85 : 1;
+    var g = "rgba(142,201,255," + a + ")";
+    R(ctx, x + 1, y + 2 + Math.floor(bob), 10, 14, g);
+    R(ctx, x, y + 4 + Math.floor(bob), 12, 8, g);
+    R(ctx, x + 2, y + 16 + Math.floor(bob), 8, 3, g);
+    // đuôi ma lượn
+    var w1 = Math.floor(Math.sin(time * 3) * 1);
+    R(ctx, x + 2, y + 19 + Math.floor(bob), 3 - w1, 2, g);
+    R(ctx, x + 7, y + 19 + Math.floor(bob), 3 + w1, 2, g);
+    // hộp sọ trắng
+    R(ctx, x + 2, y + 4 + Math.floor(bob), 8, 6, C.skull);
+    R(ctx, x + 3, y + 3 + Math.floor(bob), 2, 2, C.skull);
+    R(ctx, x + 7, y + 3 + Math.floor(bob), 2, 2, C.skull);
+    P(ctx, x + 3, y + 6 + Math.floor(bob), "#0a0a14"); P(ctx, x + 8, y + 6 + Math.floor(bob), "#0a0a14");
+    P(ctx, x + 4, y + 8 + Math.floor(bob), "#0a0a14"); P(ctx, x + 7, y + 8 + Math.floor(bob), "#0a0a14");
+  }
+
+  // ===== 5 KIỂU HÙ (ảnh E) =====
+  // 1. Ma trắng ga
+  function drawScareGhost(ctx, x, y, time) {
+    var bob = Math.sin(time * 4) * 1;
+    var g = "rgba(232,236,242,0.9)";
+    R(ctx, x, y + 2 + bob, 10, 12, g);
+    R(ctx, x + 1, y + 14 + bob, 8, 3, g);
+    R(ctx, x + 2, y + 17 + bob, 2, 2, g); R(ctx, x + 6, y + 17 + bob, 2, 2, g);
+    R(ctx, x + 2, y + 4 + bob, 2, 2, "#0a0a14"); R(ctx, x + 6, y + 4 + bob, 2, 2, "#0a0a14");
+    R(ctx, x + 3, y + 7 + bob, 4, 2, "#0a0a14");
+  }
+  // 2. Chân dung hét (tay vươn khỏi khung)
+  function drawScarePortrait(ctx, x, y, time) {
+    R(ctx, x, y, 14, 12, "#4a3a2a");
+    R(ctx, x + 1, y + 1, 12, 10, "#1a1020");
+    R(ctx, x + 3, y + 3, 8, 6, "#c9a38a");
+    R(ctx, x + 4, y + 2, 2, 2, "#5a3a20"); R(ctx, x + 8, y + 2, 2, 2, "#5a3a20");
+    // miệng hét
+    R(ctx, x + 5, y + 7, 4, 3, "#3a0a0a");
+    // tay vươn
+    var ext = Math.floor(time * 4) % 2 === 0 ? 2 : 0;
+    R(ctx, x - 3 - ext, y + 4, 3 + ext, 2, "#c9a38a");
+    R(ctx, x + 13, y + 4, 3 + ext, 2, "#c9a38a");
+  }
+  // 3. Tay zombie từ bóng tối
+  function drawScareHands(ctx, x, y, time) {
+    R(ctx, x - 4, y - 6, 14, 14, "#05050c");
+    var r1 = Math.floor(time * 3) % 2 === 0 ? 0 : 1;
+    R(ctx, x + 0, y + 2 + r1, 3, 5, "#cfd4dc");
+    R(ctx, x + 5, y + 4 - r1, 3, 5, "#cfd4dc");
+    R(ctx, x + 9, y + 1 + r1, 3, 5, "#cfd4dc");
+    P(ctx, x + 1, y + 5, "#8a8f98"); P(ctx, x + 6, y + 6, "#8a8f98"); P(ctx, x + 10, y + 5, "#8a8f98");
+  }
+  // 4. Bóng đen mắt vàng
+  function drawScareShadow(ctx, x, y, time) {
+    R(ctx, x, y + 4, 14, 18, "#05050c");
+    R(ctx, x + 1, y + 2, 12, 16, "#05050c");
+    R(ctx, x + 3, y, 8, 14, "#05050c");
+    if (Math.floor(time * 2) % 2 === 0) {
+      R(ctx, x + 4, y + 6, 3, 2, C.eyeYellow); R(ctx, x + 9, y + 6, 3, 2, C.eyeYellow);
+    }
+  }
+  // 5. Mặt xương sọ lớn
+  function drawScareSkull(ctx, x, y, time) {
+    var s = Math.floor(time * 5) % 2 === 0 ? 1 : 0;
+    R(ctx, x, y, 12, 11, C.skull);
+    R(ctx, x + 1, y - 1 + s, 10, 4, C.skullDark);
+    R(ctx, x + 2, y + 2, 3, 4, "#0a0a14"); R(ctx, x + 7, y + 2, 3, 4, "#0a0a14");
+    R(ctx, x + 3, y + 8, 6, 2, "#0a0a14");
+    P(ctx, x + 1, y + 4, C.skullDark); P(ctx, x + 10, y + 4, C.skullDark);
+  }
+
+  // Vết máu (bếp)
+  function drawBlood(ctx, x, y, time) {
+    R(ctx, x, y, 24, 5, C.blood);
+    R(ctx, x + 4, y + 5, 16, 3, C.blood);
+    R(ctx, x + 8, y + 8, 8, 2, C.bloodDark);
+    R(ctx, x - 2, y + 3, 4, 3, C.bloodDark); R(ctx, x + 22, y + 4, 4, 2, C.bloodDark);
+    if (Math.floor(time * 1.5) % 2 === 0) P(ctx, x + 12, y + 10, C.bloodDark);
+  }
+
+  // Bánh kem (cảnh 6 + END)
+  function drawCake(ctx, x, y, time) {
+    R(ctx, x, y, 16, 5, C.cake);
+    R(ctx, x + 1, y - 2, 14, 3, C.cakeFrost);
+    R(ctx, x + 2, y + 1, 12, 2, "#ff9db8");
+    for (var i = 0; i < 4; i++) {
+      R(ctx, x + 3 + i * 4, y - 6, 1, 4, "#ff6b9d");
+      R(ctx, x + 3 + i * 4, y - 8, 1, 2, (Math.floor(time * 5 + i) % 2 === 0) ? C.flame : "#ff8c1c");
+    }
+  }
+
+  // Mũi tên chỉ đường
+  function arrow(ctx, x, y, dir) {
+    if (dir === 1) { R(ctx, x, y + 1, 4, 1, C.textYellow); R(ctx, x + 1, y, 2, 1, C.textYellow); R(ctx, x + 1, y + 3, 2, 1, C.textYellow); }
+    else { R(ctx, x, y + 1, 4, 1, C.textYellow); R(ctx, x + 1, y, 2, 1, C.textYellow); R(ctx, x + 1, y + 3, 2, 1, C.textYellow); }
+  }
+
+  // ===== Public =====
   root.Sprites = {
-    cat: cat, butterfly: butterfly, owner: owner, ownerSit: ownerSit,
-    ghost: ghost, cake: cake, heart: heart, arrow: arrow,
-    door: door, bush: bush, tree: tree, flower: flower, blood: blood,
-    getBG: getBG
+    GX: GX, GW: GW, GH: GH, C: C,
+    drawTitle: drawTitle,
+    drawGarden: drawGarden,
+    drawLiving: drawLiving,
+    drawKitchen: drawKitchen,
+    drawHaunted: drawHaunted,
+    drawHallway: drawHallway,
+    drawBirthday: drawBirthday,
+    drawGameOver: drawGameOver,
+    drawEnd: drawEnd,
+    drawCat: drawCat,
+    drawOwner: drawOwner,
+    drawButterfly: drawButterfly,
+    drawGhostSkull: drawGhostSkull,
+    drawScareGhost: drawScareGhost,
+    drawScarePortrait: drawScarePortrait,
+    drawScareHands: drawScareHands,
+    drawScareShadow: drawScareShadow,
+    drawScareSkull: drawScareSkull,
+    drawBlood: drawBlood,
+    drawCake: drawCake,
+    arrow: arrow
   };
-})(typeof window !== "undefined" ? window : this);
+})(typeof self !== "undefined" ? self : this);

@@ -1,22 +1,22 @@
-# YUNIEBEL — Cuộc phiêu lưu của mèo con 🐱🎂
+# YUNIEBEL'S CAT — Cuộc phiêu lưu của mèo con 🐱
 
 Webgame 2D pixel art **100% static** (HTML/CSS/JS thuần — 0 dependency, không build, không CDN). Chạy offline bằng cách mở `index.html` trực tiếp, hoặc online qua GitHub Pages.
 
+> Làm lại hoàn toàn theo kịch bản chi tiết + 5 ảnh tham khảo — TASK-078 (thay thế bản TASK-077).
+
 ## 🎮 Cách chơi
 
-- **WASD** — di chuyển mèo (mũi tên cũng được)
-- **1 / 2** — chọn lựa khi xuất hiện hộp chọn
-- **Nút UI (góc trên phải)** — bật/tắt khung nhiệm vụ
-- **✕ (góc trên trái)** — về màn hình chính
+- **WASD / mũi tên** — di chuyển mèo
+- **Space / Enter** — advance hội thoại nhanh
+- **1 / 2** (hoặc click) — chọn lựa ở cảnh nhà bếp
+- **🔊** (góc phải) — bật/tắt âm thanh
 - Mobile: d-pad ảo hiện tự động
 
 ## 📖 Câu chuyện
 
-Hôm nay là sinh nhật Yuniebel — nhưng chủ nhân biến mất... Đi qua 6 cảnh: sân vườn đuổi bướm → nhà bếp bí ẩn → phòng khách ma ám → hành lang dài → và cuối cùng là một bất ngờ ngọt ngào. 🎂
+Hôm nay là sinh nhật Yuniebel — nhưng chủ nhân biến mất... 7 màn chơi: sân vườn đuổi bướm (ngày → hoàng hôn → đêm) → phòng khách → nhà bếp bí ẩn (lựa chọn 1/2) → phòng khách ma ám (ma xanh đầu lâu chặn cửa) → hành lang 5 jump scare → và cuối cùng là một bất ngờ ngọt ngào. 🎂
 
 ## 🚀 Chơi online (GitHub Pages)
-
-Sau khi workflow `pages.yml` deploy (cần bật **Settings → Pages → Source: GitHub Actions**):
 
 ```
 https://mrdanhdanh.github.io/aios-python/games/yuniebel/
@@ -27,21 +27,33 @@ https://mrdanhdanh.github.io/aios-python/games/yuniebel/
 ```
 games/yuniebel/
 ├── index.html      # Canvas + UI overlay (script classic, relative path)
-├── style.css       # Pixel style + letterbox
+├── style.css       # Pixel style + letterbox + overlay
 ├── src/
-│   ├── core.js     # Logic thuần (test được bằng Node — UMD)
-│   ├── sprites.js  # Pixel art vẽ bằng ma trận ký tự
-│   ├── audio.js    # WebAudio SFX tự sinh (meow/scare/chime)
-│   └── game.js     # Game loop + render + input
+│   ├── core.js     # Logic thuần (UMD — test được bằng Node)
+│   ├── sprites.js  # 7 cảnh + sprite vẽ canvas primitives theo 5 ảnh ref
+│   ├── audio.js    # WebAudio: 10 mood nhạc nền + 27 SFX (audio clock)
+│   └── game.js     # Game loop + render + input + debug hook (?test=1)
 └── test/
-    └── core.test.js  # node test/core.test.js
+    ├── core.test.js    # logic thuần (27 assertions)
+    ├── smoke.test.js   # jsdom load (4 assertions)
+    ├── e2e.spec.js     # Playwright — chơi thật không hook + audio assert
+    ├── visual.spec.js  # Playwright — chụp 17 ảnh đối chiếu brief
+    └── brief/          # README + COMPARISON.md (đối chiếu 17/17 khớp)
 ```
 
 ## ✅ Test
 
 ```bash
-node test/core.test.js        # logic thuần (58 assertions)
-node test/smoke.test.js       # smoke test jsdom (cần node_modules của dashboard)
+npm test                 # core + smoke + playwright (54/54 PASS)
+node test/core.test.js   # logic thuần (27)
+node test/smoke.test.js  # smoke jsdom (4)
+npx playwright test      # e2e + visual — chụp 17 ảnh ra test-results/shots/
 ```
 
-Tạo bởi AIOS Orchestrator — TASK-077 (spec + critique ×2 + review + test đầy đủ).
+Test gồm **chụp ảnh màn hình 17 cảnh** đối chiếu với brief (COMPARISON.md) + **2 test chơi thật không hook** (title→sinh nhật, title→game over).
+
+## 🔍 Debug
+
+Thêm `?test=1` vào URL → `window.__yuniebel.debug` (setPhase/setPlayer/setDarkness/setScareZone/freeze...) — chỉ dùng cho test/chụp ảnh.
+
+Tạo bởi AIOS Orchestrator — TASK-078 (spec + critique ×2 + review + post-review + test + evaluation đầy đủ).

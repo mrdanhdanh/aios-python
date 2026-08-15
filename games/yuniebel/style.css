@@ -1,181 +1,135 @@
-/* style.css — Yuniebel: pixel style, letterbox, UI overlay */
+/* style.css — Yuniebel's Cat (TASK-078) — pixel style + letterbox */
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
+  background: #0a0a14;
   overflow: hidden;
-  background: #10101c;
-  font-family: "Courier New", Courier, monospace;
-  user-select: none;
-  -webkit-user-select: none;
+  font-family: "Courier New", monospace;
+  image-rendering: pixelated;
 }
 
 #wrap {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
 }
 
 #game {
+  background: #000;
+  border: 4px solid #2a2a3a;
+  border-radius: 4px;
+  box-shadow: 0 0 40px rgba(60, 60, 120, 0.35);
   image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  background: #7ec8ff;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
-  touch-action: none;
 }
 
-/* ===== Khung nhiệm vụ ===== */
+/* ===== UI overlay ===== */
 #task-box {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(12, 12, 28, 0.85);
-  border: 3px solid #ff6fb5;
-  color: #fff;
-  padding: 10px 14px 12px 14px;
-  max-width: 260px;
-  z-index: 20;
-  image-rendering: pixelated;
-}
-#task-title {
-  font-size: 11px;
-  letter-spacing: 3px;
-  color: #ffc4e3;
-  margin-bottom: 4px;
-}
-#task-text {
+  position: absolute; top: 10px; left: 10px;
+  background: rgba(16, 16, 24, 0.92);
+  border: 2px solid #ffd93b;
+  color: #ffd93b;
+  padding: 8px 12px;
   font-size: 13px;
-  line-height: 1.5;
-  color: #fff;
+  min-width: 180px;
+  z-index: 10;
 }
 #task-close {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: none;
-  border: none;
-  color: #ff6fb5;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 2px 6px;
+  position: absolute; top: 4px; right: 4px;
+  background: none; border: none;
+  color: #ffd93b; font-size: 14px; cursor: pointer;
 }
-#task-close:hover { color: #fff; }
+#task-title { font-weight: bold; letter-spacing: 2px; margin-bottom: 4px; }
+#task-text { color: #fff; white-space: pre-wrap; }
 
-/* ===== Nút bật/tắt UI ===== */
-#ui-toggle {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(12, 12, 28, 0.85);
-  border: 2px solid #ff6fb5;
-  color: #fff;
-  font-family: inherit;
-  font-size: 12px;
-  padding: 6px 10px;
+#ui-toggle, #mute-btn {
+  position: absolute; top: 10px;
+  background: rgba(16, 16, 24, 0.85);
+  border: 2px solid #ffd93b;
+  color: #ffd93b;
+  padding: 4px 10px;
+  font-size: 13px;
   cursor: pointer;
-  z-index: 20;
+  z-index: 10;
+  font-family: "Courier New", monospace;
 }
-#ui-toggle:hover { background: #ff6fb5; color: #10101c; }
+#ui-toggle { right: 10px; }
+#mute-btn { right: 56px; }
 
 /* ===== Hội thoại ===== */
 #dialogue {
-  position: absolute;
-  left: 50%;
-  bottom: 14%;
-  transform: translateX(-50%);
-  background: rgba(12, 12, 28, 0.9);
-  border: 2px solid #ffc4e3;
-  color: #fff;
-  font-size: 14px;
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  background: #101018;
+  border: 3px solid #ffd93b;
+  color: #ffd93b;
   padding: 10px 18px;
-  max-width: 380px;
+  font-size: 16px;
+  max-width: 80%;
   text-align: center;
-  z-index: 20;
-  animation: pop 0.15s ease-out;
+  z-index: 12;
+  border-radius: 2px;
 }
-@keyframes pop {
-  from { transform: translateX(-50%) scale(0.9); opacity: 0; }
-  to { transform: translateX(-50%) scale(1); opacity: 1; }
-}
+#dialogue.thought { border-color: #8ec9ff; color: #8ec9ff; font-style: italic; }
 
 /* ===== Hộp lựa chọn ===== */
 #choice-box {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(12, 12, 28, 0.92);
-  border: 3px solid #e63946;
-  padding: 18px 22px;
+  position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%);
+  background: #101018;
+  border: 3px solid #ffd93b;
+  color: #ffd93b;
+  padding: 16px 22px;
+  z-index: 20;
   text-align: center;
-  z-index: 30;
+  border-radius: 2px;
 }
-.choice-title {
-  color: #ffb3b3;
-  font-size: 14px;
-  margin-bottom: 12px;
-}
+.choice-title { margin-bottom: 12px; font-weight: bold; }
 .choice-btn {
-  display: block;
-  width: 100%;
-  margin: 6px 0;
-  background: #1c1c30;
-  border: 2px solid #ff6fb5;
+  display: block; width: 100%;
+  background: #1a1a28;
+  border: 2px solid #ffd93b;
   color: #fff;
-  font-family: inherit;
-  font-size: 14px;
-  padding: 8px 12px;
+  padding: 8px 20px;
+  margin: 6px 0;
+  font-size: 15px;
   cursor: pointer;
-  text-align: left;
+  font-family: "Courier New", monospace;
 }
-.choice-btn:hover { background: #ff6fb5; color: #10101c; }
+.choice-btn:hover { background: #2a2a44; }
 
 /* ===== Scare counter ===== */
 #scare-counter {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background: rgba(12, 12, 28, 0.85);
-  border: 2px solid #9b7bff;
-  color: #ffd93d;
-  font-size: 12px;
-  padding: 6px 10px;
-  z-index: 20;
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  background: rgba(16, 16, 24, 0.85);
+  border: 2px solid #ffd93b;
+  color: #ffd93b;
+  padding: 4px 14px;
+  font-size: 14px;
+  z-index: 10;
 }
 
 /* ===== Hint ===== */
 #hint {
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 11px;
-  z-index: 15;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  position: absolute; bottom: 8px; right: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  z-index: 10;
 }
 
 /* ===== D-pad ===== */
 #dpad {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
-  display: grid;
-  grid-template-columns: 40px 40px 40px;
-  grid-template-rows: 40px 40px;
+  position: absolute; bottom: 16px; left: 16px;
+  display: grid; grid-template-columns: 44px 44px 44px; grid-template-rows: 44px 44px;
   gap: 4px;
-  z-index: 30;
+  z-index: 15;
 }
 .pad {
-  background: rgba(12, 12, 28, 0.7);
-  border: 2px solid #ff6fb5;
-  color: #fff;
-  font-size: 14px;
+  background: rgba(16, 16, 24, 0.75);
+  border: 2px solid #ffd93b;
+  color: #ffd93b;
+  font-size: 18px;
   cursor: pointer;
-  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 #pad-up { grid-column: 2; }
 #pad-left { grid-column: 1; grid-row: 2; }
@@ -184,43 +138,38 @@ html, body {
 
 /* ===== Overlay screens ===== */
 .overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  background: rgba(10, 12, 30, 0.55);
-  z-index: 40;
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+  background: rgba(8, 8, 20, 0.25); /* để thấy rõ cảnh nền (trời xanh, mây, mèo) — brief ảnh 1 */
+  z-index: 30;
   text-align: center;
 }
-#title-screen { background: rgba(80, 160, 255, 0.12); }
 .pixel-title {
-  font-size: 44px;
-  letter-spacing: 8px;
-  color: #ffd93d;
-  text-shadow: 3px 3px 0 #ff6fb5, 6px 6px 0 rgba(0, 0, 0, 0.4);
+  color: #ffd93b;
+  font-size: 34px;
+  letter-spacing: 4px;
+  text-shadow: 3px 3px 0 #7a4a00;
+  font-family: "Courier New", monospace;
 }
-.over-title { color: #ff3b3b; text-shadow: 3px 3px 0 #1a1a2e; }
-.end-title { font-size: 26px; letter-spacing: 2px; color: #ff6fb5; }
-.subtitle {
-  color: #fff;
-  font-size: 15px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
+.subtitle { color: #fff; font-size: 15px; }
+.tiny { color: rgba(255, 255, 255, 0.55); font-size: 12px; }
+.over-title { color: #ff3b3b; text-shadow: 3px 3px 0 #5a0a0a; }
+.end-title { color: #ffd93b; }
+
 .big-btn {
-  background: #ff6fb5;
-  border: 3px solid #fff;
-  color: #1a1a2e;
-  font-family: inherit;
-  font-size: 20px;
+  background: #2ea44f;
+  border: 4px solid #1a1a2e;
+  color: #ffb52e;
+  font-size: 26px;
   font-weight: bold;
-  padding: 12px 36px;
+  padding: 12px 48px;
   cursor: pointer;
-  letter-spacing: 2px;
+  font-family: "Courier New", monospace;
+  box-shadow: 4px 4px 0 #1a1a2e;
+  letter-spacing: 3px;
 }
-.big-btn:hover { background: #ffd93d; }
-.tiny { color: rgba(255, 255, 255, 0.8); font-size: 11px; }
+.big-btn:hover { background: #38c05e; transform: translate(-1px, -1px); }
 
 .hidden { display: none !important; }
