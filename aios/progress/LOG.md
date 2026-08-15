@@ -4,6 +4,11 @@
 > Entry `[bypass]` = fix nhỏ làm nhanh, có lý do.
 > Entry mới ghi LÊN ĐẦU file (mới nhất trước).
 
+| 2026-08-15 | TASK-043 | plan | Khởi động M8 theo dependency; chọn Public AIOS SDK làm task đầu tiên và ghi nhận hard gate trước implement | `todo` — cần spec, critique ×2, tasks và review trước khi code | `docs/PLAN.md §M8`, `aios/progress/PROGRESS.md` |
+| 2026-08-15 | TASK-043 | hard-gate | Hoàn tất spec, critique-1, critique-2, tasks và pre-implementation review; resolve import boundary, DTO strict, DAG, transport injection | **PASS — được phép implement** | `aios/progress/tasks/TASK-043/` |
+| 2026-08-15 | TASK-043 | implement/test | Implement SDK Python v1 độc lập (DTO, Agent/Tool/Capability/Workflow, Client/Transport, metadata, README); SDK tests | **5 passed**; backend regression còn 1 flaky failure có sẵn tại `test_planning_engine.py::TestEngine::test_deterministic` (`latency_ms` timing 0/1), không liên quan SDK | `sdk/python/`, `aios/progress/tasks/TASK-043/` |
+| 2026-08-15 | TASK-043 | evaluate | Đối chiếu 10 AC: Public SDK v1 đạt phạm vi; ghi nhận 1 AC strict request DTO đạt một phần và backend flaky timing ngoài scope | **TASK-043 DONE**; M8 tiếp tục TASK-044 Plugin Runtime | `aios/progress/tasks/TASK-043/evaluation.md` |
+
 | Thời gian | Task | Bước | Việc đã làm | Kết quả | Artifact |
 |-----------|------|------|-------------|---------|----------|
 | 2026-08-15 | TASK-035..042 | implement | Implement Enterprise M7 package (identity/tenancy/runtime/scheduler/governance/security/operations/dashboard) + config (EnterpriseSettings) + wiring (RuntimeKernel.create register EnterpriseManager) + 29 enterprise tests + 8 m7_* arch invariant tests; INV-022..INV-029 | **1560 pass (baseline 1521 + 39), coverage 95.05%, 8/8 AC (E1-E7) — M7 CORE HOÀN TẤT** | `enterprise/*`, `config.*`, `runtime_kernel.py`, `test_architecture.py`, `test_enterprise.py` |

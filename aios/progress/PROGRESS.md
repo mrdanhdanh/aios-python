@@ -15,6 +15,7 @@
 | M5 | Core Intelligence (P9–P10: memory/context/model/planning/graph/scheduler) | `done` ✅ (1086 tests, 95.22%) |
 | M6 | AIOS Harness (P11: harness kernel, verification, test & simulation, evaluation, benchmark, doctor & readiness) | `done` ✅ (1521 tests, 95.35%) |
 | M7 | Enterprise (P12: identity, tenancy, distributed runtime, distributed scheduler, governance, security, operations, dashboard) | `in-progress` 🔄 (1560 tests, 95.05%) |
+| M8 | Ecosystem (P13: Public SDK, Plugin Runtime, Extension Contracts, Registry, Developer Kit, Hub, Certification) | `in-progress` 🔄 (planning TASK-043) |
 
 ## Hạ tầng bổ sung (bypass)
 
@@ -240,6 +241,7 @@
 | TASK-040 | E6 Security & Data Isolation — CredentialBroker (scoped INV-024) + NetworkPolicy (default-deny) + SandboxBoundary (INV-028) | `done` ✅ | `enterprise/security.py` |
 | TASK-041 | E7 Operations — CentralAuditStore (tamper-evident INV-027) + HealthMonitor failover + RecoveryManager | `done` ✅ | `enterprise/operations.py` |
 | TASK-042 | Enterprise Operations + Dashboard — EnterpriseDashboard aggregate tenant metrics từ audit | `done` ✅ | `enterprise/dashboard.py` |
+| TASK-043 | M8-E1 — Public AIOS SDK | `done` ✅ | 5 SDK tests pass; backend regression có 1 flaky timing failure không liên quan |
 | INV-022..029 | 8 architecture invariant enforced bằng import allow-list + source-literal tests trong `tests/test_architecture.py` (m7_*) | `done` ✅ | 79 arch tests pass (chung) |
 
 **Deliverable M7 (batch)**: `backend/src/aios_core/enterprise/` 10 file (contracts, identity, tenancy, runtime, scheduler, governance, security, operations, dashboard, __init__) + config (`EnterpriseSettings` trong `config.py` + `config.yaml`) + wiring (`RuntimeKernel.create` register `EnterpriseManager`) + `tests/test_enterprise.py` (29 tests) + `tests/test_architecture.py` (8 m7_* invariant tests).
