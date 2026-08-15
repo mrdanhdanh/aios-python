@@ -1377,6 +1377,7 @@ OBSERVE → THINK → PLAN → ACT → RESULT → VERIFY → EVALUATE → LEARN 
 → Kết quả: AIOS có Autonomy Layer (Goal Engine, World Model, Planner, Governor, Recovery, Learning) vận hành theo Goal dài hạn, bounded bởi Policy/Budget/Risk,可逆 qua Checkpoint, tự kiểm chứng qua Harness (M6) và Enterprise (M7), mở rộng qua Ecosystem (M8) — enforced bởi 5 invariant mới INV-030..INV-034
 
 ### M10 – AIOS 1.0 (P15 — Productization + Stabilization + Certification)
+> ✅ **DONE 2026-08-15** — 13/13 task (TASK-063..075), 5 phase hoàn tất; `aiagent conformance` → **AIOS 1.0 READY** (9/9 areas · 20/20 GS · 5/5 gates); full suite **1939 pass** + vitest 13+19; Constitution 1.0 (INV-001..034 frozen); 75 task toàn dự án. Chi tiết: `aios/progress/PROGRESS.md` + `reviews/M10-review.md`.
 > M10 **không phải là "thêm nhiều feature cuối cùng"**. M10 = **Productization + Stabilization + Certification**: biến toàn bộ M0–M9 thành một AI Operating System có contract ổn định, runtime đáng tin cậy, autonomous bounded, ecosystem mở và đủ chuẩn để gọi là **AIOS 1.0**.
 > ```
 > M10 = Freeze Architecture, không phải Freeze Innovation.

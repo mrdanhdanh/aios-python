@@ -4,6 +4,8 @@
 > Entry `[bypass]` = fix nhỏ làm nhanh, có lý do.
 > Entry mới ghi LÊN ĐẦU file (mới nhất trước).
 
+| 2026-08-15 | M10 | milestone | **M10 HOÀN TẤT** — 13/13 task, 5 phase; `aiagent conformance` → **AIOS 1.0 READY** (9/9 areas · 20/20 GS · 5/5 gates); full suite **1939 pass** + vitest 13/13; doctor 100/100; review ACCEPTED (F1 P2: +2 enforcement test INV-008/012; F2 P3: certification layer rule; F3 P3: auth/authz WARN → 1.1). Cập nhật PLAN.md (M10 DONE) + STATS.md (tổng kết 75 task) + PROGRESS.md + reviews/M10-review*.md | **AIOS 1.0 CERTIFIED** | `docs/PLAN.md`, `aios/progress/{PROGRESS,STATS,LOG}.md`, `reviews/M10-review*.md` |
+
 | 2026-08-15 | TASK-073,074 | evaluate | Đóng Phase 5 M10 (Certify): TASK-073 Certification Suite (9 areas + 20 GS + 5 gates — 9/9 PASS; `aiagent conformance` → **AIOS 1.0 READY**) + TASK-074 Migration 1.0 (plan/backup/dry-run/validate/rollback + auto-rollback + journal — 13/13 PASS) | **M10 HOÀN TẤT 13/13 task** — full suite 1939 pass + dashboard 13/13 + conformance READY | `harness/certification/*`, `upgrade/migration.py`, CLI conformance/migrate |
 
 | 2026-08-15 | TASK-073,074 | hard-gate | Batch hard gate M10-P5: TASK-073 (certification — critique ×2 C1-01..05/C2-01..03, review R1–R5) + TASK-074 (migration — critique ×2, review R1–R4) | **PASS — được phép implement** | `aios/progress/tasks/TASK-073/`, `TASK-074/` |

@@ -236,6 +236,31 @@
 | Verify sau fix | scanner `SRC_ROOT` → `healthy=True, 0 violations` (autonomous đã cover); 3/3 new test pass; full suite 1793 pass |
 | Kết luận | **M9 ĐẠT** V1–V7 PASS; V8 P2→RESOLVED (F1); không P1 |
 
+## M10 — AIOS 1.0 ✅ (2026-08-15)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task tổng | 13 (TASK-063 Freeze, 064 Contract 1.0, 065 Hardening, 066 Durable, 067 Safety, 068 Kill Switch, 069 SLO, 070 Security, 071 DX, 072 Dashboard, 073 Certification, 074 Migration, 075 Perf&Cost) — TẤT CẢ done |
+| Task done | 13/13 (đủ 8-file hard gate mỗi task) |
+| Tests (cuối M10) | **1939 pass** (M9: 1793 → +146) + dashboard vitest 13/13 + extension 19/19 |
+| Phase | P1 Freeze (063,064) → P2 Harden (065,066,069) → P3 Secure (067,068,070) → P4 Productize (071,072,075) → P5 Certify (073,074) — 5 commit phase |
+| Invariants | **Freeze INV-001..034** (Constitution 1.0 — vi phạm = release blocker; +2 enforcement test INV-008/012 bổ sung) |
+| Deliverable | `aiagent conformance` → **AIOS 1.0 READY** (9/9 areas · 20/20 GS-001..020 · 5/5 gates A–E); `aiagent health` 100/100; `aiagent contract check` breaking 0; `aiagent slo` READY; `aiagent security-check` SECURE; `aiagent migrate`; `aiagent cost/performance`; `aiagent stop/emergency-stop`; Dashboard 11 tabs + Execution Timeline |
+| Package mới | `harness/certification/` · `security/` · `cli/` · `kernel/{durability,kill_switch,hardening}.py` · `contracts/{catalog,check}.py` · `observability/{slo,performance}.py` · `upgrade/migration.py` · `api/routers/m10.py` |
+| Milestone review (2026-08-15) | **TỰ REVIEW** — full suite 1939 + conformance READY + doctor 100/100 + contract 0 breaking |
+| Findings | 1 P2 (F1: 2 invariant chưa enforce trực tiếp — INV-008/012 → +2 test) + 2 P3 (F2 certification layer rule; F3 auth/authz WARN ghi nhận 1.1) |
+| Kết luận | **M10 ĐẠT (ACCEPTED)** — không P1; AIOS 1.0 READY |
+
+## Tổng kết toàn dự án (M0–M10)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Milestone | 11/11 done (M0–M10) |
+| Task | **75 task** (M0:1, M1:9, M2:7, M3:3, M4:3, M5:6, M6:6, M7:8, M8:7, M9:13, M10:13) |
+| Tests | **1939 pytest + 13 vitest dashboard + 19 vitest extension** |
+| Invariants | INV-001..034 frozen (Constitution 1.0) |
+| Deliverable cuối | `aiagent conformance` → **AIOS 1.0 READY** |
+
 ## Bài học M3-M4 (bổ sung)
 
 36. **VS Code Selection không có `.text`** — phải `document.getText(selection)`; stub test theo API thật, không bịa (P1 TASK-019).
