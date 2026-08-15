@@ -57,7 +57,16 @@ Quy tắc: KHÔNG được nói "xong" khi checklist chưa đóng đủ. Nếu q
 - Message commit ngắn gọn, tiền tố milestone/phase: `M0: tạo ...`.
 - Luôn commit trước khi kết thúc phiên.
 
+## 4.1. Branching Model (BẮT BUỘC — xem ADR-0005)
+
+- **`master`** = nhánh ổn định duy nhất, CHỈ nhận thay đổi từ `verify` (không commit trực tiếp, không nhận nhánh khác).
+- **`verify`** = trạm kiểm tra bắt buộc: mọi thay đổi phải đi qua `verify` trước khi về `master`.
+- **Nhánh chức năng** (feature/fix/docs/...) phải tạo TỪ `verify` (KHÔNG tạo từ `master`), tên có tiền tố loại: `feature/`, `fix/`, `docs/`, `operation/`, `refactor/`, `test/`...
+- **Chuỗi bắt buộc**: nhánh chức năng (từ `verify`) → merge vào `verify` → kiểm tra trên `verify` (test + hard gate + review) → `verify` → `master` (chỉ khi verify PASS).
+- Vi phạm (tạo nhánh từ master, commit thẳng master, merge thẳng master) = sai quy trình, phải sửa lại.
+
 ## 5. Ngôn ngữ
 
 - Tài liệu tiến độ (`aios/progress/`) và trao đổi với người dùng: **tiếng Việt**.
 - Code, tên biến, tên file, commit message: **tiếng Anh** (trừ tài liệu).
+- Chi tiết branching model: [ADR-0005](docs/adr/0005-branching-model.md).

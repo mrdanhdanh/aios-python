@@ -3,6 +3,13 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## 🔒 Quy tắc branching mới (BẮT BUỘC từ 2026-08-15 — ADR-0005)
+
+- `master` = ổn định, CHỈ nhận từ `verify`; `verify` = trạm kiểm tra bắt buộc (test + hard gate + review).
+- Nhánh chức năng tạo TỪ `verify` (tiền tố `feature/`, `fix/`, `docs/`, `operation/`, `refactor/`, `test/`...).
+- Chuỗi: nhánh chức năng → `verify` (kiểm tra) → `master`. Vi phạm = sai quy trình.
+- Ghi chú: các entry bypass trước (tạo nhánh operation/test-A, verify) nằm trên nhánh operation/test-A — chưa gộp về master.
+
 ## ✅ TASK-076 — Architecture v3 (Mermaid): AIOS 1.0 Final (2026-08-15)
 
 - **Kết quả**: tạo `docs/architecture-v3.md` — bản **hiện hành** (AIOS 1.0 Final, **Mermaid** — theo yêu cầu người dùng phương án "2 và 3"), 12 khối sơ đồ (10 flowchart + stateDiagram-v2 Safety chain + sequenceDiagram Kill Switch), 7 tầng L1..L7 theo `layer-model.md` **frozen** (Autonomous = L2 — sửa điểm v2 sai; Harness/Enterprise/Ecosystem = L7; M10 = nhóm đảm bảo không phải L8), bảng tasks M10 13/13 done (đúng ánh xạ id PROGRESS), INV-001..034 frozen + 5 release gates + AIOS 1.0 READY/CERTIFIED. `architecture-v2.md` đánh dấu **LỊCH SỬ** (header/§0/§14); README link → v3.
