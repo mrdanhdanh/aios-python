@@ -4,6 +4,9 @@
 > Entry `[bypass]` = fix nhỏ làm nhanh, có lý do.
 > Entry mới ghi LÊN ĐẦU file (mới nhất trước).
 
+| 2026-08-15 | TASK-073,074 | evaluate | Đóng Phase 5 M10 (Certify): TASK-073 Certification Suite (9 areas + 20 GS + 5 gates — 9/9 PASS; `aiagent conformance` → **AIOS 1.0 READY**) + TASK-074 Migration 1.0 (plan/backup/dry-run/validate/rollback + auto-rollback + journal — 13/13 PASS) | **M10 HOÀN TẤT 13/13 task** — full suite 1939 pass + dashboard 13/13 + conformance READY | `harness/certification/*`, `upgrade/migration.py`, CLI conformance/migrate |
+
+| 2026-08-15 | TASK-073,074 | hard-gate | Batch hard gate M10-P5: TASK-073 (certification — critique ×2 C1-01..05/C2-01..03, review R1–R5) + TASK-074 (migration — critique ×2, review R1–R4) | **PASS — được phép implement** | `aios/progress/tasks/TASK-073/`, `TASK-074/` |
 | 2026-08-15 | TASK-071,072,075 | evaluate | Đóng Phase 4 M10 (Productize): TASK-071 Developer Experience (doctor first-class 18 hạng mục Health 100/100 + 6 lệnh mới — 10/10 PASS) + TASK-072 Dashboard 1.0 (11 tabs + Execution Timeline, API /m10/* — backend 5/5 + vitest 13/13) + TASK-075 Performance & Cost (cost 5 chiều + model independence — 11/11 PASS) | **M10-P4 DONE** — full suite 1917 pass + dashboard 13/13 | `cli/{doctor,system}.py`, `api/routers/m10.py`, `observability/performance.py`, `dashboard/src/views/{Overview,ExecutionTimeline}.tsx` |
 
 | 2026-08-15 | TASK-071,072,075 | hard-gate | Batch hard gate M10-P4: TASK-071 (doctor 18 items, critique ×2, review R1–R4) + TASK-072 (dashboard 11 tabs + timeline, critique ×2, review R1–R4) + TASK-075 (performance/cost, critique ×2, review R1–R4) | **PASS — được phép implement** | `aios/progress/tasks/TASK-071/`, `TASK-072/`, `TASK-075/` |

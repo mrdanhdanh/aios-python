@@ -30,8 +30,8 @@
 | TASK-071 | F7 Developer Experience — command tree thống nhất + `aiagent doctor` first-class (Health/100) | M10-P4 | `done` ✅ (10/10 PASS — Health 100/100) | AIOS Orchestrator |
 | TASK-072 | AIOS Dashboard 1.0 — 11 tabs + Execution Timeline | M10-P4 | `done` ✅ (backend 5/5 + vitest 13/13) | AIOS Orchestrator |
 | TASK-075 | Performance & Cost — metrics + Cost/Goal/Workflow/Agent/Tool/Success + model independence | M10-P4 | `done` ✅ (11/11 PASS — full suite 1917) | AIOS Orchestrator |
-| TASK-073 | F8 Certification Suite — 13 categories + GS-001..020 + `aiagent conformance` + 5 release gates | M10-P5 | `todo` | AIOS Orchestrator |
-| TASK-074 | Upgrade & Migration 1.0 — migration plan/backup/dry-run/validation/rollback (0.x→1.0, plugin/contract/workflow v0→v1) | M10-P5 | `todo` | AIOS Orchestrator |
+| TASK-073 | F8 Certification Suite — 13 categories + GS-001..020 + `aiagent conformance` + 5 release gates | M10-P5 | `done` ✅ (9/9 PASS — **AIOS 1.0 READY**) | AIOS Orchestrator |
+| TASK-074 | Upgrade & Migration 1.0 — migration plan/backup/dry-run/validation/rollback (0.x→1.0, plugin/contract/workflow v0→v1) | M10-P5 | `done` ✅ (13/13 PASS — full suite 1939) | AIOS Orchestrator |
 
 ## ✅ Review toàn diện M0–M9 (2026-08-15)
 

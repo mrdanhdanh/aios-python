@@ -85,6 +85,18 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("performance", help="Performance metrics (M10-F4, TASK-075)")
 
+    migrate = sub.add_parser("migrate", help="Migration 1.0 (M10-F5, TASK-074)")
+    migrate.add_argument("kind", help="config|workflow|plugin")
+    migrate.add_argument("from_version", help="Version gốc (semver)")
+    migrate.add_argument("to_version", help="Version đích (semver)")
+    migrate.add_argument("--dry-run", action="store_true", help="Không thay đổi gì")
+    migrate.add_argument("--apply", action="store_true", help="Thực hiện migration")
+    migrate.add_argument("--input", default="-i.json", help="File input JSON (default: stdin-style stub)")
+    migrate.add_argument("--journal", default="aios/data/migrations.db",
+                         help="Migration journal DB path (test isolation)")
+
+    sub.add_parser("conformance", help="AIOS 1.0 conformance — 9 areas + 5 gates (M10-F5, TASK-073)")
+
     serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
     serve.add_argument("--host", default="127.0.0.1", help="Bind host")
     serve.add_argument("--port", type=int, default=8000, help="Bind port")
@@ -180,6 +192,11 @@ def main(argv: list[str] | None = None) -> int:
         return _cost()
     if args.command == "performance":
         return _performance()
+    if args.command == "migrate":
+        return _migrate(args.kind, args.from_version, args.to_version,
+                        args.dry_run, args.apply, args.input, args.journal)
+    if args.command == "conformance":
+        return _conformance()
     if args.command == "serve":
         return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
@@ -562,6 +579,66 @@ def _performance() -> int:
         "tool_count": snap.tool_count,
     }, indent=2))
     return 0
+
+
+def _migrate(kind: str, from_version: str, to_version: str,
+             dry_run: bool, apply: bool, input_file: str,
+             journal_path: str = "aios/data/migrations.db") -> int:
+    """Migration 1.0 (M10-F5, TASK-074)."""
+    from ..upgrade.migration import (
+        MigrationEngine,
+        MigrationFormats,
+        MigrationJournal,
+        MigrationPlan,
+        MigrationStep,
+    )
+
+    # input payload stub (demo): config/workflow/plugin v0
+    if kind == "config":
+        payload = {"autonomous": {"budget": {"max_duration_s": 7200.0}}}
+        fmt = MigrationFormats.config_v0_to_v1
+    elif kind == "workflow":
+        payload = {"id": "w", "nodes": [{"id": "n1", "type": "task", "name": "n1"}]}
+        fmt = MigrationFormats.workflow_v0_to_v1
+    elif kind == "plugin":
+        payload = {"id": "p", "name": "p", "version": "0.9.0",
+                   "aios": {"min": "1.0.0"}}
+        fmt = MigrationFormats.plugin_v0_to_v1
+    else:
+        print(f"FAILED: kind {kind!r} không hỗ trợ (config|workflow|plugin)")
+        return 1
+
+    plan = MigrationPlan(
+        migration_id=f"{kind}:{from_version}->{to_version}",
+        kind=kind, from_version=from_version, to_version=to_version,
+        steps=[MigrationStep(kind=kind, id=f"{kind}.v1", fn=fmt)],
+    )
+    engine = MigrationEngine(journal=MigrationJournal(journal_path))
+    try:
+        if dry_run:
+            result = engine.dry_run(plan, payload)
+            print(json.dumps({"dry_run": True, "steps": result["_dry_run_steps"],
+                              "payload": result}, indent=2))
+            return 0
+        if apply:
+            result = engine.apply(plan, payload)
+            print(json.dumps({"applied": True, "migration_id": plan.migration_id,
+                              "payload": result}, indent=2))
+            return 0
+    except Exception as exc:  # noqa: BLE001
+        print(f"FAILED: {exc}")
+        return 1
+    print("Chọn --dry-run hoặc --apply")
+    return 2
+
+
+def _conformance() -> int:
+    """AIOS 1.0 conformance — 9 areas + 20 GS + 5 release gates (TASK-073)."""
+    from ..harness.certification import ConformanceRunner, format_conformance
+
+    report = ConformanceRunner().run()
+    print(format_conformance(report))
+    return 0 if report.ready else 1
 
 
 def _catalog_list() -> int:

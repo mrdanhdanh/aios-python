@@ -660,6 +660,7 @@ _HARNESS_ALLOWED_EXTERNAL = {
     "time", "abc", "collections", "pathlib",  # pathlib: TASK-030 FILE_EXISTS/
     # CONTAINS checks (R2-1 review) — B7: top-level (collections.abc -> collections)
     "yaml",  # TASK-031: scenarios loader (safe_load — C2-07)
+    "dataclasses", "tempfile",  # TASK-073 certification (contracts + GS ctx)
 }
 
 
@@ -1160,6 +1161,7 @@ _UPGRADE_ALLOWED_EXTERNAL = {
     "uuid",
     "collections",
     "logging",
+    "pydantic",  # TASK-074 migration.py (MigrationPlan)
 }
 
 

@@ -129,6 +129,21 @@ _LAYER_RULES: list[tuple[str, str, tuple[str, ...]]] = [
         "aios_core.skills",
         "aios_core.observability",
     )),
+    # -- M10 — Certification Suite (TASK-073) ----------------------------------
+    # Certification = hệ thống kiểm chứng TOÀN CỤC (M10): đọc/gọi API public
+    # của mọi layer để verify (INV-017 mở rộng: "chỉ gọi API, không sửa").
+    # Rule riêng thay vì gộp vào "harness" — nếu không, mọi import verify bị
+    # coi là vi phạm. Cấm các module implementation sâu mà certification
+    # không bao giờ dùng.
+    ("layer", "harness/certification", (
+        "aios_core.kernel.graph",
+        "aios_core.capabilities",
+        "aios_core.workflow",
+        "aios_core.sandbox",
+        "aios_core.skills",
+        "aios_core.prompts",
+        "aios_core.context",
+    )),
     # -- M7 — Enterprise / Control Plane (INV-022..029) ------------------------
     # PLAN §M7 requires "observability đầy đủ" for the 8 M7 invariants, so the
     # runtime scanner MUST actually scan enterprise/ (not silently skip it, cf.
@@ -262,6 +277,11 @@ class ArchitectureHealth:
                     # its pkg_dotted computation and relative-import resolution.
                     rel = py.relative_to(package_dir).with_suffix("").as_posix()
                     if rel.endswith(_ORCHESTRATOR_EXEMPT):
+                        continue
+                    # M10: harness/certification có rule riêng — loại khỏi
+                    # rule "harness" chung (INV-017 extension, TASK-073).
+                    if sub == "harness" and \
+                            rel.startswith("aios_core/harness/certification"):
                         continue
                     ext, mods = collect_imports(package_dir, rel)
                     for f in forbidden:
