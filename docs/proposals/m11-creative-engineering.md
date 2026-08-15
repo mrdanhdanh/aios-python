@@ -1,9 +1,9 @@
-# Proposal: M11 — AIOS Creative / Asset / UI Engineering
+# Proposal: M11 — Deterministic Artifact & Interaction Runtime
 
-> **Status**: draft / proposal (tham khảo, chưa thành task)
-> **Date**: 2026-08-16
+> **Status**: refined (post-review — user score 8.8/10, chuẩn bị thành milestone)
+> **Date**: 2026-08-16 (review adjustments cùng ngày)
 > **Source**: PR #1 (`operation/test-A` → `verify`) — commits TASK-077..081 + 2 bypass fix
-> **Author**: AIOS Orchestrator (analysis pass)
+> **Author**: AIOS Orchestrator (analysis pass) + user review/adjustment
 > **Related**: M10 AIOS 1.0 CERTIFIED; ADR-0005 branching model
 
 ---
@@ -13,12 +13,22 @@
 PR #1 mang toàn bộ công việc webgame **Yuniebel's Cat** (vanilla → Phaser 4) + game-dev skills.
 Phân tích 12 commit thực tế cho thấy AIOS 1.0 xử lý backend/runtime xuất sắc, nhưng **mù với
 output phi-deterministic** (render/UI/asset) và **không điều phối được skill/capability creative**.
-Đề xuất **M11** gồm 9 nâng cấp (R1–R9) mở rộng trực tiếp các thành phần M10 (observability,
-durable execution, security-check, contract 1.0, ecosystem), không phá vỡ INV-001..034.
 
-**Ưu tiên cao nhất: R2** (fail-closed golden-master test policy) — vì PR chứng minh false-positive
-đã xảy ra thật (`toHaveScreenshot` skip do thiếu ảnh ref ở TASK-079), vi phạm trực tiếp triết lý
-"policy bypass=0" của M10.
+**M11 không phải "creative expansion" cho vui** — đó là bước tiến kiến trúc:
+
+```
+M10: AIOS can reliably execute logic.
+M11: AIOS can reliably execute AND verify logic + state + render + asset + interaction.
+```
+
+Đề xuất **M11** gồm 10 nâng cấp (R1–R10) mở rộng trực tiếp M10, không phá vỡ INV-001..034.
+**Cụm cốt lõi (R2 → R3 → R1)**: Verification Policy → Deterministic Harness → Visual Evidence,
+mở đường cho CAD, diagram, document rendering, image/video/3D generation — mọi workflow có artifact phi-text.
+
+**Ưu tiên số 1: R2 (INV-035 Verification Fail-Closed)** — vì PR chứng minh false-positive đã xảy ra thật
+(TASK-079: `toHaveScreenshot` skip do thiếu ảnh ref → "17/17 PASS" giả). Đây là **Core Invariant**, không chỉ rule visual test.
+
+> User review: **8.8/10** — "M11 không phải thêm feature creative cho vui, mà xuất phát từ một failure mode thực tế của AIOS 1.0."
 
 ---
 
@@ -65,103 +75,238 @@ durable execution, security-check, contract 1.0, ecosystem), không phá vỡ IN
 
 ---
 
-## 3. Đề xuất nâng cấp (R1–R9)
+## 3. Đề xuất nâng cấp (R1–R10, đã điều chỉnh theo review)
 
-### R1 — VisualRegressionProbe trong Observability
-- **Evidence**: 47 PNG golden-master; bug TASK-079 chỉ bắt bằng visual test.
-- **Gap**: SLO registry (M10-P2) chỉ có metric backend.
-- **Proposal**: Thêm `VisualRegressionProbe` — biến "pixel-diff delta" thành metric (histogram như
-  latency), report qua `aiagent metrics`; mỗi render snapshot → 1 event trên event bus.
-- **Maps-to**: M10-P2 / TASK-069 (SLO registry).
+> Dependency order (architecture): **R2 → R3 → R1 → R9 → R4 → R8 → R6 → R5 → R7**
+> (R3 nền tảng trước R1; R4+R9 gộp thành Asset Capability Architecture; R5 rớt xuống Ecosystem Extension; R7 trì hoãn P4)
 
-### R2 — Fail-closed Golden-Master test policy
-- **Evidence**: TASK-079 "17/17 pass" thực chất skip vì thiếu ảnh ref.
-- **Gap**: `aiagent conformance` không enforce visual test có reference.
-- **Proposal**: `INV-035` — "mọi visual/golden-master test PHẢI fail-closed: thiếu reference =
-  ERROR (không skip)". Tích hợp vào `aiagent conformance` + CI gate. Áp dụng trực tiếp "policy
-  bypass=0" của M10.
-- **Maps-to**: M10-P3 / TASK-070 (security-check) + M10-P5 (conformance).
-- **Priority**: 🔴 CAO NHẤT — false-positive đã xảy ra thật.
+### R2 — INV-035: Verification Fail-Closed (CORE INVARIANT)
+- **Evidence**: TASK-079 "17/17 PASS" thực chất skip vì thiếu ảnh ref.
+- **Gap**: `aiagent conformance` không enforce verification fail-closed.
+- **Proposal**: Thăng cấp thành **Core Invariant INV-035** — wording rộng:
+  > *Không một verification mechanism nào được phép chuyển trạng thái `UNKNOWN / NOT EXECUTED / MISSING EVIDENCE` thành `PASS`.*
+  Bắt: missing screenshot reference, test skipped, browser failed to launch, renderer unavailable,
+  reference unreadable, artifact missing, dependency unavailable, assertion not executed.
+  Trạng thái hợp lệ: `PASS | FAIL | ERROR | BLOCKED` — **KHÔNG** `SKIP → vô tình PASS`.
+- **Maps-to**: M10-P3 (security-check) + M10-P5 (conformance) + Constitution 1.0.
+- **Priority**: 🔴 CAO NHẤT.
 
-### R3 — RenderReplay / DeterministicHarness cho UI
-- **Evidence**: playtest thật 45s (title→birthday) / 22s (title→gameover); bug do non-determinism.
+### R3 — RenderReplay / DeterministicHarness (FOUNDATION, trước R1)
+- **Evidence**: playtest thật 45s (title→birthday) / 22s (title→gameover); bug do non-determinism (scale).
 - **Gap**: Durable Execution 1.0 chỉ cho backend workflow.
 - **Proposal**: `RenderReplay` — record input timeline + seed → replay → assert pixel-stable.
-  Mượn phân loại idempotency (exactly-once) cho asset generation.
+  Là nền tảng cho R1: không có deterministic replay thì VisualRegressionProbe dễ thành
+  "ảnh hôm nay khác ảnh hôm qua" nhưng không biết tại sao. Mượn idempotency classification (exactly-once) cho asset.
 - **Maps-to**: M10-P2 / TASK-066 (Durable Execution).
 
-### R4 — Capability-first cho Asset/Game tooling
-- **Evidence**: `generate2dsprite.py` là script rời, không nằm registry; skill tạo tay.
-- **Gap**: Capability Registry (M1) chỉ discover tools backend (Python/Docker/REST/MCP/Shell/Git).
-- **Proposal**: Thêm `kind=asset` capability type; wrap script sinh sprite/map/audio thành
-  `CapabilityManifest` để Orchestrator route offline-first (Rule Engine/Matcher, không rớt Planner).
-- **Maps-to**: M1 (Capability Registry).
+### R1 — VisualEvidence / VisualRegressionProbe (KHÔNG chỉ pixel-diff metric)
+- **Evidence**: 47 PNG golden-master; bug TASK-079 chỉ bắt bằng visual test.
+- **Gap**: SLO registry chỉ có metric backend.
+- **Proposal**: Thiết kế `VisualEvidence` TRƯỚC khi có metric:
+  ```
+  VisualRegressionProbe
+        ├── Screenshot
+        ├── DOM Snapshot
+        ├── Render State
+        ├── Input Timeline
+        ├── Browser/OS metadata
+        ├── Seed
+        └── Pixel Diff
+  ```
+  `VisualEvidence` → `VisualRegressionProbe` → Observability → SLO/Evaluation.
+  Pixel-diff KHÔNG tự nói tốt/xấu (anti-aliasing, font, GPU, device scale factor tạo diff lớn)
+  → chỉ là 1 trường trong evidence, không phải SLO chính sớm.
+- **Maps-to**: M10-P2 / TASK-069 (SLO registry).
 
-### R5 — SkillDistiller tool/agent
-- **Evidence**: TASK-080 "bring repo ngoài về skill package" làm thủ công (manifest + SKILL.md + catalog).
-- **Gap**: Ecosystem (M8) có Plugin Runtime/Registry nhưng không có tool tự distill.
-- **Proposal**: `SkillDistiller` — input repo URL + license → tự sinh SkillManifest conform +
-  SKILL.md + catalog entry, tự chạy critique×2 gate. Meta-learning cho ecosystem.
-- **Maps-to**: M8 (Ecosystem / Registry / DevKit).
+### R9 + R4 — Asset Capability Architecture (GỘP)
+- **Evidence**: `generate2dsprite.py` script rời; agent-sprite-forge chroma #FF00FF chưa chuẩn.
+- **Gap**: Capability Registry chỉ backend tools; không có AssetPipeline contract.
+- **Proposal**: Gộp thành một kiến trúc lớn:
+  ```
+  AssetPipeline Contract        (R9)
+       ├── Sprite / Tileset / Map / Audio / Animation / UI Asset
+       ↓
+  Capability Manifest
+       ↓
+  Asset Capability Registry     (R4, kind=asset)
+       ↓
+  Creative Matcher
+       ↓
+  Runtime / Orchestrator
+  ```
+  Biến M11 từ "AIOS hỗ trợ game" → **"AIOS hiểu và điều phối artifact creative"**.
+- **Maps-to**: M1 (Capability Registry) + M10-P1 (Contract 1.0).
 
 ### R6 — Creative/Game domain trong Decision Pipeline
 - **Evidence**: "build a game" / "generate pixel art" không có workflow; scaffold ad-hoc.
-- **Gap**: 4 tầng (Normalizer→Rule→Matcher→Planner)建模 backend/runtime, không có domain creative.
-- **Proposal**: Thêm workflow domain `creative`/`frontend` vào Workflow Matcher → route "build game"
-  tới chuỗi skill+capability xác định (offline-first), giảm lệ thuộc Planner LLM.
+- **Gap**: 4 tầng Orchestrator建模 backend, không có domain `creative`.
+- **Proposal**: Thêm workflow domain `creative`/`frontend` vào Workflow Matcher → route offline-first,
+  giảm lệ thuộc Planner LLM.
 - **Maps-to**: Orchestrator Decision Pipeline (PLAN.md §AIOS Orchestrator).
-
-### R7 — Static-site / Artifact Deploy capability
-- **Evidence**: `pages.yml` sửa tay (pin Node 20, build, `rm node_modules` trước upload).
-- **Gap**: CLI `aiagent doctor`/`conformance` first-class (M10-P4) nhưng không có deploy.
-- **Proposal**: `aiagent deploy --static <dir>` (artifact → GitHub Pages / static host) làm runtime
-  service hoặc CLI command tái dùng.
-- **Maps-to**: M3 (Dashboard/Extension) + M10-P4 (DX).
 
 ### R8 — Vendor Integrity verification
 - **Evidence**: TASK-081 AC-16 verify thủ công SHA256 vendor bundle byte-identical.
 - **Gap**: `security-check` (M10) chưa cover third-party bundle hash.
-- **Proposal**: Thêm `VendorIntegrity` vào `aiagent security-check` — tự verify hash của pinned
-  bundles; freeze thành invariant.
+- **Proposal**: Thêm `VendorIntegrity` vào `aiagent security-check` — tự verify hash pinned bundles; freeze invariant.
 - **Maps-to**: M10-P3 / TASK-070 (Security Baseline).
 
-### R9 — AIOS Asset Pipeline Contract
-- **Evidence**: agent-sprite-forge dùng chroma #FF00FF, tách layer — nhưng chưa thành chuẩn.
-- **Gap**: 10 contract frozen (M10) không có contract cho asset generation.
-- **Proposal**: Thêm `AssetPipeline` contract (sprite/map/audio) — output deterministic (RGBA,
-  0 magenta), mọi asset skill phải conform; đi cùng `aiagent contract-check`.
-- **Maps-to**: M10-P1 / TASK-064 (Contract 1.0).
+### R10 — UI State Contract (MỚI)
+- **Evidence**: TASK-079 — logical state đúng nhưng render transform sai → screenshot khác, nhưng AIOS không biết "tại sao".
+- **Gap**: Proposal cũ tập trung pixel/asset/render/replay, chưa chuẩn hóa UI state.
+- **Proposal**: `UIState` contract — chuẩn hóa state có thể reason:
+  ```json
+  {
+    "screen": "game",
+    "player": { "x": 160, "y": 90, "scale": 3 },
+    "input": { "left": false, "right": true }
+  }
+  ```
+  `UI State → Render → Screenshot`. Giúp AIOS **debug UI bằng reasoning**, không chỉ screenshot comparison.
+- **Maps-to**: M10-P1 (Contract 1.0) + Observability.
+
+### R5 — SkillDistiller (Ecosystem Extension, KHÔNG core M11)
+- **Evidence**: TASK-080 distill thủ công từ repo ngoài.
+- **Gap**: Ecosystem (M8) không có tool tự distill.
+- **Proposal**: Xếp thành `M11 Ecosystem Extension` (P4), không core. Scope lớn
+  (repo → license → structure → capability extraction → synthesis → manifest → contract validation → critique×2 → registry)
+  — gần như Meta-Evolution Engine; làm sớm sẽ phình M11 mất trọng tâm.
+- **Maps-to**: M8 (Ecosystem / Registry / DevKit).
+
+### R7 — Static-site / Artifact Deploy (TRÌ HOÃN → P4 / optional)
+- **Evidence**: `pages.yml` sửa tay (Node 20 + build + `rm node_modules`).
+- **Gap**: CLI không có deploy; nhưng PR không chứng minh correctness bị phá vỡ.
+- **Proposal**: `aiagent deploy --static <dir>` → P4 / optional. R2/R3/R9 là correctness primitives quan trọng hơn.
+- **Maps-to**: M3 (Dashboard/Extension) + M10-P4 (DX).
 
 ---
 
-## 4. M11 Roadmap đề xuất
+## 4. Asset Capability Architecture (R9 + R4 gộp)
 
 ```
-M11: AIOS Creative / Asset / UI Engineering
-├─ P1 Observability      R1 (VisualRegressionProbe) + R2 (INV-035 fail-closed)
-├─ P2 Determinism        R3 (RenderReplay)
-├─ P3 Capability/Eco     R4 (asset capability) + R5 (SkillDistiller) + R9 (Asset contract)
-└─ P4 Pipeline/DX        R6 (creative domain) + R7 (deploy) + R8 (vendor integrity)
+AssetPipeline Contract
+       │
+       ├── Sprite
+       ├── Tileset
+       ├── Map
+       ├── Audio
+       ├── Animation
+       └── UI Asset
+              ↓
+      Capability Manifest
+              ↓
+      Capability Registry (kind=asset)
+              ↓
+       Creative Matcher
+              ↓
+          Runtime
 ```
 
-**Thứ tự ưu tiên**: R2 → R1 → R8 → R9 → R4 → R3 → R6 → R5 → R7
-(Lý do: R2/R1 khắc phụcilable test blind spot ngay; R8/R9 mở rộng contract/security sẵn có;
-R4/R3 nền tảng capability/determinism; R6/R5/R7 mở rộng ecosystem/DX.)
+## 5. M11 Roadmap — 5 tầng (P0–P4)
 
----
+```
+M11 — Deterministic Artifact & Interaction Runtime
 
-## 5. Open Questions
+P0 — Verification Integrity
+ └── R2  INV-035 Fail-closed Verification
 
-1. R2 (INV-035) có nên áp dụng retroactive cho TASK-077..081 đã merge không, hay chỉ cho PR mới?
-2. R1 pixel-diff metric: ngưỡng "delta acceptable" bao nhiêu (tham số hóa qua SLO hay cố định)?
-3. R5 SkillDistiller có nên chạy qua `agent` tool hay là CLI `aiagent skill distill <url>`?
-4. R7 deploy: GitHub Pages only, hay hỗ trợ S3/Netlify/static host khác?
+P1 — Deterministic Visual Runtime
+ └── R3  RenderReplay / DeterministicHarness
 
----
+P2 — Visual Observability
+ └── R1  VisualEvidence / VisualRegressionProbe
 
-## 6. Ghi chú tuân thủ
+P3 — Asset & Creative Architecture
+ ├── R9  AssetPipeline Contract
+ ├── R4  Asset Capability
+ ├── R6  Creative Domain
+ └── R8  Vendor Integrity
 
-- Đề xuất này **không vi phạm INV-001..034** — toàn bộ là mở rộng additive lên M10.
-- Nếu được chấp nhận → tạo `TASK-082` (M11-P1: R1+R2) theo hard-gate chuẩn
-  (plan → spec → critique×2 → tasks → review → implement → test → evaluate).
-- Hiện tại file này là **tài liệu tham khảo**, chưa commit vào luồng task.
+P4 — Ecosystem & DX
+ ├── R5  SkillDistiller (Ecosystem Extension)
+ └── R7  Static Deploy (optional)
+```
+
+**Dependency graph**:
+```
+Verification (R2)
+     ↓
+Determinism (R3)
+     ↓
+Observation (R1)
+     ↓
+Contract (R9)
+     ↓
+Capability (R4)
+     ↓
+Decision (R6)
+     ↓
+Ecosystem (R5) + DX (R7)
+```
+
+**Core capability cluster (R2 → R3 → R1)**:
+```
+┌──────────────────────┐
+│ Verification Policy  │  INV-035
+└──────────┬───────────┘
+           ↓
+┌──────────────────────┐
+│ DeterministicHarness │  RenderReplay
+└──────────┬───────────┘
+           ↓
+┌──────────────────────┐
+│    VisualEvidence    │  Regression Probe
+└──────────┬───────────┘
+           ↓
+┌──────────────────────┐
+│ AIOS Evaluation /    │  Observability
+│ Observability        │
+└──────────────────────┘
+```
+> Nếu xây đúng cụm này, M11 mở đường cho CAD, diagram, document rendering, image generation, video, 3D và mọi workflow có artifact phi-text.
+
+## 6. Architectural Goal / Progression
+
+```
+M10: AIOS can reliably execute logic.
+M11: AIOS can reliably execute AND verify logic + state + render + asset + interaction.
+```
+M11 = **Deterministic Artifact & Interaction Runtime** (không phải "Creative expansion").
+
+## 7. TASK breakdown (refined — TASK-082 thu nhỏ)
+
+```
+TASK-082  M11-P0 — Verification Integrity
+  Scope:
+  ├── INV-035 (Verification Fail-Closed)
+  ├── conformance visual policy
+  ├── skip/error normalization
+  ├── missing reference detection
+  ├── CI fail-closed gate
+  ├── regression tests
+  └── retroactive audit TASK-077..081
+
+TASK-083 → RenderReplay (R3)
+TASK-084 → VisualEvidence (R1)
+TASK-085 → AssetPipeline Contract (R9)
+TASK-086 → Asset Capability (R4)
+TASK-087 → Creative Domain (R6)
+TASK-088 → Vendor Integrity (R8)
+TASK-089 → UI State Contract (R10)
+TASK-090 → SkillDistiller (R5, Ecosystem)
+TASK-091 → Static Deploy (R7, optional)
+```
+
+## 8. Open Questions (cập nhật)
+
+1. **R2 retroactive**: user duyệt — TASK-082 bao gồm *retroactive audit TASK-077..081* (áp dụng INV-035 cho PR #1 đã merge). ✅ resolved.
+2. R1 pixel-diff threshold: chưa tham số hóa thành SLO sớm (theo feedback R1 → VisualEvidence trước, metric sau). Để TASK-084 quyết.
+3. R5 SkillDistiller form: CLI `aiagent skill distill <url>` hay `agent` tool? → TASK-090.
+4. R7 deploy hosts: GitHub Pages only hay S3/Netlify? → TASK-091.
+5. R10 UIState schema: định hình chuẩn JSON trong TASK-089.
+
+## 9. Ghi chú tuân thủ
+
+- **Không vi phạm INV-001..034** — toàn bộ additive lên M10; INV-035 là invariant MỚI (M11).
+- Trạng thái: proposal đã qua review user (8.8/10), sẵn sàng tạo `TASK-082` (M11-P0) theo hard-gate chuẩn.
+- Khi duyệt → tạo TASK-082 (thu nhỏ, chỉ P0) trước; các TASK-083..091 theo tiến độ phase.
+- File này là tài liệu tham khảo; cập nhật LOG.md nhưng CHƯA tạo task (chờ user "tạo TASK-082").
