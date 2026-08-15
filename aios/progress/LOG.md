@@ -4,6 +4,8 @@
 > Entry `[bypass]` = fix nhỏ làm nhanh, có lý do.
 > Entry mới ghi LÊN ĐẦU file (mới nhất trước).
 
+| 2026-08-15 | — | [bypass] git | Yêu cầu người dùng: "có" (push lên remote) — thao tác git thuần túy. **ĐÃ LÀM**: `git push origin master` (`64d3e75..7b4d05f`) + `git push origin verify` (`7737098..b4254d2`) → cả 2 nhánh đồng bộ remote `mrdanhdanh/aios-python`. Working tree sạch | **PUSHED — master + verify đồng bộ origin** | `git push origin master verify` |
+
 | 2026-08-15 | — | [bypass] git | Yêu cầu người dùng: "quay về nhánh master" — thao tác git thuần túy. **ĐÃ LÀM**: `git checkout master` (working tree sạch) — HEAD → `master` @ 7737098, up to date với origin. `verify` @ 7737098, `operation/test-A` @ 78d42da giữ nguyên (các entry bypass trước nằm trên nhánh operation/test-A — sẽ gộp về master khi merge). | **HEAD về master** | `git checkout master` |
 
 | 2026-08-15 | — | [bypass] process | Yêu cầu người dùng: "từ nay, mọi nhánh chức năng đều phải đi từ nhánh verify; verify kiểm tra thay đổi sau đó mới update về master" → **THAY ĐỔI QUY TRÌNH BẮT BUỘC (branching model)**: (1) `master` = ổn định, CHỈ nhận từ `verify` (không commit/merge trực tiếp); (2) `verify` = trạm kiểm tra bắt buộc (test + hard gate + review trước khi về master); (3) nhánh chức năng tạo TỪ `verify` (tiền tố feature//fix//docs//operation/...). **ĐÃ LÀM**: ghi vào `AGENTS.md` §4.1 + `docs/PLAN.md` (Workflow Gate + ADR list) + tạo `docs/adr/0005-branching-model.md` (accepted). **DOGFOOD ngay**: mọi thay đổi của chính lần này được làm trên nhánh `docs/branching-model` (tạo từ `verify`) → sẽ merge vào `verify` → verify PASS → mới merge `verify` → `master` | **Quy tắc mới có hiệu lực từ bây giờ** | `AGENTS.md`, `docs/PLAN.md`, `docs/adr/0005-branching-model.md` |
