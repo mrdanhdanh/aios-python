@@ -142,6 +142,18 @@
 | Deliverable M5 | Memory Coordinator + Context Optimizer + Model Router + Planning Engine + Execution Graph + Parallel Scheduler ✓ |
 | Commit | 6 (0e9e7d2, 352d251, a73563d, 012a584, 53c13c7, 06602d9) |
 
+## M5 — Review độc lập (2026-08-15)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Review type | Self-review (AIOS Orchestrator), đọc code + chạy test + chạy scanner cây thật |
+| Findings | 1 P2 (F1) + 1 P3 (F2) |
+| F1 (P2) | runtime `ArchitectureHealth.scan()` không cover M5 packages — vi phạm PLAN §M5 "observability đầy đủ". **ĐÃ TỰ SỬA** (thêm 6 M5 layer rule vào `observability/arch_health.py` + 6 test regresi `tests/test_observability_arch_health.py`) |
+| F2 (P3) | M5 thiếu milestone review doc (M0/M3/M4 có) — process. **ĐÃ TỰ SỬA** (viết `reviews/M5-review.md` + `reviews/M5-review-brief.md`) |
+| Test regresi thêm | 6 (`test_m5_real_src_healthy`, `test_m5_memory_isolation_fires`, `test_m5_context_no_knowledge_fires`, `test_m5_planning_no_models_fires`, `test_m5_graph_no_orchestrator_fires`, `test_m5_scheduler_no_orchestrator_fires`) |
+| Verify sau fix | scanner `SRC_ROOT` → `healthy=True, 0 violations`; 15/15 arch-health test pass (gồm 6 mới); 335 arch+M5 test pass |
+| Kết luận | **M5 ĐẠT** V1–V8 (sau F1); không P1 |
+
 ## M6 — AIOS Harness ✅ (2026-08-15)
 
 | Chỉ số | Giá trị |

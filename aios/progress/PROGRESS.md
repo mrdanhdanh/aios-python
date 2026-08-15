@@ -221,6 +221,12 @@
 | TASK-027 | Execution Graph — ExecutionGraph/GraphNode/GraphEdge/Dependency/Condition/JoinPolicy/FailurePolicy; graph state 8 trạng thái; INV-015 | `done` ✅ | 1055 pass, coverage 95.09%, 13/13 AC (2026-08-15) |
 | TASK-028 | Parallel Scheduler — Graph Scheduler → Resource → Execution → State; không sở hữu Resource/Execution; INV-016 | `done` ✅ | 1086 pass, coverage 95.22%, 12/12 AC (2026-08-15) — **M5 HOÀN TẤT** |
 
+### M5 — Review độc lập (self-review, 2026-08-15)
+- Đọc thực tế code TASK-023..028 + spec, chạy test thật (256 M5 test + 17 INV-011..016 arch test PASS), chạy scanner trên cây thật.
+- **F1 (P2)**: runtime `ArchitectureHealth.scan()` không cover M5 packages (memory/context/models.router/orchestrator.planning/kernel.graph/kernel.scheduler) — vi phạm PLAN §M5 "observability đầy đủ". **→ ĐÃ TỰ SỬA**: thêm 6 M5 layer rule vào `arch_health.py` + 6 test regresi `test_observability_arch_health.py`; scanner trên `SRC_ROOT` → `healthy=True, 0 violations`.
+- **F2 (P3)**: M5 thiếu milestone review doc (M0/M3/M4 có). **→ ĐÃ TỰ SỬA**: viết `reviews/M5-review.md` + `reviews/M5-review-brief.md`.
+- Kết quả: **M5 ĐẠT** V1–V8 (sau F1); không P1. Xem `reviews/M5-review.md` + `reviews/M5-review-brief.md`.
+
 ## M6 — AIOS Harness (in-progress) — 2026-08-15
 
 > PLAN.md §M6: subsystem `harness/` giúp AIOS tự kiểm thử/xác minh/quan sát/cải tiến (H1-H5). Không sửa Runtime/Orchestrator — chỉ gọi qua API. INV-017..021.

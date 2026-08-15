@@ -111,3 +111,78 @@ def test_nested_aios_core_layout_policy_check(tmp_path):
     )
     report = ArchitectureHealth().scan(package_dir=pkg)
     assert any(v.kind == "policy" for v in report.violations)
+
+
+# ---------------------------------------------------------------------------
+# M5 — Core Intelligence: runtime scanner must cover INV-011..016 (PLAN §M5
+# yêu cầu "observability đầy đủ"). Các rule layer cho memory/context/models.
+# router/orchestrator.planning/kernel.graph/kernel.scheduler được thêm cùng
+# đợt review M5; test này khoá vào không cho quay lại trạng thái "scanner bỏ
+# qua M5" (cf. M4 F1 silent-skip).
+# ---------------------------------------------------------------------------
+
+def test_m5_real_src_healthy():
+    """INV-011..016: scanner chạy trên src thật phải xanh (gồm M5 packages)."""
+    from aios_core.observability.arch_scan import SRC_ROOT
+
+    report = ArchitectureHealth().scan(package_dir=SRC_ROOT)
+    assert report.healthy, f"M5 scanner vi phạm: {report.violations}"
+
+
+def test_m5_memory_isolation_fires(tmp_path):
+    """memory/ không được import orchestrator/agents/tools (INV-011)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(aios, "memory/evil", "from aios_core.orchestrator.planner import x\n")
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(v.kind == "layer" and "memory" in v.module for v in report.violations)
+
+
+def test_m5_context_no_knowledge_fires(tmp_path):
+    """context/ (intelligence) không import knowledge/models (INV-012)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(aios, "context/evil", "from aios_core.knowledge.graph import y\n")
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(v.kind == "layer" and "context" in v.module for v in report.violations)
+
+
+def test_m5_planning_no_models_fires(tmp_path):
+    """orchestrator/planning không import models/knowledge (INV-014)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(aios, "orchestrator/planning/evil", "from aios_core.models.base import z\n")
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "orchestrator/planning" in v.module
+        for v in report.violations
+    )
+
+
+def test_m5_graph_no_orchestrator_fires(tmp_path):
+    """kernel/graph không import orchestrator/models (INV-015)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(aios, "kernel/graph/evil", "from aios_core.orchestrator.planner import w\n")
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "kernel/graph" in v.module
+        for v in report.violations
+    )
+
+
+def test_m5_scheduler_no_orchestrator_fires(tmp_path):
+    """kernel/scheduler không import orchestrator/models (INV-016)."""
+    pkg = tmp_path / "src"
+    aios = pkg / "aios_core"
+    _write(aios, "kernel/scheduler/evil", "from aios_core.orchestrator.planner import w\n")
+    report = ArchitectureHealth().scan(package_dir=pkg)
+    assert not report.healthy
+    assert any(
+        v.kind == "layer" and "kernel/scheduler" in v.module
+        for v in report.violations
+    )

@@ -20,6 +20,75 @@ _LAYER_RULES: list[tuple[str, str, tuple[str, ...]]] = [
     ("layer", "workflow", ("langgraph", "aios_core.models")),
     ("layer", "orchestrator", ("aios_core.models",)),
     ("layer", "capabilities", ("aios_core.models", "aios_core.workflow", "aios_core.tools")),
+    # -- M5 — Core Intelligence (INV-011..016) --------------------------------
+    # These mirror the allow-lists enforced by tests/test_architecture.py
+    # (test_inv_memory_import_allowlist, test_inv_context_import_allowlist,
+    # test_inv_planning_import_allowlist, test_inv_graph_import_allowlist,
+    # test_inv016_scheduler_import_allowlist). PLAN §M5 requires "observability
+    # đầy đủ" for INV-011..016, so the runtime architecture-health scanner must
+    # actually scan the M5 packages (not silently skip them, cf. M4 F1).
+    # Rules forbid DOWNWARD layer crossings only; every module below is one the
+    # package is allowed to import per its allow-list, so no false positives.
+    ("layer", "memory", (
+        "aios_core.agents", "aios_core.tools", "aios_core.capabilities",
+        "aios_core.workflow", "aios_core.orchestrator", "aios_core.models",
+        "aios_core.context", "aios_core.knowledge", "aios_core.prompts",
+        "aios_core.skills", "aios_core.sandbox", "aios_core.observability",
+        "aios_core.upgrade", "aios_core.harness", "aios_core.enterprise",
+        "aios_core.ecosystem", "aios_core.plugins", "aios_core.extension",
+        "aios_core.contracts", "aios_core.metadata",
+        "aios_core.kernel.events", "aios_core.kernel.dag",
+        "aios_core.kernel.execution_plan", "aios_core.kernel.graph",
+        "aios_core.kernel.scheduler", "aios_core.kernel.policy",
+        "aios_core.kernel.resource", "aios_core.kernel.state",
+        "aios_core.kernel.runtime_kernel",
+    )),
+    ("layer", "context", (
+        "aios_core.agents", "aios_core.tools", "aios_core.capabilities",
+        "aios_core.workflow", "aios_core.orchestrator", "aios_core.models",
+        "aios_core.knowledge", "aios_core.prompts", "aios_core.skills",
+        "aios_core.sandbox", "aios_core.observability", "aios_core.harness",
+        "aios_core.enterprise", "aios_core.ecosystem", "aios_core.plugins",
+        "aios_core.extension", "aios_core.contracts",
+        "aios_core.kernel.dag", "aios_core.kernel.execution_plan",
+        "aios_core.kernel.graph", "aios_core.kernel.scheduler",
+        "aios_core.kernel.policy", "aios_core.kernel.resource",
+        "aios_core.kernel.runtime_kernel", "aios_core.kernel.events",
+    )),
+    ("layer", "models/router", (
+        "aios_core.agents", "aios_core.tools", "aios_core.capabilities",
+        "aios_core.workflow", "aios_core.orchestrator", "aios_core.context",
+        "aios_core.knowledge", "aios_core.memory", "aios_core.prompts",
+        "aios_core.skills", "aios_core.sandbox", "aios_core.observability",
+        "aios_core.harness", "aios_core.enterprise", "aios_core.ecosystem",
+        "aios_core.plugins", "aios_core.extension", "aios_core.contracts",
+    )),
+    ("layer", "orchestrator/planning", (
+        "aios_core.knowledge", "aios_core.context", "aios_core.contracts",
+        "aios_core.memory", "aios_core.agents", "aios_core.tools",
+        "aios_core.capabilities", "aios_core.prompts", "aios_core.skills",
+        "aios_core.sandbox", "aios_core.observability", "aios_core.harness",
+        "aios_core.enterprise", "aios_core.ecosystem", "aios_core.plugins",
+        "aios_core.extension",
+    )),
+    ("layer", "kernel/graph", (
+        "aios_core.orchestrator", "aios_core.models", "aios_core.memory",
+        "aios_core.context", "aios_core.knowledge", "aios_core.tools",
+        "aios_core.agents", "aios_core.capabilities", "aios_core.workflow",
+        "aios_core.prompts", "aios_core.skills", "aios_core.sandbox",
+        "aios_core.contracts", "aios_core.observability", "aios_core.harness",
+        "aios_core.enterprise", "aios_core.ecosystem", "aios_core.plugins",
+        "aios_core.extension",
+    )),
+    ("layer", "kernel/scheduler", (
+        "aios_core.orchestrator", "aios_core.models", "aios_core.memory",
+        "aios_core.context", "aios_core.knowledge", "aios_core.tools",
+        "aios_core.agents", "aios_core.capabilities", "aios_core.workflow",
+        "aios_core.prompts", "aios_core.skills", "aios_core.sandbox",
+        "aios_core.contracts", "aios_core.observability", "aios_core.harness",
+        "aios_core.enterprise", "aios_core.ecosystem", "aios_core.plugins",
+        "aios_core.extension",
+    )),
 ]
 
 _CONTRACT_RULES: list[tuple[str, str, tuple[str, ...]]] = [
