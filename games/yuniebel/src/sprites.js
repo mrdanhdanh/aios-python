@@ -101,7 +101,9 @@
   }
 
   // ===== 2. GARDEN — nhà hiên, hàng rào, cây, bụi, hoa; trời ĐỘNG ngày→hoàng hôn→đêm =====
-  function sky(ctx, darkness, time) {
+  // w: width map (160 cho scene 1 màn, 320 cho GARDEN/HALLWAY) — nền trải theo w
+  function sky(ctx, darkness, time, w) {
+    w = w || GW;
     // darkness 0..0.5: day→dusk; 0.5..1: dusk→night — luôn mix 2 HEX gốc (tránh NaN)
     var t1 = Math.min(darkness / 0.5, 1);
     var t2 = Math.max((darkness - 0.5) / 0.5, 0);
@@ -114,7 +116,7 @@
       bot = mix(C.skyDuskBot, C.skyNightBot, t2);
     }
     for (var i = 0; i < 9; i++) {
-      R(ctx, 0, i * 6, GW, 6, mix(top, bot, i / 9));
+      R(ctx, 0, i * 6, w, 6, mix(top, bot, i / 9));
     }
     // mặt trời lặn dần về phía chân trời (hoàng hôn)
     var sy = 4 + t1 * 22;
@@ -125,15 +127,20 @@
     // sao khi đêm
     if (t2 > 0.3) {
       for (i = 0; i < 18; i++) {
-        var sx = (i * 37 + 13) % 155, sxx = (i * 53) % 50;
+        var sx = (i * 37 + 13) % (w - 10);
+        var sxx = (i * 53) % (w - 100) + 100;
         var tw = Math.sin(time * 2 + i) > 0.6 ? 1 : 0;
         if (tw) P(ctx, sx, 2 + (i * 7) % 20, C.star);
-        if (tw && t2 > 0.6) P(ctx, sxx + 100, 3 + (i * 11) % 16, "rgba(255,255,255,0.6)");
+        if (tw && t2 > 0.6) P(ctx, sxx, 3 + (i * 11) % 16, "rgba(255,255,255,0.6)");
       }
     }
     // mây
     cloud(ctx, 20 + Math.sin(time * 0.3) * 3, 8, 20, 6, "rgba(255,255,255," + (0.9 - t1 * 0.5) + ")");
     cloud(ctx, 90 - Math.sin(time * 0.25) * 3, 16, 16, 5, "rgba(255,255,255," + (0.85 - t1 * 0.5) + ")");
+    if (w > 200) { // mây phụ cho map 320
+      cloud(ctx, 180 + Math.sin(time * 0.28) * 3, 10, 18, 6, "rgba(255,255,255," + (0.88 - t1 * 0.5) + ")");
+      cloud(ctx, 250 - Math.sin(time * 0.2) * 3, 18, 16, 5, "rgba(255,255,255," + (0.82 - t1 * 0.5) + ")");
+    }
   }
 
   function cloud(ctx, x, y, w, h, col) {
@@ -152,84 +159,94 @@
     R(ctx, x + 2, y, w - 4, 2, col);
   }
 
-  function drawGarden(ctx, state, time) {
+  // ===== 2. GARDEN — map 320×90 logical (2 màn hình, camera scroll) =====
+  function drawGarden(ctx, state, time, cx) {
+    cx = cx || 0;
     var d = state.darkness || 0;
-    sky(ctx, d, time);
+    var i;
+    ctx.save();
+    ctx.translate(-cx * GX, 0); // C2-P1-2: bọc translate — không restore → transform rò rỉ
+    sky(ctx, d, time, 320);
     // cỏ
-    R(ctx, 0, 66, GW, 24, mix(C.grass, C.grassDark, Math.min(d * 1.2, 1)));
+    R(ctx, 0, 66, 320, 24, mix(C.grass, C.grassDark, Math.min(d * 1.2, 1)));
     // vệt cỏ sáng
-    for (var i = 0; i < 8; i++) P(ctx, (i * 23 + 5) % 160, 70 + (i % 5) * 3, C.grassLight);
+    for (i = 0; i < 16; i++) P(ctx, (i * 23 + 5) % 320, 70 + (i % 5) * 3, C.grassLight);
     // đường mòn đất
-    R(ctx, 40, 76, 90, 2, mix(C.dirt, "#4a2f16", d));
-    R(ctx, 60, 78, 60, 2, mix(C.dirt, "#4a2f16", d));
-    // hàng rào trắng (giữa)
-    for (i = 0; i < 8; i++) {
+    R(ctx, 40, 76, 180, 2, mix(C.dirt, "#4a2f16", d));
+    R(ctx, 60, 78, 120, 2, mix(C.dirt, "#4a2f16", d));
+    // hàng rào trắng (trải 0..320)
+    for (i = 0; i < 16; i++) {
       var fx = 8 + i * 18;
       R(ctx, fx, 62, 2, 10, mix(C.fence, "#9a9386", d));
       R(ctx, fx - 2, 63, 6, 2, mix(C.fence, "#9a9386", d));
       R(ctx, fx - 2, 69, 6, 2, mix(C.fence, "#9a9386", d));
     }
-    // bụi cây + hoa
-    bush(ctx, 30, 70, 16, 5, mix("#2e8b57", "#14402a", d));
-    bush(ctx, 96, 72, 14, 4, mix("#2e8b57", "#14402a", d));
-    R(ctx, 36, 68, 2, 2, "#ff6b9d"); R(ctx, 104, 70, 2, 2, "#ff6b9d");
-    R(ctx, 42, 74, 2, 2, "#ffd93b");
+    // bụi cây + hoa (khớp 4 wall GARDEN)
+    bush(ctx, 67, 62, 8, 5, mix("#2e8b57", "#14402a", d));
+    bush(ctx, 117, 33, 7, 5, mix("#2e8b57", "#14402a", d));
+    bush(ctx, 207, 85, 9, 4, mix("#2e8b57", "#14402a", d));
+    bush(ctx, 13, 50, 7, 4, mix("#2e8b57", "#14402a", d));
+    R(ctx, 72, 66, 2, 2, "#ff6b9d"); R(ctx, 121, 36, 2, 2, "#ff6b9d");
+    R(ctx, 210, 87, 2, 2, "#ffd93b"); R(ctx, 42, 74, 2, 2, "#ffd93b");
     // quả bóng đỏ
     R(ctx, 56, 72, 4, 4, "#e03030"); R(ctx, 57, 73, 1, 1, "rgba(255,255,255,0.5)");
-    // cây lớn (phải)
-    R(ctx, 150, 44, 3, 16, C.woodDark);
-    R(ctx, 143, 38, 17, 8, mix("#2e8b57", "#0f3020", d));
-    R(ctx, 146, 34, 11, 6, mix("#3aa05f", "#155030", d));
-    // ===== NGÔI NHÀ (phải, x~800..960 = logical 133..160) =====
+    // cây lớn (230,13 — khớp wall cây)
+    R(ctx, 230, 36, 3, 24, C.woodDark);
+    R(ctx, 223, 24, 17, 16, mix("#2e8b57", "#0f3020", d));
+    R(ctx, 226, 12, 11, 14, mix("#3aa05f", "#155030", d));
+    // ===== NGÔI NHÀ (x 267..320 — khớp wall nhà (267,7,53,43)) =====
     // thân nhà (tường be)
-    R(ctx, 133, 30, 27, 36, mix(C.wallCream, "#8a7a58", d));
-    // mái đỏ
-    R(ctx, 131, 26, 31, 5, mix(C.roofRed, "#5e1c13", d));
-    R(ctx, 134, 24, 25, 3, mix(C.roofRed, "#5e1c13", d));
-    R(ctx, 137, 22, 19, 3, mix(C.roofRed, "#5e1c13", d));
-    // cửa gỗ
-    R(ctx, 143, 40, 7, 13, mix(C.wood, "#3c2716", d));
-    R(ctx, 144, 41, 5, 11, mix(C.woodDark, "#2a1a0e", d));
+    R(ctx, 267, 26, 53, 24, mix(C.wallCream, "#8a7a58", d));
+    // mái đỏ 3 lớp
+    R(ctx, 265, 22, 57, 5, mix(C.roofRed, "#5e1c13", d));
+    R(ctx, 268, 19, 51, 4, mix(C.roofRed, "#5e1c13", d));
+    R(ctx, 271, 16, 45, 4, mix(C.roofRed, "#5e1c13", d));
+    // cửa gỗ (khớp door zone 284,48)
+    R(ctx, 285, 42, 9, 8, mix(C.wood, "#3c2716", d));
+    R(ctx, 286, 43, 7, 6, mix(C.woodDark, "#2a1a0e", d));
     // cửa sổ
-    R(ctx, 135, 36, 5, 5, mix("#bfe8ff", "#20304a", d));
-    R(ctx, 153, 36, 5, 5, mix("#bfe8ff", "#20304a", d));
-    R(ctx, 137, 38, 1, 3, C.woodDark); R(ctx, 155, 38, 1, 3, C.woodDark);
+    R(ctx, 271, 32, 5, 5, mix("#bfe8ff", "#20304a", d));
+    R(ctx, 300, 32, 5, 5, mix("#bfe8ff", "#20304a", d));
+    R(ctx, 273, 34, 1, 3, C.woodDark); R(ctx, 302, 34, 1, 3, C.woodDark);
     // hiên nhà
-    R(ctx, 131, 66, 29, 2, mix(C.wood, "#3c2716", d));
-    R(ctx, 131, 65, 29, 1, mix(C.woodLight, "#5a3a24", d));
-    // đèn hiên bật khi darkness>0.15 (hoàng hôn, ảnh B panel 2)
+    R(ctx, 265, 49, 55, 2, mix(C.wood, "#3c2716", d));
+    R(ctx, 265, 48, 55, 1, mix(C.woodLight, "#5a3a24", d));
+    // đèn hiên khi darkness>0.15 (hoàng hôn, ảnh B panel 2)
     if (d > 0.15) {
-      R(ctx, 142, 38, 2, 2, "#ffd93b");
-      R(ctx, 140, 39, 6, 1, "rgba(255,217,59,0.35)");
+      R(ctx, 287, 38, 2, 2, "#ffd93b");
+      R(ctx, 285, 39, 6, 1, "rgba(255,217,59,0.35)");
     }
     // chủ nhân đứng ở cửa khi G_INIT (gọi mèo)
     if (state.phase === "G_INIT" && state.dialogue) {
-      drawOwner(ctx, 146, 42, 0, 1);
+      drawOwner(ctx, 288, 44, 0, 1);
     }
+    ctx.restore();
   }
 
   // ===== 3. LIVING — phòng khách ấm áp (ảnh C trái) =====
   function drawLiving(ctx, time) {
+    var i;
     // tường kem sọc mờ
     R(ctx, 0, 0, GW, 62, C.wallCream);
-    for (var i = 0; i < 10; i++) R(ctx, (i * 16 + 6) % GW, 0, 2, 62, "rgba(190,170,130,0.35)");
+    for (i = 0; i < 10; i++) R(ctx, (i * 16 + 6) % GW, 0, 2, 62, "rgba(190,170,130,0.35)");
     // sàn gỗ
     for (i = 0; i < 8; i++) R(ctx, 0, 62 + i * 4, GW, 4, mix(C.wood, "#6a4526", i / 8));
     // viền chân tường
     R(ctx, 0, 62, GW, 2, C.woodDark);
-    // sofa đỏ cam + gối (trái)
-    R(ctx, 4, 50, 30, 12, C.sofaRedDark);
-    R(ctx, 2, 48, 32, 5, C.sofaRed);
-    R(ctx, 6, 46, 10, 4, C.cushion);   // gối tựa
-    R(ctx, 18, 46, 8, 4, C.cushion);
-    R(ctx, 2, 58, 4, 4, C.sofaRedDark); // chân
-    R(ctx, 30, 58, 4, 4, C.sofaRedDark);
-    // bàn trà gỗ + thảm
-    R(ctx, 38, 52, 22, 2, C.woodLight);
-    R(ctx, 40, 54, 18, 4, C.wood);
-    R(ctx, 38, 58, 2, 2, C.woodDark); R(ctx, 58, 58, 2, 2, C.woodDark);
-    R(ctx, 42, 62, 20, 2, C.rug);
-    for (i = 0; i < 6; i++) R(ctx, 42 + i * 4, 62, 2, 2, C.rugStripe);
+    // sofa đỏ cam + gối (khớp wall (10,53,30,15))
+    R(ctx, 10, 52, 30, 12, C.sofaRedDark);
+    R(ctx, 8, 50, 32, 5, C.sofaRed);
+    R(ctx, 12, 48, 10, 4, C.cushion);   // gối tựa
+    R(ctx, 24, 48, 8, 4, C.cushion);
+    R(ctx, 10, 64, 4, 4, C.sofaRedDark); // chân
+    R(ctx, 36, 64, 4, 4, C.sofaRedDark);
+    // thảm trải (giữa sofa và bàn trà)
+    R(ctx, 44, 73, 20, 2, C.rug);
+    for (i = 0; i < 6; i++) R(ctx, 44 + i * 4, 73, 2, 2, C.rugStripe);
+    // bàn trà gỗ (khớp wall (63,67,23,4))
+    R(ctx, 63, 66, 23, 2, C.woodLight);
+    R(ctx, 65, 68, 19, 4, C.wood);
+    R(ctx, 63, 72, 2, 2, C.woodDark); R(ctx, 82, 72, 2, 2, C.woodDark);
     // đèn tường sconce
     R(ctx, 12, 12, 2, 6, C.woodDark); R(ctx, 10, 10, 6, 3, "#ffd93b");
     R(ctx, 10, 13, 6, 1, "rgba(255,217,59,0.3)");
@@ -242,33 +259,35 @@
     R(ctx, 82, 16, 10, 10, C.woodLight);
     R(ctx, 84, 18, 6, 6, "#ffffff");
     R(ctx, 86, 20, 1, 2, C.woodDark); R(ctx, 87, 21, 2, 1, C.woodDark);
-    // kệ sách + chậu cây (phải)
-    R(ctx, 124, 30, 20, 20, C.wood);
-    R(ctx, 126, 32, 16, 3, "#b04a3c"); R(ctx, 126, 38, 16, 3, "#3a6e4a");
-    R(ctx, 126, 44, 16, 3, "#b04a3c");
-    R(ctx, 138, 26, 6, 8, C.pot);
-    R(ctx, 139, 22, 4, 6, C.plant); R(ctx, 140, 20, 2, 3, C.plant);
+    // kệ đứng + chậu cây (phải — khớp wall kệ (127,70,10,17))
+    R(ctx, 126, 62, 12, 24, C.wood);
+    R(ctx, 127, 64, 4, 6, "#b04a3c"); R(ctx, 133, 64, 4, 6, "#b04a3c");
+    R(ctx, 127, 72, 4, 6, "#3a6e4a"); R(ctx, 133, 72, 4, 6, "#3a6e4a");
+    R(ctx, 127, 80, 4, 4, "#b04a3c"); R(ctx, 133, 80, 4, 4, "#b04a3c");
+    R(ctx, 138, 56, 6, 8, C.pot);
+    R(ctx, 139, 52, 4, 6, C.plant); R(ctx, 140, 50, 2, 3, C.plant);
     // cửa tối hậu cảnh (bếp)
     R(ctx, 96, 34, 12, 26, "#0a0a14");
     R(ctx, 96, 34, 2, 26, C.woodDark); R(ctx, 106, 34, 2, 26, C.woodDark);
-    // cửa ra phòng khách — bên trái (đi tới bếp) + mũi tên
-    R(ctx, 0, 40, 4, 20, "#1a1a24");
+    // cửa ra phòng khách — bên trái (đi tới bếp) + mũi tên (khớp door_kitchen (3,30,11,20))
+    R(ctx, 0, 36, 4, 24, "#1a1a24");
     arrow(ctx, 3, 46, 1);
   }
 
   // ===== 4. KITCHEN — bếp tối: tủ trắng, lò, tủ lạnh, vết máu LỚN, mắt sáng (ảnh C phải) =====
   function drawKitchen(ctx, state, time) {
+    var i, x, y;
     R(ctx, 0, 0, GW, 60, mix("#4a4a52", "#22222a", 0.25));
     // sàn gạch nâu tối
-    for (var y = 60; y < 90; y += 6) {
-      for (var x = 0; x < GW; x += 8) {
+    for (y = 60; y < 90; y += 6) {
+      for (x = 0; x < GW; x += 8) {
         R(ctx, x, y, 8, 6, ((x / 8 + y / 6) % 2 === 0) ? "#5a4530" : "#4e3c28");
       }
     }
-    // tủ bếp trắng trên
+    // tủ bếp trắng trên (giữ nguyên — C2-P3-6: mèo vẽ đè, chấp nhận)
     R(ctx, 0, 10, 80, 22, C.cabWhite);
     R(ctx, 0, 10, 80, 3, C.cabShade);
-    for (var i = 0; i < 5; i++) {
+    for (i = 0; i < 5; i++) {
       R(ctx, 4 + i * 16, 16, 10, 12, "#f4f4f6");
       R(ctx, 11 + i * 16, 20, 2, 3, C.handle);
     }
@@ -277,40 +296,41 @@
     R(ctx, 84, 26, 8, 6, "#2a2a32");
     R(ctx, 84, 36, 8, 6, "#2a2a32");
     R(ctx, 96, 28, 4, 4, C.handle);
-    // tủ lạnh (mặt đơn giản)
-    R(ctx, 108, 16, 16, 28, C.fridge);
-    R(ctx, 110, 18, 12, 2, "#c0c4cc");
-    P(ctx, 118, 30, "#8a8f98"); P(ctx, 116, 28, "#8a8f98"); P(ctx, 118, 28, "#8a8f98"); P(ctx, 116, 30, "#8a8f98");
-    // bàn bếp
-    R(ctx, 128, 44, 20, 3, C.woodLight);
-    R(ctx, 130, 47, 2, 10, C.woodDark); R(ctx, 144, 47, 2, 10, C.woodDark);
+    // tủ lạnh (khớp wall tủ (127,7,33,43))
+    R(ctx, 128, 12, 16, 30, C.fridge);
+    R(ctx, 130, 14, 12, 2, "#c0c4cc");
+    P(ctx, 138, 26, "#8a8f98"); P(ctx, 136, 24, "#8a8f98"); P(ctx, 138, 24, "#8a8f98"); P(ctx, 136, 26, "#8a8f98");
+    // bàn bếp (khớp wall (100,47,30,15))
+    R(ctx, 100, 47, 30, 3, C.woodLight);
+    R(ctx, 102, 50, 2, 12, C.woodDark); R(ctx, 126, 50, 2, 12, C.woodDark);
     // cửa sổ
     R(ctx, 60, 2, 16, 8, "#0d1526");
     R(ctx, 62, 4, 12, 6, "#1a2a4a");
     R(ctx, 68, 3, 1, 7, C.woodDark); R(ctx, 62, 6, 12, 1, C.woodDark);
-    // VẾT MÁU LỚN (giữa sàn, ảnh C)
-    R(ctx, 68, 66, 30, 6, C.blood);
-    R(ctx, 72, 72, 22, 4, C.blood);
-    R(ctx, 78, 76, 12, 3, C.bloodDark);
-    R(ctx, 66, 68, 6, 3, C.bloodDark); R(ctx, 98, 69, 5, 3, C.bloodDark);
+    // VẾT MÁU LỚN (khớp blood zone (50,78,40,8), ảnh C)
+    R(ctx, 50, 78, 40, 8, C.blood);
+    R(ctx, 54, 86, 26, 3, C.blood);
+    R(ctx, 66, 86, 6, 2, C.bloodDark);
+    R(ctx, 52, 80, 6, 3, C.bloodDark); R(ctx, 84, 81, 5, 3, C.bloodDark);
     // giọt máu anim (drip)
     var drippy = Math.floor(time * 1.2) % 2 === 0;
-    if (drippy) P(ctx, 76, 78, C.bloodDark);
-    // VÙNG TỐI + 2 MẮT TRẮNG SÁNG (trái, DARK_RECT logical ~ (7,7,31,33))
-    R(ctx, 5, 5, 34, 38, "#05050c");
+    if (drippy) P(ctx, 76, 89, C.bloodDark);
+    // VÙNG TỐI + 2 MẮT TRẮNG SÁNG (khớp DARK_RECT (7,7,31,33))
+    R(ctx, 7, 7, 31, 33, "#05050c");
     if (Math.floor(time * 2) % 2 === 0) {
-      R(ctx, 18, 20, 3, 2, "#ffffff"); R(ctx, 26, 20, 3, 2, "#ffffff");
+      R(ctx, 17, 19, 3, 2, "#ffffff"); R(ctx, 25, 19, 3, 2, "#ffffff");
     }
-    // cửa ra (phải — quay về phòng khách ma ám)
-    R(ctx, 156, 40, 4, 20, "#0a0a14");
+    // cửa ra (phải — quay về phòng khách ma ám, khớp door_out (149,43,11,20))
+    R(ctx, 149, 40, 4, 20, "#0a0a14");
     // nếu đang K_CHOICE: highlight vết máu
     if (state.phase === "K_CHOICE") {
-      R(ctx, 68, 66, 30, 6, "rgba(255,255,255,0.25)");
+      R(ctx, 50, 78, 40, 8, "rgba(255,255,255,0.25)");
     }
   }
 
   // ===== 5. HAUNTED — phòng khách ma ám: tối xanh đen, ma XANH đầu lâu chặn cửa (ảnh D) =====
   function drawHaunted(ctx, state, time) {
+    var i;
     // tường tối
     R(ctx, 0, 0, GW, 60, mix("#23203d", "#10101f", 0.4));
     // dầm gỗ trần
@@ -320,14 +340,14 @@
     R(ctx, 4, 8, 3, 1, "rgba(200,200,220,0.3)"); R(ctx, 8, 4, 1, 3, "rgba(200,200,220,0.3)");
     R(ctx, 5, 5, 1, 1, "rgba(200,200,220,0.3)"); R(ctx, 6, 6, 1, 1, "rgba(200,200,220,0.3)");
     // sàn gỗ tối
-    for (var i = 0; i < 8; i++) R(ctx, 0, 62 + i * 4, GW, 4, mix("#2a2038", "#171020", i / 8));
-    // sofa đỏ cũ
-    R(ctx, 4, 50, 28, 12, "#5c2430");
-    R(ctx, 2, 48, 30, 4, "#6e2a38");
-    // bàn nhỏ + chân nến
-    R(ctx, 130, 52, 12, 2, "#3c2a20");
-    R(ctx, 131, 48, 2, 4, "#7a5a2b"); R(ctx, 132, 46, 1, 2, "#ffd93b");
-    if (Math.floor(time * 3) % 2 === 0) P(ctx, 132, 45, "#ff8c1c");
+    for (i = 0; i < 8; i++) R(ctx, 0, 62 + i * 4, GW, 4, mix("#2a2038", "#171020", i / 8));
+    // sofa cũ (khớp wall (10,53,30,15))
+    R(ctx, 10, 52, 28, 12, "#5c2430");
+    R(ctx, 8, 50, 30, 4, "#6e2a38");
+    // bàn nhỏ + chân nến (khớp wall (67,68,20,4))
+    R(ctx, 67, 66, 20, 3, "#3c2a20");
+    R(ctx, 76, 62, 2, 4, "#7a5a2b"); R(ctx, 77, 60, 1, 2, "#ffd93b");
+    if (Math.floor(time * 3) % 2 === 0) P(ctx, 77, 59, "#ff8c1c");
     // đồng hồ quả lắc (grandfather clock)
     R(ctx, 120, 16, 10, 34, C.woodDark);
     R(ctx, 122, 18, 6, 6, "#0c0c18"); R(ctx, 123, 20, 4, 3, "#8ec9ff");
@@ -338,45 +358,51 @@
     ctx.save(); ctx.translate(60 * GX, 20 * GX); ctx.rotate(0.12);
     R(ctx, -8, -6, 16, 12, "#3a2a20"); R(ctx, -6, -4, 12, 8, "#1a1020");
     ctx.restore();
-    // CỬA CHÍNH GIỮA + MA XANH ĐẦU LÂU LỚN chặn (ảnh D)
-    R(ctx, 74, 20, 12, 40, "#0a0a16");
-    R(ctx, 74, 20, 2, 40, "#3c2a4a"); R(ctx, 84, 20, 2, 40, "#3c2a4a");
+    // CỬA CHÍNH + MA XANH ĐẦU LÂU LỚN chặn (khớp door_front (143,33,15,33), ảnh D)
+    R(ctx, 143, 20, 12, 40, "#0a0a16");
+    R(ctx, 143, 20, 2, 40, "#3c2a4a"); R(ctx, 153, 20, 2, 40, "#3c2a4a");
     if (state.phase !== "H_INIT" || !state.dialogue) {
-      drawGhostSkull(ctx, 70, 16, time, state);
+      drawGhostSkull(ctx, 139, 16, time, state);
     }
-    // cửa phụ trái
-    R(ctx, 0, 40, 4, 20, "#0a0a16");
+    // cửa phụ trái (khớp door_side (2,30,11,20))
+    R(ctx, 0, 36, 4, 24, "#0a0a16");
     arrow(ctx, 2, 46, 1);
     // glow xanh quanh ma
-    R(ctx, 74, 34, 12, 20, "rgba(142,201,255,0.08)");
+    R(ctx, 143, 34, 12, 20, "rgba(142,201,255,0.08)");
   }
 
-  // ===== 6. HALLWAY — hành lang gỗ tối + 5 jump scare (ảnh E) =====
-  function drawHallway(ctx, state, time) {
-    // tường tối + sàn ván
-    R(ctx, 0, 0, GW, 54, "#17131f");
-    for (var i = 0; i < 6; i++) R(ctx, 0, 62 + i * 4, GW, 4, mix("#241a30", "#161020", i / 6));
-    R(ctx, 0, 60, GW, 2, "#0c0814");
+  // ===== 6. HALLWAY — hành lang gỗ tối + 5 jump scare (map 320×90, camera scroll) =====
+  function drawHallway(ctx, state, time, cx) {
+    cx = cx || 0;
+    var i;
+    ctx.save();
+    ctx.translate(-cx * GX, 0); // C2-P1-2
+    // tường tối + sàn ván (trải 320)
+    R(ctx, 0, 0, 320, 54, "#17131f");
+    for (i = 0; i < 6; i++) R(ctx, 0, 62 + i * 4, 320, 4, mix("#241a30", "#161020", i / 6));
+    R(ctx, 0, 60, 320, 2, "#0c0814");
     // ván sàn
-    for (i = 0; i < 20; i++) P(ctx, i * 8, 64, "#2e2038"); P(ctx, i * 8 + 4, 70, "#2e2038");
-    // nến/đuốc tường
-    for (i = 0; i < 6; i++) {
-      var tx = 8 + i * 27;
+    for (i = 0; i < 40; i++) P(ctx, i * 8, 64, "#2e2038");
+    for (i = 0; i < 40; i++) P(ctx, i * 8 + 4, 70, "#2e2038");
+    // nến/đuốc tường (11 cái trải 0..320)
+    for (i = 0; i < 11; i++) {
+      var tx = 8 + i * 29;
       R(ctx, tx, 12, 2, 8, "#3c2a20");
       R(ctx, tx - 1, 10, 4, 3, "#ffd93b");
       if (Math.floor(time * 4 + i) % 2 === 0) P(ctx, tx, 9, "#ff8c1c");
       R(ctx, tx - 3, 12, 8, 1, "rgba(255,150,60,0.12)");
     }
-    // cửa hai đầu
-    R(ctx, 0, 40, 4, 20, "#0a0a14");
-    R(ctx, 156, 40, 4, 20, "#0a0a14");
-    // 5 kiểu hù (mapping §6.2) — hiển thị khi scareActive = n
+    // cửa hai đầu (khớp wall trái (0,33,9,23) + door_dining (302,33,14,20))
+    R(ctx, 0, 36, 4, 24, "#0a0a14");
+    R(ctx, 316, 36, 4, 24, "#0a0a14");
+    // 5 kiểu hù (mapping §6.2) — vị trí tuyệt đối trong map, luôn trong viewport khi kích hoạt
     var sa = state.scareActive;
     if (sa === 1) drawScareGhost(ctx, 130, 30, time);          // ma trắng ga
-    if (sa === 2) drawScarePortrait(ctx, 70, 12, time);        // chân dung hét
-    if (sa === 3) drawScareHands(ctx, 148, 34, time);          // tay zombie
-    if (sa === 4) drawScareShadow(ctx, 120, 20, time);         // bóng mắt vàng
-    if (sa === 5) drawScareSkull(ctx, 96, 26, time);           // mặt xương
+    if (sa === 2) drawScarePortrait(ctx, 160, 12, time);        // chân dung hét
+    if (sa === 3) drawScareHands(ctx, 210, 34, time);           // tay zombie
+    if (sa === 4) drawScareShadow(ctx, 260, 20, time);          // bóng mắt vàng
+    if (sa === 5) drawScareSkull(ctx, 300, 26, time);           // mặt xương
+    ctx.restore();
   }
 
   // ===== 7. BIRTHDAY — sinh nhật: lò sưởi, bánh kem 4 nến, chủ, sparkle =====

@@ -3,6 +3,13 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## ✅ TASK-079 — Fix mèo biến mất sau START (bug TASK-078) (2026-08-15)
+
+- **Kết quả**: **DONE** — root cause: scale mismatch giữa sprite logical 160×90 (×3 → canvas 480×270) và world core gấp 3 → mèo vẽ ra ngoài canvas sau START, background không khớp walls/zones. Đã chuyển toàn bộ core về logical grid (GARDEN/HALLWAY 320×90 camera scroll, còn lại 160×90), mở rộng drawGarden/drawHallway với camera translate + save/restore, sửa camX(), khớp nội thất với walls, cập nhật test ÷3 + **thêm 4 pixel tests chống tái phát** (AC-1 mèo hiện tại spawn, AC-4 nhà khớp wall, AC-10 camera scroll, AC-5 mèo hiện diện). Phát hiện kèm: test visual TASK-078 "17/17 khớp brief" là sai — brief không có ảnh ref nên `toHaveScreenshot` bị skip.
+- **Test**: **59/59 PASS** — core 27 + smoke 4 + Playwright 28 (gồm 2 test chơi thật không hook: title→sinh nhật 45s, title→game over 22s + AC-2 di chuyển mới). **10/10 AC ĐẠT**.
+- **Hard gate**: plan + spec + critique ×3 (critique-1: 5 P1/10 P2/6 P3; critique-2: 2 P1/1 P2/6 P3; critique-3 xác nhận: 1 P1/1 P2/3 P3 — đủ 3 vòng) + tasks + review trước (CHANGES REQUESTED → R1-R5 resolved) + review sau (Code APPROVED).
+- Xem chi tiết: `aios/progress/tasks/TASK-079/` (plan + spec + critique ×3 + tasks + review + review-post + test + evaluation + implementation/)
+
 ## ✅ TASK-078 — Làm lại hoàn toàn game "Yuniebel's Cat" theo kịch bản + 5 ảnh tham khảo (2026-08-15)
 
 - **Kết quả**: **DONE** — viết lại từ đầu `games/yuniebel/` (bản cũ TASK-077 bị chê xấu). 13 câu thoại nguyên văn brief-scenario.md, 9 task text, 10 mood nhạc nền + 27 SFX WebAudio, 7 cảnh vẽ theo 5 ảnh tham khảo (trời động ngày→hoàng hôn→đêm + đèn hiên, 5 kiểu hù riêng biệt, ma xanh đầu lâu chặn cửa, vết máu lớn + mắt sáng, lò sưởi + bánh kem sinh nhật).

@@ -25,7 +25,9 @@ async function hold(page, key, ms) {
   await page.keyboard.up(key);
 }
 
-// Di chuyển mèo tới (tx, ty) — ưu tiên trục Y trước (tránh kẹt wall ngang thân nhà/sofa)
+// Di chuyển mèo tới (tx, ty) — logical grid (TASK-079): ưu tiên trục Y trước (tránh kẹt wall ngang thân nhà/sofa)
+// R1: hai tầng hold — bước lớn 120ms ≈ 4.7px khi xa (>12), bước nhỏ 40ms ≈ 1.6px khi gần (>2)
+// → hội tụ |dx|,|dy| ≤ 2, tránh oscillation + hạ cánh kẹt wall nhà (đáy y=50)
 async function moveTo(page, tx, ty, maxSteps) {
   maxSteps = maxSteps || 60;
   const startPhase = (await getState(page)).phase;
@@ -34,14 +36,14 @@ async function moveTo(page, tx, ty, maxSteps) {
     if (st.phase !== startPhase) break; // phase đổi → đã chạm zone mục tiêu, dừng
     const p = st.player;
     const dx = tx - p.x, dy = ty - p.y;
-    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) break;
-    // ưu tiên y trước (thay đổi nhỏ, tránh kẹt wall ngang)
-    if (Math.abs(dy) > 12) await hold(page, dy > 0 ? "s" : "w", 120);
-    else await hold(page, dx > 0 ? "d" : "a", 120);
+    if (Math.abs(dx) < 2 && Math.abs(dy) < 2) break;
+    // ưu tiên y trước; bước nhỏ khi gần để hội tụ chính xác
+    if (Math.abs(dy) > 2) await hold(page, dy > 0 ? "s" : "w", Math.abs(dy) > 12 ? 120 : 40);
+    else if (Math.abs(dx) > 2) await hold(page, dx > 0 ? "d" : "a", Math.abs(dx) > 12 ? 120 : 40);
   }
 }
 
-// Đuổi bướm — bấm hướng bướm LIÊN TỤC (không dừng): mèo 120px/s đuổi kịp 60px/s → chạm → catch
+// Đuổi bướm — bấm hướng bướm LIÊN TỤC (không dừng): mèo 40px/s đuổi kịp 20px/s → chạm → catch
 async function chaseButterfly(page, maxSteps) {
   maxSteps = maxSteps || 100;
   for (let i = 0; i < maxSteps; i++) {
@@ -56,14 +58,22 @@ async function chaseButterfly(page, maxSteps) {
   return false;
 }
 
+test("AC-2: mèo di chuyển được — hold D 1s → player.x tăng (TASK-079)", async ({ page }) => {
+  await gotoGame(page);
+  const x0 = (await getState(page)).player.x;
+  await hold(page, "d", 1000);
+  const x1 = (await getState(page)).player.x;
+  expect(x1).toBeGreaterThan(x0 + 10);
+});
+
 test("AC-14a: chơi thật title → sinh nhật (D_END) — không hook", async ({ page }) => {
   await gotoGame(page);
 
   // ===== S1 Sân vườn =====
   await page.keyboard.press("Space"); // advance câu 1
   await page.keyboard.press("Space"); // advance câu 2
-  // mèo tiến gần cửa (x>780) → bướm xuất hiện
-  await moveTo(page, 800, 210);
+  // mèo tiến gần cửa (x>260) → bướm xuất hiện
+  await moveTo(page, 271, 70);
   let st = await getState(page);
   expect(st.butterfly).toBeTruthy();
   // đuổi bướm đến khi bắt được
@@ -75,14 +85,14 @@ test("AC-14a: chơi thật title → sinh nhật (D_END) — không hook", async
   await page.waitForFunction(() => ["G_DOOR", "L_SEARCH"].includes(window.__yuniebel.getState().phase), null, { timeout: 15000 });
   st = await getState(page);
   if (st.phase !== "L_SEARCH") {
-    await moveTo(page, 865, 178); // cửa mở dưới y=172 — mèo phải đi thấp
+    await moveTo(page, 288, 50); // cửa mở dưới y=48..68 — mèo phải đi thấp (C2-P2-1/C3-P1)
     st = await getState(page);
   }
   expect(st.phase).toBe("L_SEARCH");
 
   // ===== S2 Phòng khách → S3 bếp =====
   await page.keyboard.press("Space");
-  await moveTo(page, 20, 110);
+  await moveTo(page, 7, 20); // lối TRÊN sofa (P1-3) → door_kitchen (3,30,11,20)
   st = await getState(page);
   expect(["K_INIT", "K_BLOOD", "K_CHOICE"].includes(st.phase)).toBeTruthy();
 
@@ -91,7 +101,7 @@ test("AC-14a: chơi thật title → sinh nhật (D_END) — không hook", async
   expect(["K_INIT", "K_BLOOD", "K_CHOICE"].includes(st.phase)).toBeTruthy();
   await page.keyboard.press("Space");
   if ((await getState(page)).phase !== "K_CHOICE") {
-    await moveTo(page, 60, 60); // vùng tối → K_CHOICE
+    await moveTo(page, 20, 20); // vùng tối (7,7,31,33) → K_CHOICE
   }
   st = await getState(page);
   expect(st.phase).toBe("K_CHOICE");
@@ -105,11 +115,11 @@ test("AC-14a: chơi thật title → sinh nhật (D_END) — không hook", async
   await page.waitForFunction(() => ["H_BLOCK", "H_EXIT"].includes(window.__yuniebel.getState().phase));
   st = await getState(page);
   // thử ra cửa chính → bị đẩy (task đổi "Phải đi qua phòng khác!")
-  await moveTo(page, 440, 150);
+  await moveTo(page, 147, 50);
   st = await getState(page);
   expect(st.ghostBlocked).toBeTruthy();
   // đi qua cửa phụ trái → W_INIT
-  await moveTo(page, 10, 110);
+  await moveTo(page, 3, 20); // lối TRÊN sofa (P1-3) → door_side (2,30,11,20)
   await page.waitForFunction(() => ["W_INIT", "W_WALK", "W_DONE"].includes(window.__yuniebel.getState().phase));
 
   // ===== S5 Hành lang: 5 scare =====
@@ -119,13 +129,13 @@ test("AC-14a: chơi thật title → sinh nhật (D_END) — không hook", async
     await page.waitForFunction(() => window.__yuniebel.getState().phase === "W_WALK");
   }
   // đi hết hành lang (qua 5 scare zone)
-  await moveTo(page, 930, 135, 60);
+  await moveTo(page, 310, 45, 60);
   st = await getState(page);
   expect(st.scareCount).toBe(5);
   expect(["W_DONE", "D_END"].includes(st.phase)).toBeTruthy();
   // vào phòng ăn → D_END (sinh nhật)
   if (st.phase === "W_DONE") {
-    await moveTo(page, 935, 135, 20);
+    await moveTo(page, 312, 45, 20);
     st = await getState(page);
   }
   expect(st.phase).toBe("D_END");
@@ -138,21 +148,21 @@ test("AC-14b: chơi thật title → game over (chọn 2) — không hook", asyn
   await gotoGame(page);
   await page.keyboard.press("Space");
   await page.keyboard.press("Space");
-  await moveTo(page, 800, 210);
+  await moveTo(page, 271, 70);
   await chaseButterfly(page);
   await page.waitForFunction(() => ["G_DOOR", "L_SEARCH"].includes(window.__yuniebel.getState().phase), null, { timeout: 15000 });
   let st = await getState(page);
-  if (st.phase !== "L_SEARCH") { await moveTo(page, 865, 178); } // cửa mở dưới y=172
+  if (st.phase !== "L_SEARCH") { await moveTo(page, 288, 50); } // cửa mở y 48..68 (C2-P2-1/C3-P1)
   await page.keyboard.press("Space");
-  await moveTo(page, 20, 110);
+  await moveTo(page, 7, 20); // lối TRÊN sofa → door_kitchen
   await page.waitForFunction(() => ["K_INIT", "K_BLOOD", "K_CHOICE"].includes(window.__yuniebel.getState().phase));
   await page.keyboard.press("Space");
   st = await getState(page);
   if (!["K_BLOOD", "K_CHOICE"].includes(st.phase)) {
-    await moveTo(page, 60, 60);
+    await moveTo(page, 20, 20);
   }
   st = await getState(page);
-  if (st.phase !== "K_CHOICE") { await moveTo(page, 60, 60); }
+  if (st.phase !== "K_CHOICE") { await moveTo(page, 20, 20); }
   st = await getState(page);
   expect(st.phase).toBe("K_CHOICE");
   // chọn 2 → GAME OVER

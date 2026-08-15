@@ -106,11 +106,11 @@
     }
   }
 
-  // ===== CAMERA =====
+  // ===== CAMERA (logical viewport 160 — R2: thay toàn bộ, bỏ guard sc.w <= CW cũ) =====
   function camX() {
     var sc = core.SCENES[state.scene];
-    if (!sc || sc.w <= CW) return 0;
-    return Math.max(0, Math.min(state.player.x - CW / 2 + 8, sc.w - CW));
+    if (!sc) return 0; // TITLE/END không có scene map
+    return Math.max(0, Math.min(state.player.x - 80 + 3, sc.w - 160));
   }
 
   // ===== SOUND FLAGS (game.js phát 1 lần rồi xóa) =====
@@ -178,7 +178,7 @@
         S.drawTitle(ctx, state.time);
         break;
       case "GARDEN":
-        S.drawGarden(ctx, state, state.time);
+        S.drawGarden(ctx, state, state.time, cx);
         // bướm
         if (state.butterfly && state.butterflyVisible !== false) {
           S.drawButterfly(ctx, state.butterfly.x - cx, state.butterfly.y, state.time);
@@ -188,11 +188,11 @@
           ctx.fillStyle = "rgba(8,10,30," + (state.darkness - 0.5) * 0.6 + ")";
           ctx.fillRect(0, 0, CW, CH);
         }
-        // đèn hiên sáng (đêm)
+        // đèn hiên sáng (đêm) — khớp sprite đèn (287,38) trong drawGarden
         if (state.darkness > 0.5) {
-          var lx = 146 * S.GX - cx * S.GX;
+          var lx = (287 - cx) * S.GX;
           ctx.fillStyle = "rgba(255,217,59,0.12)";
-          ctx.fillRect(lx - 12, 36 * S.GX, 24, 30);
+          ctx.fillRect(lx - 12, 38 * S.GX, 24, 30);
         }
         break;
       case "LIVING":
@@ -200,13 +200,12 @@
         break;
       case "KITCHEN":
         S.drawKitchen(ctx, state, state.time);
-        S.drawBlood(ctx, 68, 66, state.time);
         break;
       case "HAUNTED":
         S.drawHaunted(ctx, state, state.time);
         break;
       case "HALLWAY":
-        S.drawHallway(ctx, state, state.time);
+        S.drawHallway(ctx, state, state.time, cx);
         break;
       case "BIRTHDAY":
         S.drawBirthday(ctx, state, state.time);

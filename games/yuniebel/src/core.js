@@ -11,18 +11,18 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  // ====== Hằng số ======
-  var WALK_SPEED = 120;        // px/s mèo
-  var BUTTERFLY_SPEED = 60;    // px/s bướm (waypoint cố định — C2-07)
+  // ====== Hằng số (logical grid — 1 đơn vị = 1 pixel sprite, ×3 → canvas 480×270) ======
+  var WALK_SPEED = 40;         // px/s mèo (logical)
+  var BUTTERFLY_SPEED = 20;    // px/s bướm (waypoint cố định — C2-07)
   var MAX_DT = 0.05;           // clamp delta time (50ms)
-  var PW = 16, PH = 16;        // player sprite
+  var PW = 16, PH = 16;        // player sprite (16×16 logical)
   var HBX = 3, HBW = 10;       // hitbox lệch (x+3, y+2, 10x12)
   var HBY = 2, HBH = 12;
-  var KNOCKBACK = 40;          // px đẩy lùi cửa ma
+  var KNOCKBACK = 13;          // px đẩy lùi cửa ma (logical)
   var KNOCKBACK_CD = 1.5;      // giây
-  var DARK_RECT = { x: 20, y: 20, w: 92, h: 100 }; // vùng tối bếp (mắt sáng)
-  var BUTTERFLY_CATCH = 12;    // px bán kính bắt bướm
-  var BUTTERFLY_STAY = 40;     // px bán kính "đứng yên bắt"
+  var DARK_RECT = { x: 7, y: 7, w: 31, h: 33 }; // vùng tối bếp (logical — khớp sprites.js)
+  var BUTTERFLY_CATCH = 4;     // px bán kính bắt bướm (cosmetic — butterflyHit dùng bbox 8/16)
+  var BUTTERFLY_STAY = 13;     // px bán kính "đứng yên bắt"
   var BUTTERFLY_STAY_T = 1.0;  // giây đứng trong vùng bán kính
   var DARK_RAMP = 5.0;         // giây tối dần sau bắt bướm (R7)
 
@@ -30,80 +30,80 @@
   // zone: {id, x, y, w, h, phases:[...]} — action xử lý trong updateGame
   var SCENES = {
     GARDEN: {
-      w: 960, h: 270,
-      spawn: { x: 320, y: 210 },
-      butterflyWp: [ {x: 500, y: 120}, {x: 650, y: 90}, {x: 540, y: 190} ],
+      w: 320, h: 90,
+      spawn: { x: 107, y: 70 },
+      butterflyWp: [ { x: 167, y: 40 }, { x: 217, y: 30 }, { x: 180, y: 63 } ],
       walls: [
-        { x: 800, y: 20, w: 160, h: 130 },   // thân nhà trên (tới y=150)
-        { x: 200, y: 185, w: 24, h: 14 },    // bụi cây 1
-        { x: 350, y: 100, w: 22, h: 14 },    // bụi cây 2
-        { x: 620, y: 240, w: 26, h: 14 },    // bụi cây 3 (sát mép dưới — không chặn đường chính)
-        { x: 40, y: 150, w: 20, h: 12 },     // bụi cây 4
-        { x: 690, y: 40, w: 18, h: 70 }      // cây lớn
+        { x: 267, y: 7, w: 53, h: 43 },   // thân nhà (tới y=50)
+        { x: 67, y: 62, w: 8, h: 5 },     // bụi cây 1
+        { x: 117, y: 33, w: 7, h: 5 },    // bụi cây 2
+        { x: 207, y: 85, w: 9, h: 4 },    // bụi cây 3 (sát mép dưới — không chặn đường chính y=70)
+        { x: 13, y: 50, w: 7, h: 4 },     // bụi cây 4
+        { x: 230, y: 13, w: 6, h: 23 }    // cây lớn
       ],
       zones: [
-        { id: "door", x: 852, y: 145, w: 32, h: 60, phases: ["G_INIT", "G_DOOR"] }
+        { id: "door", x: 284, y: 48, w: 11, h: 20, phases: ["G_INIT", "G_DOOR"] }
       ]
     },
     LIVING: {
-      w: 480, h: 270,
-      spawn: { x: 340, y: 190 },
+      w: 160, h: 90,
+      spawn: { x: 113, y: 63 },
       walls: [
-        { x: 30, y: 160, w: 90, h: 45 },    // sofa
-        { x: 190, y: 200, w: 70, h: 12 },   // bàn trà
-        { x: 380, y: 210, w: 30, h: 50 }    // kệ
+        { x: 10, y: 53, w: 30, h: 15 },   // sofa
+        { x: 63, y: 67, w: 23, h: 4 },    // bàn trà
+        { x: 127, y: 70, w: 10, h: 17 }   // kệ
       ],
       zones: [
-        { id: "door_kitchen", x: 8, y: 90, w: 34, h: 50, phases: ["L_SEARCH"] }
+        { id: "door_kitchen", x: 3, y: 30, w: 11, h: 20, phases: ["L_SEARCH"] }
       ]
     },
     KITCHEN: {
-      w: 480, h: 270,
-      spawn: { x: 240, y: 230 },
+      w: 160, h: 90,
+      spawn: { x: 80, y: 73 },
       walls: [
-        { x: 300, y: 140, w: 90, h: 45 },   // bàn bếp
-        { x: 380, y: 20, w: 100, h: 130 }   // tủ bếp phải
+        { x: 100, y: 47, w: 30, h: 15 },  // bàn bếp
+        { x: 127, y: 7, w: 33, h: 43 }    // tủ bếp phải
       ],
       zones: [
-        { id: "blood", x: 150, y: 235, w: 120, h: 25, phases: ["K_INIT", "K_BLOOD"] },
+        { id: "blood", x: 50, y: 78, w: 40, h: 8, phases: ["K_INIT", "K_BLOOD"] },
         { id: "dark", x: DARK_RECT.x, y: DARK_RECT.y, w: DARK_RECT.w, h: DARK_RECT.h, phases: ["K_BLOOD"] },
-        { id: "door_out", x: 446, y: 130, w: 34, h: 60, phases: ["K_CHOICE"] }
+        { id: "door_out", x: 149, y: 43, w: 11, h: 20, phases: ["K_CHOICE"] }
       ]
     },
     HAUNTED: {
-      w: 480, h: 270,
-      spawn: { x: 240, y: 190 },
+      w: 160, h: 90,
+      spawn: { x: 90, y: 63 },
       walls: [
-        { x: 30, y: 160, w: 90, h: 45 },   // sofa cũ
-        { x: 200, y: 205, w: 60, h: 12 }   // bàn
+        { x: 10, y: 53, w: 30, h: 15 },   // sofa cũ
+        { x: 67, y: 68, w: 20, h: 4 }     // bàn
       ],
       zones: [
-        { id: "door_front", x: 428, y: 100, w: 44, h: 100, phases: ["H_INIT", "H_BLOCK", "H_EXIT"] },
-        { id: "door_side", x: 6, y: 90, w: 34, h: 60, phases: ["H_BLOCK", "H_EXIT"] }
+        { id: "door_front", x: 143, y: 33, w: 15, h: 33, phases: ["H_INIT", "H_BLOCK", "H_EXIT"] },
+        { id: "door_side", x: 2, y: 30, w: 11, h: 20, phases: ["H_BLOCK", "H_EXIT"] }
       ]
     },
     HALLWAY: {
-      w: 960, h: 270,
-      spawn: { x: 60, y: 135 },
+      w: 320, h: 90,
+      spawn: { x: 20, y: 45 },
       walls: [
-        { x: 0, y: 100, w: 26, h: 70 }     // cửa vào đóng (one-way)
+        { x: 0, y: 33, w: 9, h: 23 }      // cửa vào đóng (one-way)
       ],
-      scareZones: [                          // 5 vị trí hù (C1-08: scare1..5)
-        { x: 140, y: 100, w: 90, h: 60 },
-        { x: 300, y: 100, w: 90, h: 60 },
-        { x: 460, y: 100, w: 90, h: 60 },
-        { x: 620, y: 100, w: 90, h: 60 },
-        { x: 780, y: 100, w: 90, h: 60 }
+      scareZones: [                       // 5 vị trí hù (C1-08: scare1..5)
+        { x: 47, y: 33, w: 30, h: 20 },
+        { x: 100, y: 33, w: 30, h: 20 },
+        { x: 153, y: 33, w: 30, h: 20 },
+        { x: 207, y: 33, w: 30, h: 20 },
+        { x: 260, y: 33, w: 30, h: 20 }
       ],
       zones: [
-        { id: "door_dining", x: 905, y: 100, w: 42, h: 60, phases: ["W_WALK", "W_DONE"] }
+        { id: "door_dining", x: 302, y: 33, w: 14, h: 20, phases: ["W_WALK", "W_DONE"] }
       ]
     },
     BIRTHDAY: {
-      w: 480, h: 270,
-      spawn: { x: 240, y: 200 },
+      w: 160, h: 90,
+      spawn: { x: 80, y: 67 },
       walls: [
-        { x: 140, y: 140, w: 200, h: 60 }  // bàn bánh kem
+        { x: 47, y: 47, w: 67, h: 20 }   // bàn bánh kem
       ],
       zones: []
     }
@@ -400,9 +400,9 @@
         break;
 
       case "G_INIT":
-        // bướm xuất hiện khi mèo tiến gần cửa (x > 780 — C2-07/R12), trừ khi đã bắt
-        if (state.player.x > 780 && !state.butterfly) {
-          state.butterfly = { x: 700, y: 140, wp: 0, stayT: 0, flap: 0 };
+        // bướm xuất hiện khi mèo tiến gần cửa (x > 260 — C2-07/R12), trừ khi đã bắt
+        if (state.player.x > 260 && !state.butterfly) {
+          state.butterfly = { x: 233, y: 47, wp: 0, stayT: 0, flap: 0 };
           state.soundFlags.ting = true;
         }
         if (state.butterfly) {
@@ -644,7 +644,7 @@
       },
       setChoice: function (n) { s.choice = n; },
       setButterfly: function (x, y) {
-        s.butterfly = { x: x == null ? 700 : x, y: y == null ? 150 : y, wp: 0, stayT: 0, flap: 0 };
+        s.butterfly = { x: x == null ? 233 : x, y: y == null ? 50 : y, wp: 0, stayT: 0, flap: 0 };
       },
       freeze: function (v) { s.frozen = !!v; }
     };

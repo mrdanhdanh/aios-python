@@ -62,7 +62,7 @@ T("Tổng 12 câu trong DIALOGUES + 'Meow!!' khi hù = 13 (C1-05)", function () 
   // câu 13 "Meow!!" được đặc tả trong W_WALK khi scare — kiểm tra qua simulate
   var s = core.startGame();
   core.setPhase(s, "W_WALK");
-  s.player.x = 160; s.player.y = 130; // scare zone 1
+  s.player.x = 53; s.player.y = 43; // scare zone 1 (logical ÷3)
   core.updateGame(s, 0.016, {});
   assert.strictEqual(s.dialogue.text, "Meow!!");
 });
@@ -112,9 +112,9 @@ T("R-02: startGame set soundFlags.start (resetStats màn chơi mới)", function
   var s = core.startGame();
   assert.strictEqual(s.soundFlags.start, true);
 });
-T("Mèo tiến gần cửa (x>780) → bướm xuất hiện + ting", function () {
+T("Mèo tiến gần cửa (x>260) → bướm xuất hiện + ting", function () {
   var s = core.startGame();
-  s.player.x = 790; s.player.y = 150;
+  s.player.x = 263; s.player.y = 50;
   core.updateGame(s, 0.016, {});
   assert.ok(s.butterfly, "bướm phải xuất hiện");
   assert.strictEqual(s.soundFlags.ting, true);
@@ -133,7 +133,7 @@ T("Bắt bướm → G_DARK + darkness ramp 5s (R7)", function () {
 T("Vào cửa (G_DOOR) → L_SEARCH + dialogue 'Meow? Chủ nhân đâu rồi?'", function () {
   var s = core.startGame();
   core.setPhase(s, "G_DOOR");
-  s.player.x = 860; s.player.y = 160;
+  s.player.x = 287; s.player.y = 53;
   core.updateGame(s, 0.016, {});
   assert.strictEqual(s.phase, "L_SEARCH");
   assert.strictEqual(s.dialogue.text, "Meow? Chủ nhân đâu rồi?");
@@ -141,7 +141,7 @@ T("Vào cửa (G_DOOR) → L_SEARCH + dialogue 'Meow? Chủ nhân đâu rồi?'"
 T("Phòng khách → cửa bếp → K_INIT", function () {
   var s = core.startGame();
   core.setPhase(s, "L_SEARCH");
-  s.player.x = 20; s.player.y = 100;
+  s.player.x = 7; s.player.y = 33;
   core.updateGame(s, 0.016, {});
   assert.strictEqual(s.phase, "K_INIT");
   assert.strictEqual(s.dialogue.text, "Meow… có gì đó lạ…");
@@ -149,14 +149,14 @@ T("Phòng khách → cửa bếp → K_INIT", function () {
 T("Chạm vết máu → K_BLOOD → hết dialogue → K_CHOICE", function () {
   var s = core.startGame();
   core.setPhase(s, "K_INIT");
-  s.player.x = 190; s.player.y = 240;
+  s.player.x = 63; s.player.y = 73; // hitbox bottom 87 ≤ 90 — hợp lệ (P3-3)
   core.updateGame(s, 0.016, {});
   assert.strictEqual(s.phase, "K_BLOOD");
   assert.strictEqual(s.dialogue.text, "Meow?! Đây là gì vậy?");
   // advance dialogue rồi chạm vùng tối
   for (var i = 0; i < 10; i++) core.updateGame(s, 0.016, {});
   s.dialogue = null; s.dialogueQueue = [];
-  s.player.x = 40; s.player.y = 40;
+  s.player.x = 13; s.player.y = 13;
   core.updateGame(s, 0.016, {});
   assert.strictEqual(s.phase, "K_CHOICE");
 });
@@ -185,7 +185,7 @@ T("H_INIT hết dialogue → H_BLOCK + ma đẩy lùi + đổi task (C1-14)", fu
   core.updateGame(s, 0.016, {});
   assert.strictEqual(s.phase, "H_BLOCK");
   // cố ra cửa chính → knockback
-  s.player.x = 430; s.player.y = 150;
+  s.player.x = 143; s.player.y = 50;
   var x0 = s.player.x;
   core.updateGame(s, 0.016, {});
   assert.ok(s.player.x < x0, "mèo bị đẩy lùi");
@@ -195,7 +195,7 @@ T("H_INIT hết dialogue → H_BLOCK + ma đẩy lùi + đổi task (C1-14)", fu
 T("Cửa phụ trái → W_INIT (không deadlock — C2-03)", function () {
   var s = core.startGame();
   core.setPhase(s, "H_EXIT");
-  s.player.x = 10; s.player.y = 100;
+  s.player.x = 3; s.player.y = 33;
   core.updateGame(s, 0.016, {});
   assert.strictEqual(s.phase, "W_INIT");
   assert.strictEqual(s.scene, "HALLWAY");
@@ -222,7 +222,7 @@ T("5 scare zone → W_DONE + 'Meow!!' mỗi lần (AC-8)", function () {
 T("W_DONE → cửa → D_END + 3 câu thoại sinh nhật (AC-9)", function () {
   var s = core.startGame();
   core.setPhase(s, "W_DONE");
-  s.player.x = 910; s.player.y = 130;
+  s.player.x = 303; s.player.y = 43;
   core.updateGame(s, 0.016, {});
   assert.strictEqual(s.phase, "D_END");
   assert.strictEqual(s.dialogue.text, "Happy Birthday Yuniebel!");
@@ -247,7 +247,7 @@ T("GAME OVER → START lại → G_INIT (reset)", function () {
 console.log("\n[Collision]");
 T("Không xuyên tường nhà (GARDEN)", function () {
   var s = core.startGame();
-  s.player.x = 790; s.player.y = 50;
+  s.player.x = 263; s.player.y = 30; // hitbox y 32..44 chồng wall nhà (267,7,53,43) y 7..50 (P2-7)
   var x0 = s.player.x;
   core.updateGame(s, 0.016, { right: true });
   assert.ok(s.player.x <= x0 + 2);
