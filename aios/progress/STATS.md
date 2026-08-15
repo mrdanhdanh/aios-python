@@ -176,6 +176,26 @@
 | Verify sau fix | scanner `SRC_ROOT` → `healthy=True` cho harness (0 violations); 18/18 arch-health test pass (gồm 3 mới); 424 M6 test pass |
 | Kết luận | **M6 ĐẠT** V1–V8 (sau F1); không P1 |
 
+## M7 — Enterprise ✅ (2026-08-15)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task tổng | 8 (TASK-035 Identity, 036 Tenancy, 037 Distributed Runtime, 038 Distributed Scheduler, 039 Governance, 040 Security, 041 Operations, 042 Operations+Dashboard) — TẤT CẢ done |
+| Task done | 8/8 |
+| Tests (cuối M7) | **1560 pass — coverage 95.05%** (M6: 1521 → M7: +39 test enterprise + 8 INV) |
+| Invariants | INV-022 Identity First · INV-023 Tenant Isolation · INV-024 Credential Isolation · INV-025 Resource Fairness · INV-026 Distributed Execution Safety · INV-027 Audit Completeness · INV-028 Sandbox Boundary · INV-029 Control Plane Isolation |
+| Package | `backend/src/aios_core/enterprise/` (identity/tenancy/runtime/scheduler/governance/security/operations/dashboard/contracts + `EnterpriseManager` facade) |
+| Deliverable M7 | enterprise/ 7 nhóm (E1–E7) + 8 invariant + tenant dashboard + audit tamper-evident + lease/failover ✓ |
+| Commit | M7 impl (1) + review fix (1) |
+| Milestone review (2026-08-15) | **TỰ REVIEW** — đọc code TASK-035..042 + spec, chạy 29 enterprise + 8 INV-022..029 + 2 package-level + 3 new arch-health regresi = 42 M7-related test (đều pass) |
+| Findings | 1 P2 (F1 scanner không cover enterprise) + 1 P2 (F2 thiếu implementation/ hard-gate) + 1 P3 (F3 nhãn INV-022 xung đột M6/M7) |
+| F1 (P2) | runtime `ArchitectureHealth.scan()` không cover `enterprise/` — vi phạm PLAN §M7 "observability đầy đủ" (gap tương tự M5/M6 F1). **ĐÃ TỰ SỬA** (thêm 1 `enterprise` layer rule vào `observability/arch_health.py` + 3 test regresi `tests/test_observability_arch_health.py`) |
+| F2 (P2) | TASK-035..042 thiếu `implementation/` (8th hard-gate file) — mirrors M3 F1. **ĐÃ TỰ SỬA** (thêm `implementation/README.md` cho 8 folder) |
+| F3 (P3) | 4 test M6-H5 (TASK-034) dùng nhãn `test_inv022_*` (INV-022 của M7) → M7 phải rename `test_m7_inv022..`. **ĐÃ TỰ SỬA** (rename 4 test M6-H5 → INV-017/018/021 đúng nhãn; rename M7 `test_m7_inv022..` → `test_inv022..` canonical; rewrite comment) |
+| Test regresi thêm | 3 (`test_m7_real_src_healthy`, `test_m7_enterprise_isolation_fires`, `test_m7_enterprise_no_orchestrator_fires`) |
+| Verify sau fix | scanner `SRC_ROOT` → `healthy=True, 0 violations` (enterprise đã cover); 42/42 M7 test pass; 150 pass cho enterprise+arch-health+architecture |
+| Kết luận | **M7 ĐẠT** V1–V7 PASS; V8 P2→RESOLVED (F1/F2/F3); không P1 |
+
 ## Bài học M3-M4 (bổ sung)
 
 36. **VS Code Selection không có `.text`** — phải `document.getText(selection)`; stub test theo API thật, không bịa (P1 TASK-019).

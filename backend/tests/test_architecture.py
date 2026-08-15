@@ -960,9 +960,10 @@ def test_inv021_persist_before_block():
 
 @pytest.mark.skipif(not (AIOS / "harness" / "doctor").is_dir(),
                     reason="harness/doctor chưa tồn tại (TASK-034)")
-def test_inv022_doctor_no_kernel_impl():
-    """doctor/ không import kernel.services.execution|events|resource|scheduler
-    + kernel.graph|orchestrator.planning (checks injectable)."""
+def test_inv017_doctor_no_kernel_impl():
+    """doctor/ không import kernel.services (INV-017 Harness Isolation):
+    execution|events|resource|scheduler + kernel.graph|orchestrator.planning
+    (checks injectable)."""
     hits = dir_imports(AIOS / "harness" / "doctor", [
         "aios_core.kernel.services.execution",
         "aios_core.kernel.services.events",
@@ -971,13 +972,13 @@ def test_inv022_doctor_no_kernel_impl():
         "aios_core.kernel.graph",
         "aios_core.orchestrator.planning",
     ])
-    assert hits == [], f"INV-022 vi phạm: {hits}"
+    assert hits == [], f"INV-017 vi phạm: {hits}"
 
 
 @pytest.mark.skipif(not (AIOS / "harness" / "doctor").is_dir(),
                     reason="harness/doctor chưa tồn tại (TASK-034)")
-def test_inv022_doctor_13_kinds():
-    """DoctorKind phải đủ 13 loại (PLAN §H5)."""
+def test_inv017_doctor_13_kinds():
+    """DoctorKind phải đủ 13 loại (PLAN §H5, INV-017 Harness contract)."""
     src = (AIOS / "harness" / "doctor" / "contracts.py").read_text(encoding="utf-8")
     kinds = [
         "ARCHITECTURE", "RUNTIME", "WORKFLOW", "AGENT", "CAPABILITY", "TOOL",
@@ -991,9 +992,10 @@ def test_inv022_doctor_13_kinds():
 
 @pytest.mark.skipif(not (AIOS / "harness" / "doctor").is_dir(),
                     reason="harness/doctor chưa tồn tại (TASK-034)")
-def test_inv022_readiness_policy_gate():
-    """Hard gate policy: readiness.py chứa literal `RELEASE BLOCKED` +
-    `policy_violations` (policy violation > 0 → block dù overall cao)."""
+def test_inv021_readiness_policy_gate():
+    """Hard gate policy (INV-021 Release Gate): readiness.py chứa literal
+    `RELEASE BLOCKED` + `policy_violations` (policy violation > 0 → block dù
+    overall cao)."""
     src = (AIOS / "harness" / "doctor" / "readiness.py").read_text(encoding="utf-8")
     assert "RELEASE BLOCKED" in src
     assert "policy_violations" in src
@@ -1001,8 +1003,8 @@ def test_inv022_readiness_policy_gate():
 
 @pytest.mark.skipif(not (AIOS / "harness" / "doctor").is_dir(),
                     reason="harness/doctor chưa tồn tại (TASK-034)")
-def test_inv022_persist_before_raise():
-    """doctor.py + readiness.py: persist TRƯỚC raise (evidence-first).
+def test_inv018_persist_before_raise():
+    """doctor.py + readiness.py: persist TRƯỚC raise (INV-018 Evidence First).
     Dùng rfind — early-return raise (no results) đứng trước persist."""
     for name, err in (("doctor.py", "DoctorError"),
                       ("readiness.py", "ReadinessError")):
@@ -1230,12 +1232,13 @@ def test_arch_scan_resolves_relative():
 
 
 # -- enterprise/ import allow-list (M7 — TASK-035..TASK-042) ------------------
-# NOTE: PLAN §M7 defines INV-022..INV-029 for the Enterprise milestone. The
-# actual test labels INV-022..INV-029 were already consumed by TASK-034 (M6-H5)
-# doctor tests, so M7 invariants are named test_m7_* below to avoid collision
-# while keeping the same semantic coverage (Identity First, Tenant Isolation,
-# Credential Isolation, Resource Fairness, Distributed Execution Safety, Audit
-# Completeness, Sandbox Boundary, Control Plane Isolation).
+# PLAN §M7 defines INV-022..INV-029 for the Enterprise milestone. These 8
+# invariants are enforced below as test_inv022_..test_inv029_* using the
+# canonical INV numbering. The M6-H5 Doctor/Readiness tests (TASK-034) are
+# labeled with their own M6 invariants instead (INV-017 Harness Isolation /
+# INV-018 Evidence First / INV-021 Release Gate — see test_inv017_*
+# /test_inv018_*/test_inv021_* in the harness section) so each invariant has
+# exactly one owner (no duplicate INV labels).
 
 ENTERPRISE_DIR = AIOS / "enterprise"
 
@@ -1267,7 +1270,7 @@ def test_m7_enterprise_import_allowlist():
 
 
 @pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
-def test_m7_inv022_identity_first_call_site():
+def test_inv022_identity_first_call_site():
     """INV-022 Identity First: identity.py phải reject execution thiếu Principal
     — literal `raise NoPrincipalError` trong require()."""
     src = (ENTERPRISE_DIR / "identity.py").read_text(encoding="utf-8")
@@ -1276,7 +1279,7 @@ def test_m7_inv022_identity_first_call_site():
 
 
 @pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
-def test_m7_inv023_tenant_isolation_deny_default():
+def test_inv023_tenant_isolation_deny_default():
     """INV-023 Tenant Isolation: tenancy.py deny-by-default — literal
     `CrossTenantAccessDenied` được raise khi scope mismatch."""
     src = (ENTERPRISE_DIR / "tenancy.py").read_text(encoding="utf-8")
@@ -1285,7 +1288,7 @@ def test_m7_inv023_tenant_isolation_deny_default():
 
 
 @pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
-def test_m7_inv024_credential_isolation_scope_check():
+def test_inv024_credential_isolation_scope_check():
     """INV-024 Credential Isolation: security.py kiểm scope trước khi resolve —
     literal `CredentialError` + `_assert_scope`."""
     src = (ENTERPRISE_DIR / "security.py").read_text(encoding="utf-8")
@@ -1295,7 +1298,7 @@ def test_m7_inv024_credential_isolation_scope_check():
 
 
 @pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
-def test_m7_inv025_resource_fairness_quota_gate():
+def test_inv025_resource_fairness_quota_gate():
     """INV-025 Resource Fairness: governance.py deny khi vượt quota (no override)
     — literal `QuotaExceeded` + `check_fairness`."""
     src = (ENTERPRISE_DIR / "governance.py").read_text(encoding="utf-8")
@@ -1305,7 +1308,7 @@ def test_m7_inv025_resource_fairness_quota_gate():
 
 
 @pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
-def test_m7_inv026_distributed_lease_single_active():
+def test_inv026_distributed_lease_single_active():
     """INV-026 Distributed Execution Safety: scheduler.py một execution chỉ một
     active lease — literal `LeaseError` khi acquire trùng."""
     src = (ENTERPRISE_DIR / "scheduler.py").read_text(encoding="utf-8")
@@ -1314,7 +1317,7 @@ def test_m7_inv026_distributed_lease_single_active():
 
 
 @pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
-def test_m7_inv027_audit_completeness_chain():
+def test_inv027_audit_completeness_chain():
     """INV-027 Audit Completeness: operations.py audit tamper-evident (hash
     chain) + action nhạy cảm phải có evidence — literal `verify_integrity`."""
     src = (ENTERPRISE_DIR / "operations.py").read_text(encoding="utf-8")
@@ -1324,7 +1327,7 @@ def test_m7_inv027_audit_completeness_chain():
 
 
 @pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
-def test_m7_inv028_sandbox_boundary_untrusted():
+def test_inv028_sandbox_boundary_untrusted():
     """INV-028 Sandbox Boundary: security.py untrusted tool phải qua sandbox —
     literal `SandboxBypassError`."""
     src = (ENTERPRISE_DIR / "security.py").read_text(encoding="utf-8")
@@ -1333,7 +1336,7 @@ def test_m7_inv028_sandbox_boundary_untrusted():
 
 
 @pytest.mark.skipif(not ENTERPRISE_DIR.is_dir(), reason="enterprise/ chưa tồn tại (M7)")
-def test_m7_inv029_control_plane_isolation_router():
+def test_inv029_control_plane_isolation_router():
     """INV-029 Control Plane Isolation: runtime.py router gate tenant_class —
     literal `tenant_classes` + `ControlPlaneIsolationError` handling."""
     src = (ENTERPRISE_DIR / "runtime.py").read_text(encoding="utf-8")
