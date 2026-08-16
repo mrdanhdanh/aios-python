@@ -81,6 +81,11 @@ def main(argv: list[str] | None = None) -> int:
     capability_sub = capability.add_subparsers(dest="capability_command", required=True)
     capability_sub.add_parser("list", help="List capabilities")
 
+    reference = sub.add_parser("reference", help="Reference-Asset commands (M11-P3d, R12)")
+    reference_sub = reference.add_subparsers(dest="reference_command", required=True)
+    ref_describe = reference_sub.add_parser("describe", help="Describe a reference image (mock vision)")
+    ref_describe.add_argument("image", help="Path to reference image")
+
     sub.add_parser("cost", help="Cost dashboard (M10-F4, TASK-075)")
 
     sub.add_parser("performance", help="Performance metrics (M10-F4, TASK-075)")
@@ -222,6 +227,8 @@ def main(argv: list[str] | None = None) -> int:
         return _skill_list()
     if args.command == "capability" and args.capability_command == "list":
         return _capability_list()
+    if args.command == "reference" and args.reference_command == "describe":
+        return _reference_describe(args.image)
     if args.command == "cost":
         return _cost()
     if args.command == "performance":
@@ -565,6 +572,25 @@ def _capability_list() -> int:
         return 0
     for c in caps:
         print(f"{c.name}")
+    return 0
+
+
+def _reference_describe(image: str) -> int:
+    """Describe reference image — R12 (M11-P3d, TASK-082), mock vision."""
+    from ..rendering import AssetError, ReferenceAssetUnderstanding
+
+    try:
+        desc = ReferenceAssetUnderstanding().ingest(image)
+    except AssetError as exc:
+        print(f"ERROR: {exc} (fail-closed — INV-035)")
+        return 1
+    print("Reference description (mock vision):")
+    print(f"  scene:   {desc.scene}")
+    print(f"  style:   {desc.style}")
+    print(f"  objects: {', '.join(desc.objects) or '-'}")
+    print(f"  palette: {', '.join(desc.palette) or '-'}")
+    if desc.raw_text:
+        print(f"  raw:     {desc.raw_text}")
     return 0
 
 
