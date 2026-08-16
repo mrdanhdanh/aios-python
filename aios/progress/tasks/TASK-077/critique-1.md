@@ -1,71 +1,30 @@
-# Critique vòng 1 — TASK-077 (bởi critic agent, 2026-08-15)
+# Critique vòng 1 — TASK-077 (bởi Critic)
 
-## Đánh giá chung
-Spec rõ về câu chuyện, cấu trúc file, ràng buộc kỹ thuật và có 15 AC. NHƯNG chưa đủ để implement an toàn: (1) state machine chỉ liệt kê state cấp cảnh, thiếu sub-state/phase trong từng cảnh — nguồn chính của "kẹt trigger"; (2) không quy định đường dẫn tài nguyên → rủi ro vỡ asset khi deploy sub-path (AC1 file:// vs URL `/aios-python/games/yuniebel/`); (3) AC visual (AC2–AC12) không có phương thức kiểm chứng; (4) nhiều case biên chưa được quyết định (bấm X giữa chừng, spam phím, mèo kẹt trigger, đổi ý sau chọn).
-**Mức sẵn sàng: 3/5 — cần sửa trước khi implement.**
+> Trạng thái: **RESOLVED** — 4 P1 + 7 P2 + 6 P3, tất cả đã resolve vào spec (xem bảng dưới).
 
-## Phản biện
+## Các vấn đề và resolution
 
-### P1 — Bắt buộc sửa
-
-**C1-01 — Đường dẫn tài nguyên: AC1 (file://) xung đột tiềm ẩn với deploy sub-path (P1)**
-- Vấn đề: Game deploy tại sub-path `/aios-python/games/yuniebel/`, còn AC1 yêu cầu mở bằng file:// vẫn chơi được. Hai môi trường chỉ cùng hoạt động nếu MỌI đường dẫn là relative và dùng script tag **classic** (`<script type="module">` bị CORS chặn trên file://).
-- **RESOLUTION: CHẤP NHẬN** → spec bổ sung ràng buộc: script classic + relative path + cấm absolute/fetch/module. test.md thêm bước kiểm tra Network chỉ có request local.
-
-**C1-02 — State machine thiếu sub-state trong cảnh (P1)**
-- Vấn đề: Chuỗi `TITLE → GARDEN → ...` chỉ là state cấp cảnh; các chuỗi bên trong cảnh (bướm, máu, cutscene) cần sub-state kèm điều kiện chuyển.
-- **RESOLUTION: CHẤP NHẬN** → spec bổ sung bảng phase đầy đủ: `GARDEN: G_INIT → G_BUTTERFLY → G_CHASE → G_DARK → G_DOOR`; `KITCHEN: K_BLOOD → K_VOICE → K_CHOICE → (K_RUN → HAUNTED | K_OBEY → GAMEOVER)`; `DINING: D_APPROACH → D_JUMP → D_HUG → D_CAKE → D_END`; mỗi transition ghi điều kiện.
-
-**C1-03 — Cửa cảnh 1 phải khóa tới khi chạm bướm (P1)**
-- Vấn đề: Nếu cửa vẫn mở, người chơi đi thẳng vào cửa → bỏ lỡ chuỗi bướm/trời tối.
-- **RESOLUTION: CHẤP NHẬN** → cửa bị chặn (invisible wall) tới khi chạm bướm; chạm bướm 1 lần → despawn; bướm bay giới hạn trong biên bản đồ.
-
-**C1-04 — AC visual (AC2–AC12) thiếu phương thức kiểm chứng (P1)**
-- Vấn đề: `node test/core.test.js` chỉ test logic thuần; AC visual không Node-test được → trạng thái done mơ hồ.
-- **RESOLUTION: CHẤP NHẬN** → test.md quy định: (1) manual checklist ~15 bước đi hết mọi nhánh (2 lựa chọn, Game Over, X giữa chừng, START lại, resize, tab background); (2) danh sách node test case tối thiểu (C2-10); (3) mỗi AC ghi rõ verify bằng node test hay manual.
-
-### P2 — Nên sửa
-
-**C2-01 — Cơ chế nạp module cho Node test chưa quy định (P2)**
-- **RESOLUTION: CHẤP NHẬN** → core.js = logic + dữ liệu thuần (không window/document/rAF), export kèm UMD guard (`typeof module !== 'undefined'`); game.js/audio.js/sprites.js không nằm trong test.
-
-**C2-02 — Điều khiển mobile/touch chưa quyết định (P2)**
-- **RESOLUTION: CHẤP NHẬN** → thêm d-pad ảo (4 nút) hiển thị khi phát hiện `ontouchstart`, set key state tương đương WASD.
-
-**C2-03 — Input: spam phím, key repeat, focus loss (P2)**
-- **RESOLUTION: CHẤP NHẬN** → key state set (keydown/keyup), bỏ qua `e.repeat`, `preventDefault` WASD/arrows, clear key state khi `blur`/`visibilitychange`; hộp lựa chọn one-shot (khóa tới khi transition xong).
-
-**C2-04 — Knockback cửa trước cảnh 4 (P2)**
-- **RESOLUTION: CHẤP NHẬN** → knockback 40px ngược hướng + cooldown 1.5s; mỗi lần chạm: đẩy 1 lần + cảnh báo "Bóng tối chặn cửa! Hồn ma đẩy mèo lùi lại!"; hồn ma canh cửa trước (vẽ sprite), cửa hành lang ở vị trí khác rõ ràng (mũi tên chỉ).
-
-**C2-05 — Cảnh 5: cơ chế "5 lần hù" (P2)**
-- **RESOLUTION: CHẤP NHẬN** → 5 scare zone cố định theo độ sâu, fire-once; hành lang one-way (cửa vào đóng sau lưng); counter "Bị hù: x/5" góc dưới màn hình; sau scare thứ 5 → mở cửa phòng ăn + mũi tên chỉ.
-
-**C2-06 — Cảnh 6: cutscene (P2)**
-- **RESOLUTION: CHẤP NHẬN** → script cutscene: vào trigger cạnh bàn → khóa input → mèo tự di chuyển tới mép bàn → nhảy (nội suy 0.5s) → chủ ôm (2 sprite chồng nhau + heart) → bubble "Happy Birthday Yuniebel!" + chime → bánh kem hiện + text gõ từng chữ → 2.5s → nút Chơi lại.
-
-**C2-07 — Reset trạng thái: X / Chơi lại / Game Over (P2)**
-- **RESOLUTION: CHẤP NHẬN** → hàm `resetGame()` duy nhất reset toàn bộ (scene, trigger flags, scare counter, darkness, audio, hộp thoại); X và mọi nút Chơi lại gọi hàm này; X không cần xác nhận (game ngắn).
-
-**C2-08 — Delta time không clamp (P2)**
-- **RESOLUTION: CHẤP NHẬN** → clamp dt max 50ms; trigger check dùng vị trí mới mỗi frame (đủ với bản đồ nhỏ + clamp).
-
-**C2-09 — pages.yml thiếu chi tiết (P2)**
-- **RESOLUTION: CHẤP NHẬN** → chốt workflow trong spec: `actions/checkout@v4` + `actions/configure-pages@v5` + `actions/upload-pages-artifact@v3` (path `games`) + `actions/deploy-pages@v4`; permissions `contents: read / pages: write / id-token: write`; trigger `push master` + `workflow_dispatch`; AC13 đổi thành "pages.yml tồn tại + syntax hợp lệ + deploy thử (cần user bật Pages tại Settings → Pages → GitHub Actions)"; bước thủ công ghi trong test.md.
-
-**C2-10 — AC14 thiếu danh sách test case tối thiểu (P2)**
-- **RESOLUTION: CHẤP NHẬN** → spec liệt kê: (1) di chuyển 4 hướng + biên; (2) collision vật cản; (3) chuỗi trigger cảnh 1 (4 phase) + cảnh 3 (2 nhánh) + cảnh 4 (knockback) + cảnh 5 (5 lần, không fire lặp) + cảnh 6; (4) mọi transition kể cả GAMEOVER + reset; (5) light radius.
-
-### P3 — Nhẹ
-
-- **C3-01 — Vùng tối cảnh 3 đi vào trước khi chọn** → RESOLUTION: trước phase K_CHOICE, vùng tối là tường vô hình; từ K_CHOICE trở đi, mèo đi vào vùng tối = GAMEOVER (tương đương chọn [2]).
-- **C3-02 — "Kiểm tra vết máu" chưa rõ cơ chế** → RESOLUTION: vết máu = trigger zone, chạm = hoàn thành nhiệm vụ → phase K_VOICE.
-- **C3-03 — Nội dung hội thoại chưa chốt** → RESOLUTION: chốt toàn bộ text trong spec (mục "Nội dung hội thoại").
-- **C3-04 — Bướm AI** → RESOLUTION: bướm bay pattern sin (hover), khi mèo cách < 60px thì bay tránh xa (tốc độ 85 px/s < mèo 120 px/s — đuổi kịp sau ~3–5s), giới hạn biên bản đồ, despawn khi chạm.
-- **C3-05 — Audio "footstep" không khớp scope** → RESOLUTION: bỏ footstep khỏi scope — chỉ meow/scare/chime.
-- **C3-06 — Input lock khi fade** → RESOLUTION: khóa input trong lúc fade (transition timer).
-- **C3-07 — localStorage/điểm số mâu thuẫn hồ sơ** → RESOLUTION: ghi rõ "không có điểm số/localStorage — ngoài scope" trong spec.
-- **C3-08 — Resolution/scale** → RESOLUTION: canvas nội phân giải 480×270 (16:9), CSS scale giữ tỷ lệ với window (letterbox), `image-rendering: pixelated`.
+| # | Mức | Vấn đề | Resolution |
+|---|-----|--------|------------|
+| C1-01 | P1 | Ngoại lệ `[bypass]` không bao giờ đạt được: AC3a bắt title phải có `ISSUE-N` → fix nhỏ không issue luôn fail title check | RESOLVED — thêm nhánh bypass vào title regex: `^(fix\|docs\|refactor\|test\|operation)/(bypass\|hotfix)-[a-z0-9-]+` khi body có `[bypass]`; docs GĐ3 định nghĩa title bypass mẫu |
+| C1-02 | P1 | PR promotion `release: verify → master` bị body-check chặn (body không chứa `#N`/`[bypass]`) | RESOLVED — action skip body-check khi title khớp `^release:`; PR template promotion bắt buộc mục "Issues included: #N, #M..." |
+| C1-03 | P1 | Action không check base branch → PR nhầm base `master` vẫn PASS, vi phạm ADR-0005 nguy hiểm nhất | RESOLVED — action check `base.ref`: feature PR → base phải `verify`; title `^release:` → base phải `master`; fail case ngược lại; thêm test case |
+| C1-04 | P1 | Thiếu cơ chế tạo PR (tooling) — agent không có công cụ tuân thủ quy trình bắt buộc | RESOLVED — chuẩn tooling: GitHub CLI `gh` (`gh auth login` bắt buộc, liệt kê lệnh `gh issue create` / `gh pr create --draft --base verify`); PR promotion: agent chuẩn bị nội dung + lệnh, người dùng bấm create/merge |
+| C1-05 | P2 | Draft PR chưa xử lý — action vẫn chạy trên draft, fail check nhiễu | RESOLVED — github-script skip khi `draft === true`; thêm `ready_for_review` vào `types` |
+| C1-06 | P2 | `config.yml` không hỗ trợ "label defaults" (sai sự thật) | RESOLVED — config.yml chỉ dùng `blank_issues_enabled: false` + `contact_links`; label gợi ý đặt trong frontmatter từng template |
+| C1-07 | P2 | AC3c khẳng định quá mức "PR bị block" (chưa có required status checks) | RESOLVED — sửa wording: "check failed (PR ✗); merge chỉ bị chặn khi người dùng bật required status checks — docs hướng dẫn bước này" |
+| C1-08 | P2 | Drift verify cục bộ — thiếu bước refresh trước khi tạo nhánh | RESOLVED — GĐ2 thêm bước chuẩn: `git fetch origin` → `git checkout verify` → `git pull origin verify` → tạo nhánh từ `origin/verify` |
+| C1-09 | P2 | "Merge thủ công bằng lệnh git" mơ hồ — có thể đọc thành merge thẳng master | RESOLVED — ghi rõ: merge local CHỈ hợp lệ cho feature → verify; `master` CHỈ cập nhật qua merge button PR promotion |
+| C1-10 | P2 | Không có quy trình PR reject / conflict | RESOLVED — reject: sửa trên CÙNG nhánh → push → re-request review (không tạo PR mới); conflict: `git rebase origin/verify` (feature) / merge (verify); thêm vào docs |
+| C1-11 | P2 | YAML parse ≠ GitHub chấp nhận template (thiếu schema assertions) | RESOLVED — AC9 thêm schema assertions: frontmatter `name` (≤80), `description` (≤190), `labels` list, `body` list, `type ∈ {markdown, input, textarea, dropdown, checkboxes}`, `validations.required` boolean; workflow có `name/on/jobs` + `types` đúng |
+| C1-12 | P3 | Escape regex trong YAML double-quoted là lỗi parse ngầm (`\d` invalid escape) | RESOLVED — dùng single-quoted YAML cho pattern; ghi chú quy tắc vào docs |
+| C1-13 | P3 | Workflow thừa `actions/checkout` + thiếu `permissions` | RESOLVED — chỉ `actions/github-script@v7` + `permissions: contents: read` (không cần checkout, an toàn PR từ fork) |
+| C1-14 | P3 | `ISSUE-\d+` khớp cả số PR (dãy số chung) | RESOLVED — action optional `github.rest.issues.get` xác minh issue tồn tại; docs khuyến khích `Fixes #N`/`Closes #N`; `[bypass]` match case-insensitive |
+| C1-15 | P3 | Promotion all-or-nothing (gộp mọi thay đổi trên verify) | RESOLVED — ghi ADR-0006 consequences: promote thường xuyên, nhỏ, nhanh; title promotion có ngày tránh trùng |
+| C1-16 | P3 | Thiếu bước xóa nhánh cụ thể | RESOLVED — docs thêm `git push origin --delete <branch>` + `git branch -d <branch>` |
+| C1-17 | P3 | Dogfooding: PR của TASK-077 (không có ISSUE-N) sẽ fail check của chính nó | RESOLVED — PR TASK-077 body sẽ có dòng `[bypass]` (fix nhỏ/process không issue) + ghi LOG.md; ghi vào tasks.md để không quên |
 
 ## Kết luận
-- [x] Cần sửa trước khi implement: C1-01..04 + C2-01..10 + C3-01..08 — **TẤT CẢ ĐÃ RESOLVE** (xem mục RESOLUTION ở trên, spec.md đã cập nhật).
+
+- [x] Cần sửa trước khi implement — 4 P1 + 7 P2 + 6 P3 đều đã resolve vào spec (spec v2)
+- [ ] Chấp nhận spec (không còn P1/P2) — chờ critique vòng 2 xác nhận

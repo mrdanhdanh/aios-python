@@ -1,50 +1,25 @@
-# Critique vòng 2 — TASK-077 (bởi critic agent, 2026-08-15)
+# Critique vòng 2 — TASK-077 (bởi Critic, sau khi resolve vòng 1)
 
-## Đánh giá chung
-Spec sau resolve vòng 1 đã cải thiện rõ: state machine có bảng sub-state, AC gắn phương thức kiểm chứng, ràng buộc path/deploy/input/audio chốt, pages.yml chi tiết. Mức sẵn sàng 3.5/5 — còn thiếu dữ liệu cụ thể: kích thước bản đồ, danh sách sprite, quy tắc trigger, input lock per phase.
+> Trạng thái: **RESOLVED** — 2 P1 + 4 P2 + 6 P3, tất cả đã resolve vào spec v3 (xem bảng dưới).
 
-## 1. Rà soát resolution vòng 1 → spec
-16/20 đã phản ánh đúng. **Thiếu/không đầy đủ (4)**: C3-04 (bướm AI) — KHÔNG có trong spec; C3-01 (tường vô hình vùng tối trước K_CHOICE) — chỉ có nửa sau; C2-05 (cửa vào đóng sau lưng hành lang) — không mô tả cơ chế; C2-04 (mũi tên cửa hành lang cảnh 4 + heart D_HUG) — không có. Mâu thuẫn nhỏ: AC16 thiếu "audio" so với C2-07.
+## Các vấn đề và resolution
 
-## 2. Vấn đề mới
-
-### P1 — Bắt buộc sửa
-
-**C2-11 — Thiếu kích thước bản đồ từng cảnh + policy camera**
-- **RESOLUTION: CHẤP NHẬN** → chốt: GARDEN 960×270 (scroll ngang, camera follow), HALLWAY 960×270, LIVING/KITCHEN/HAUNTED/DINING 480×270 (vừa canvas, không camera). Policy: map > canvas → camera follow mèo + clamp biên map; map ≤ canvas → không camera. Test: clamp tọa độ + camera clamp.
-
-**C2-12 — Thiếu quy tắc trigger zone (fire-once/re-activate/ưu tiên overlap)**
-- **RESOLUTION: CHẤP NHẬN** → (a) mỗi phase khai báo danh sách zone active riêng, fire-once trong phase, tự re-activate khi phase quay lại; (b) ưu tiên xử lý: knockback/cảnh báo TRƯỚC chuyển cảnh (không chuyển cảnh cùng frame bị knockback); (c) zone tối thiểu ≥ 16px mỗi chiều; (d) trigger check sau di chuyển + clamp.
-
-### P2 — Nên sửa
-
-**C2-13 — Thiếu danh sách sprite + lưới + frame animation**
-- **RESOLUTION: CHẤP NHẬN** → bảng sprite tối thiểu trong spec (16×16 lưới, scale 3x, ≤ 16 màu/palette): mèo (idle + walk 2 frame, 2 hướng + mirror), bướm (2 frame vỗ cánh), chủ (idle + ôm), hồn ma (float 2 frame), bánh kem (nến cháy 2 frame), cửa (khóa/mở), bàn, vết máu, mây, mặt trời, cây, hoa, heart, mũi tên chỉ đường.
-
-**C2-14 — Chưa quy định input trong hộp thoại/cutscene**
-- **RESOLUTION: CHẤP NHẬN** → mỗi phase có cờ `inputLocked` (bảng phase thêm cột); khi lock: WASD/click bỏ qua NHƯNG key state vẫn cập nhật (tránh dính phím); phím 1/2 chỉ xử lý khi phase = K_CHOICE; nút X luôn hoạt động ở MỌI state (gọi resetGame — không bao giờ kẹt); bubble KHÔNG chặn di chuyển (chỉ cutscene cảnh 6 + fade mới lock hoàn toàn).
-
-**C2-15 — Game timer theo dt (tab ẩn nhảy phase)**
-- **RESOLUTION: CHẤP NHẬN** → MỌI timing logic dùng dt tích lũy từ rAF (game-time accumulator), cấm setTimeout/setInterval cho logic game; tab ẩn → rAF dừng → pause tự nhiên, quay lại tiếp tục đúng trạng thái; test node: không dt → không transition.
-
-**C2-16 — Bướm AI chưa vào spec**
-- **RESOLUTION: CHẤP NHẬN** → bổ sung đúng C3-04: bay pattern sin, mèo cách < 60px → bay tránh (85 px/s < mèo 120 px/s, đuổi kịp 3–5s), giới hạn biên bản đồ, chạm = despawn 1 lần.
-
-**C2-17 — Vùng tối cảnh 3 + light radius chưa định nghĩa**
-- **RESOLUTION: CHẤP NHẬN** → trước K_CHOICE: vùng tối = tường vô hình; từ K_CHOICE: đi vào = K_OBEY. Light radius 90px quanh mèo, áp dụng cảnh 4 & 5; cảnh 3 sáng (chỉ vùng tối cục bộ tối); cảnh 1 G_DARK: darkness 0→1 trong 5s là overlay nền (KHÔNG light radius — vẫn dễ đi, chỉ tối bầu trời/khung). Test: darkness tăng đúng 0→1 trong 5s.
-
-**C2-18 — Collision resolution chưa quy định**
-- **RESOLUTION: CHẤP NHẬN** → collision kiểu slide (tách X/Y, trượt dọc bề mặt); vật cản/biên/tường vô hình ≥ 8px (an toàn với bước 6px/frame); knockback cũng áp dụng collision (đẩy tới khi chạm tường, không xuyên).
-
-### P3 — Nhẹ
-
-- **C2-19 — AC16/AC17**: RESOLUTION: AC16 thêm "audio" vào reset; AC17: d-pad = div overlay 4 nút, touchstart/touchend (giữ = di chuyển liên tục), có touch → ẩn hint bàn phím.
-- **C2-20 — pages.yml nhánh**: RESOLUTION: trigger cả 2 nhánh `[master, main]` (không biết chắc nhánh chính).
-- **C2-21 — Fade + visual thiếu**: RESOLUTION: fade 0.5s; D_HUG thêm heart; HAUNTED thêm mũi tên chỉ cửa hành lang; bubble chủ cảnh 1 có thể bị cắt khi mèo chạm cửa sớm (CHẤP NHẬN).
-- **C2-22 — Audio degradation**: RESOLUTION: WebAudio không khả dụng → mute hoàn toàn, game vẫn chơi; `ctx.resume()` khi gesture/tab quay lại.
-
-## 3. Đánh giá AC16/AC17 + bảng sub-state
-Đủ về ý tưởng. Cần thêm 3 cột cho bảng phase: `inputLocked`, zone active, timer duration — sẽ bổ sung vào tasks.md khi implement. AC16 cần case test "gọi resetGame 2 lần liên tục không lỗi".
+| # | Mức | Vấn đề | Resolution |
+|---|-----|--------|------------|
+| C2-01 | P1 | Frontmatter issue form dùng `description` thay vì `about` — sai chuẩn GitHub (key đúng: `name`/`about`/`title`/`labels`/`assignees`/`body`); test assert theo `description` → false-positive PASS | RESOLVED — AC1 + AC9 đổi `description` → `about` (bắt buộc, ≤190); assert đúng chuẩn: `name` (≤80), `about` (≤190), `title` (string, optional), `labels` (string HOẶC list), `body` (list, bắt buộc) |
+| C2-02 | P1 | Dogfooding vỡ: `[bypass]` trong body chỉ cứu body-check, KHÔNG cứu title-check — PR TASK-077 (title `docs/issue-pr-workflow: ...`) vẫn fail | RESOLVED — chọn phương án (b): body có `[bypass]` → bỏ qua title check (bypass = title bypass-style HOẶC body `[bypass]`); ghi vào luồng quyết định AC3 + AC10 + tasks.md |
+| C2-03 | P2 | `github.rest.issues.get` cần `issues: read`; `permissions: contents: read` không đủ → 403; thiếu xử lý 404 | RESOLVED — thêm `issues: read` vào permissions; try/catch MỌI lỗi (403/404/rate-limit); 404 → chỉ warning, không fail (traceability ≠ gate) |
+| C2-04 | P2 | `hotfix` có trong regex nhưng không có trong quy ước GĐ2 — docs lệch check | RESOLVED — GĐ2 thêm: fix khẩn cấp không issue → `hotfix/bypass-slug` (biến thể ưu tiên của bypass) |
+| C2-05 | P2 | PR đầu tiên của TASK-077 KHÔNG chạy workflow (workflow chưa tồn tại trên default branch) — AC10 không kiểm chứng được | RESOLVED — AC10 + docs GĐ3 ghi chú rõ; thay bằng AC9-3 (script mô phỏng ≥12 case); xác nhận action chạy thật bằng PR thử nghiệm nhỏ sau khi merge workflow vào verify/master (tasks.md) |
+| C2-06 | P2 | AC3b/c thiếu thứ tự ưu tiên logic — implement dễ sai | RESOLVED — AC3 mô tả luồng quyết định tuyến tính 7 bước (draft → release → base → bypass → ISSUE title → bypass title → fail); AC9 yêu cầu ≥2 test case/nhánh |
+| C2-07 | P3 | Regex đóng cứng 6 prefix; ADR-0005 có "..." mở rộng — bảo trì lệch | RESOLVED — ADR-0006 Consequences ghi: danh sách prefix nằm ở 2 nơi (docs GĐ2 + regex action), thêm prefix mới phải cập nhật đồng bộ |
+| C2-08 | P3 | `Closes #N` tự đóng issue khi merge feature→verify — đóng sớm trước promotion | RESOLVED — docs GĐ3/GĐ5 khuyến nghị `Fixes #N`/`Refs #N` cho PR feature→verify; đóng issue thủ công sau promotion |
+| C2-09 | P3 | Thiếu `gh auth setup-git` + lưu ý ký tự `→` trên Windows | RESOLVED — docs thêm `gh auth setup-git`; nhắc copy đúng `→` (regex khớp `\u2192`, gõ `->` sẽ fail) |
+| C2-10 | P3 | Thiếu `concurrency` — push nhanh → nhiều run song song, nhiễu status | RESOLVED — workflow thêm `concurrency: { group: pr-${{ github.event.pull_request.number }}, cancel-in-progress: true }` |
+| C2-11 | P3 | Body check `#\d+` trùng số PR/issue — false-positive | RESOLVED — docs khuyến nghị `Fixes #N`/`Refs #N` (KHÔNG `Closes` cho PR feature→verify — tránh đóng issue sớm, xem C2-08); ghi chú check chỉ xác nhận "có link", không xác minh đúng issue |
+| C2-12 | P3 | AC1 ép `labels` là list — GitHub chấp nhận string đơn | RESOLVED — nới assertion: `labels` string hoặc list |
 
 ## Kết luận
-- [x] Cần sửa trước khi implement: C2-11..C2-18 (P1+P2) + C2-19..C2-22 (P3) — **TẤT CẢ ĐÃ RESOLVE** (spec.md đã cập nhật). Mức sẵn sàng sau sửa: 4.5/5 — đủ điều kiện sang tasks.md.
+
+- [x] Cần sửa trước khi implement — 2 P1 + 4 P2 + 6 P3 đều đã resolve vào spec (spec v3)
+- [ ] Chấp nhận spec (không còn P1/P2) — chờ tasks.md + review.md

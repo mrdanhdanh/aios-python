@@ -1,0 +1,91 @@
+name: Bug Report
+about: Báo lỗi hệ thống AIOS — giúp chúng tôi sửa nhanh hơn và chính xác hơn
+title: "[bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn đã báo lỗi! Điền càng đầy đủ, chúng tôi sửa càng nhanh.
+
+        > Quy trình sau khi mở issue: AIOS Orchestrator nhận issue → tạo nhánh `fix/ISSUE-N-slug` từ `verify` → tạo PR (draft) → sửa → bạn duyệt & merge thủ công vào `verify` → PR promotion lên `master`. Xem `docs/workflows/issue-pr-workflow.md`.
+  - type: input
+    id: version
+    attributes:
+      label: Phiên bản AIOS
+      description: Phiên bản đang chạy (lấy từ `aiagent --version`)
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Thành phần lỗi
+      description: Thành phần nào gặp lỗi?
+      options:
+        - Runtime / Kernel
+        - CLI (aiagent)
+        - Dashboard
+        - VS Code Extension
+        - SDK (Python / TypeScript)
+        - Workflow / Capability
+        - Memory / Knowledge
+        - Observability / Metrics
+        - Tài liệu / Quy trình
+        - Khác
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Các bước tái hiện
+      description: Các bước để tái hiện lỗi
+      placeholder: |
+        1. Chạy `aiagent ...`
+        2. ...
+        3. Lỗi xảy ra
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Hành vi mong đợi
+      description: Điều gì nên xảy ra
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Hành vi thực tế
+      description: Điều gì đã xảy ra (kèm log/stack trace nếu có)
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Môi trường
+      description: Hệ điều hành, Python version, model provider đang dùng, cấu hình đặc biệt...
+      render: shell
+    validations:
+      required: false
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Mức độ nghiêm trọng
+      options:
+        - P0 — Hệ thống không chạy được / mất dữ liệu
+        - P1 — Tính năng chính hỏng
+        - P2 — Lỗi phụ / workaround được
+        - P3 — Lỗi nhỏ / cosmetic
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist trước khi gửi
+      options:
+        - label: Tôi đã tìm kiếm và không thấy issue nào trùng lặp
+          required: true
+        - label: Tôi đã đính kèm log/stack trace (nếu có)
+          required: false

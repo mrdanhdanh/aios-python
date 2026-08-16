@@ -57,7 +57,27 @@ Quy tắc: KHÔNG được nói "xong" khi checklist chưa đóng đủ. Nếu q
 - Message commit ngắn gọn, tiền tố milestone/phase: `M0: tạo ...`.
 - Luôn commit trước khi kết thúc phiên.
 
+## 4.1. Branching Model (BẮT BUỘC — xem ADR-0005)
+
+- **`master`** = nhánh ổn định duy nhất, CHỈ nhận thay đổi từ `verify` (không commit trực tiếp, không nhận nhánh khác).
+- **`verify`** = trạm kiểm tra bắt buộc: mọi thay đổi phải đi qua `verify` trước khi về `master`.
+- **Nhánh chức năng** (feature/fix/docs/...) phải tạo TỪ `verify` (KHÔNG tạo từ `master`), tên có tiền tố loại: `feature/`, `fix/`, `docs/`, `operation/`, `refactor/`, `test/`...
+- **Chuỗi bắt buộc**: nhánh chức năng (từ `verify`) → merge vào `verify` → kiểm tra trên `verify` (test + hard gate + review) → `verify` → `master` (chỉ khi verify PASS).
+- Vi phạm (tạo nhánh từ master, commit thẳng master, merge thẳng master) = sai quy trình, phải sửa lại.
+
+## 4.2. Issue-Driven Development (BẮT BUỘC — xem ADR-0006 + docs/workflows/issue-pr-workflow.md)
+
+Mọi thay đổi hệ thống phải đi qua chuỗi **Issue → Branch → PR → Merge thủ công → verify → master**:
+
+- **Issue**: mọi bug / nâng cấp / ý tưởng phải đăng lên GitHub Issue qua 1 trong 3 template (`.github/ISSUE_TEMPLATE/`). Fix nhỏ không có issue → đánh dấu `[bypass]` trong PR body + LOG.md.
+- **Branch**: nhánh chức năng tạo TỪ `verify` (refresh `verify` trước), tên `<type>/ISSUE-<N>-<slug>` (bug → `fix/`, nâng cấp → `feature/`, tài liệu → `docs/`, fix nhỏ → `fix/bypass-<slug>` hoặc `hotfix/bypass-<slug>`).
+- **PR**: tạo PR ngay sau commit đầu (draft nếu chưa xong), base = `verify`, title `<type>/ISSUE-<N>: <mô tả>`, body bắt buộc link issue (`Fixes #N`/`Refs #N` — KHÔNG `Closes` cho PR feature→verify) hoặc `[bypass]`. Dùng GitHub CLI `gh` (đã `gh auth login` + `gh auth setup-git`).
+- **Merge thủ công**: người dùng review + bấm Merge — KHÔNG bot tự merge. PR feature → `verify`; `master` CHỈ cập nhật qua PR promotion `release: verify → master (YYYY-MM-DD)` (body có `Issues included` + bằng chứng test/hard gate) do người dùng duyệt.
+- **Kiểm tra tự động**: `.github/workflows/pr-validation.yml` chặn PR sai title/base/thiếu link issue. PR đầu tiên của chính workflow (chưa trên default branch) không chạy action — chấp nhận.
+- Vi phạm (thay đổi không qua issue, PR nhắm base master, merge thẳng master) = sai quy trình, phải sửa lại. Chi tiết: `docs/workflows/issue-pr-workflow.md`.
+
 ## 5. Ngôn ngữ
 
 - Tài liệu tiến độ (`aios/progress/`) và trao đổi với người dùng: **tiếng Việt**.
 - Code, tên biến, tên file, commit message: **tiếng Anh** (trừ tài liệu).
+- Chi tiết branching model: [ADR-0005](docs/adr/0005-branching-model.md).
