@@ -1,0 +1,109 @@
+# PR Validation — kiểm tra title/body/base branch theo quy trình Issue → PR → verify → master
+# Luồng quyết định (xem docs/workflows/issue-pr-workflow.md + ADR-0006):
+#   1. PR draft                → skip (success)
+#   2. Title ^release:...      → base phải = master; skip body-check
+#   3. base != verify          → fail (chặn PR feature nhắm thẳng master)
+#   4. Body có [bypass]        → pass (fix nhỏ không có issue)
+#   5. Title type/ISSUE-N      → body phải có link issue (optional: verify issue tồn tại)
+#   6. Title type/(bypass|hotfix)-slug → body phải có [bypass]
+#   7. Còn lại                 → fail
+# Lưu ý: không auto-merge, không approve, không label, không comment.
+
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  issues: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title, body and base branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const title = (pr.title || '').trim();
+            const body = (pr.body || '').trim();
+            const base = pr.base && pr.base.ref;
+            const isDraft = pr.draft === true;
+
+            // Regex theo ADR-0005/0006 (single-quoted YAML nên không cần escape ở đây).
+            // '→' khớp qua \u2192 (không đặt ký tự → trực tiếp trong pattern).
+            const RE_RELEASE   = /^release: verify \u2192 master/;
+            const RE_ISSUE     = /^(feature|fix|docs|operation|refactor|test)\/ISSUE-\d+/;
+            const RE_BYPASS    = /^(feature|fix|docs|operation|refactor|test)\/(bypass|hotfix)-[a-z0-9-]+/;
+            const RE_LINK      = /(?:#\d+|ISSUE-\d+)/;
+            const RE_BYPASS_TAG = /\[bypass\]/i;
+
+            const fail = (msg) => {
+              core.setFailed(`[pr-validation] ${msg}`);
+            };
+
+            // Bước 1: draft → skip
+            if (isDraft) {
+              core.notice('[pr-validation] Draft PR — bỏ qua kiểm tra (validate khi ready_for_review).');
+              return;
+            }
+
+            // Bước 2: PR promotion release: verify → master
+            if (RE_RELEASE.test(title)) {
+              if (base !== 'master') {
+                fail(`PR promotion "${title}" phải nhắm base = master (hiện tại: ${base}). Muốn merge thẳng verify → master qua PR promotion, xem ADR-0006.`);
+                return;
+              }
+              core.notice('[pr-validation] PR promotion hợp lệ (base=master, skip body-check).');
+              return;
+            }
+
+            // Bước 3: base branch — mọi PR thường phải nhắm verify
+            if (base !== 'verify') {
+              fail(`PR thường phải nhắm base = verify (hiện tại: ${base}). Merge thẳng master bị cấm (ADR-0005/0006). Tạo lại PR với base=verify.`);
+              return;
+            }
+
+            // Bước 4: body [bypass] → pass (fix nhỏ không có issue, dogfooding)
+            if (RE_BYPASS_TAG.test(body)) {
+              core.notice('[pr-validation] Body chứa [bypass] — bỏ qua title/body check (fix nhỏ hợp lệ).');
+              return;
+            }
+
+            // Bước 5: title type/ISSUE-N → body phải link issue
+            const mIssue = title.match(RE_ISSUE);
+            if (mIssue) {
+              if (!RE_LINK.test(body)) {
+                fail(`Title có ISSUE-N nhưng body thiếu link issue (#N hoặc ISSUE-N). Thêm "Fixes #N"/"Refs #N" vào body.`);
+                return;
+              }
+              // Optional: xác minh issue tồn tại — KHÔNG block khi lỗi (traceability ≠ gate)
+              try {
+                const num = title.match(/ISSUE-(\d+)/)[1];
+                const issue = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: Number(num),
+                });
+                core.notice(`[pr-validation] Issue #${num} tồn tại: "${issue.data.title}"`);
+              } catch (err) {
+                core.warning(`[pr-validation] Không xác minh được issue (${err.status || err.message}) — chỉ cảnh báo, không chặn.`);
+              }
+              return;
+            }
+
+            // Bước 6: title type/(bypass|hotfix)-slug → body phải có [bypass]
+            if (RE_BYPASS.test(title)) {
+              fail(`Title dạng bypass nhưng body thiếu dòng "[bypass]" + lý do. Bổ sung để hợp lệ (fix nhỏ không issue).`);
+              return;
+            }
+
+            // Bước 7: còn lại → fail
+            fail(`Title không đúng quy ước: dùng "<type>/ISSUE-N: mô tả" (type ∈ feature|fix|docs|operation|refactor|test), "release: verify → master" (promotion), hoặc "<type>/bypass-<slug>: mô tả" (fix nhỏ — kèm [bypass] trong body). Nhận được: "${title}"`);

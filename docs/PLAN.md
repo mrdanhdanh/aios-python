@@ -86,10 +86,11 @@ aios/progress/
 
 **Bypass hợp lệ** (fix nhỏ): quy trình rút gọn nhưng BẮT BUỘC ghi LOG.md + đánh dấu `[bypass]` trong PROGRESS.md. Mọi task khác đều hard gate.
 
-**Branching Model (BẮT BUỘC — chi tiết [ADR-0005](adr/0005-branching-model.md))**:
+**Branching Model (BẮT BUỘC — chi tiết [ADR-0005](adr/0005-branching-model.md) + [ADR-0006](adr/0006-issue-pr-workflow.md))**:
 - `master` = ổn định, CHỈ nhận từ `verify` (không commit/merge trực tiếp).
 - Nhánh chức năng tạo TỪ `verify` (tiền tố: `feature/`, `fix/`, `docs/`, `operation/`, `refactor/`, `test/`...).
 - Chuỗi: nhánh chức năng → merge vào `verify` → kiểm tra (test + hard gate + review) → PASS → merge `verify` → `master`.
+- **Issue-Driven (bắt buộc từ 2026-08-16)**: mọi thay đổi bắt đầu từ GitHub Issue (3 template) → nhánh `<type>/ISSUE-N-slug` từ `verify` → PR draft (base `verify`) → sửa → merge thủ công vào `verify` → PR promotion `release: verify → master (YYYY-MM-DD)` do người dùng duyệt & merge thủ công. Action `pr-validation.yml` kiểm tra title/base/link issue tự động. Chi tiết: `docs/workflows/issue-pr-workflow.md`.
 
 **Definition of Done — Closing Checklist (bắt buộc sau MỖI task/yêu cầu xử lý xong)**:
 Trước khi đánh dấu task `done` hoặc kết thúc phiên, đối chiếu đủ (chi tiết: AGENTS.md §3.1):

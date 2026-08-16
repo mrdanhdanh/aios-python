@@ -1,0 +1,11 @@
+# Cấu hình trang "New Issue" của GitHub
+# Blank issues bị tắt — mọi yêu cầu phải đi qua 1 trong 3 template chuẩn
+blank_issues_enabled: false
+
+contact_links:
+  - name: Tài liệu dự án AIOS
+    url: https://github.com/mrdanhdanh/aios-python/blob/master/docs/README.md
+    about: Đọc tài liệu trước khi mở issue — có thể câu trả lời đã có sẵn.
+  - name: Quy trình Issue → PR → verify → master
+    url: https://github.com/mrdanhdanh/aios-python/blob/master/docs/workflows/issue-pr-workflow.md
+    about: Hướng dẫn quy trình phát triển bắt buộc (tạo nhánh từ verify, PR draft, merge thủ công, promotion).

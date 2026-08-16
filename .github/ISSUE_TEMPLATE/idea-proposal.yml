@@ -1,0 +1,61 @@
+name: Idea / System Change Proposal
+about: Ý tưởng mới hoặc đề xuất thay đổi kiến trúc/quy trình hệ thống — cần thảo luận trước khi làm
+title: "[idea]: "
+labels:
+  - idea
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Nơi đăng ý tưởng và đề xuất thay đổi hệ thống (kiến trúc, quy trình phát triển, quy tắc mới).
+
+        > Quy trình: issue được thảo luận/triage → nếu được chấp nhận, AIOS Orchestrator mở TASK-xxx (hard gate: spec → critique ×2 → review → implement → test → evaluate) trên nhánh từ `verify` → PR → bạn duyệt & merge thủ công → PR promotion lên `master`. Xem `docs/workflows/issue-pr-workflow.md`.
+  - type: input
+    id: title
+    attributes:
+      label: Tóm tắt ý tưởng (1 câu)
+      placeholder: "VD: Chuyển nhánh ổn định từ master sang main"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Vấn đề / cơ hội
+      description: Vấn đề hoặc cơ hội mà ý tưởng này nhắm tới
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Đề xuất chi tiết
+      description: Ý tưởng/kiến trúc/quy trình mới trông như thế nào? Tác động tới hệ thống ra sao?
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Đánh đổi & rủi ro
+      description: Chi phí, rủi ro, đánh đổi (performance, compatibility, độ phức tạp...)
+    validations:
+      required: false
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Loại đề xuất
+      options:
+        - Kiến trúc / thiết kế hệ thống
+        - Quy trình phát triển (process)
+        - Sản phẩm / trải nghiệm người dùng
+        - Research / thử nghiệm
+        - Khác
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist trước khi gửi
+      options:
+        - label: Tôi đã tìm kiếm và không thấy issue nào trùng lặp
+          required: true
+        - label: Tôi hiểu ý tưởng này cần thảo luận + ADR (nếu đổi kiến trúc) trước khi triển khai
+          required: true
