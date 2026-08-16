@@ -14,7 +14,7 @@
 | P2+P2b | Visual Observability | R1 VisualEvidence / VisualRegressionProbe + R10 UI State Contract (`UI State → Render → Screenshot`) | TASK-080 | `done` ✅ (10/10 AC — probe bắt state_diff scale 3→2 + missing-ref fail-closed; full suite 2003) |
 | P3 | Asset Capability Architecture | R9 AssetPipeline Contract + R4 Registry kind=asset + R11 Discovery/Routing (1 slice) | TASK-081 | `done` ✅ (10/10 AC — registry wire skill agent-sprite-forge thật + matcher offline; full suite 2018) |
 | P3b/c/d | Creative + Vendor + Reference | R6 Creative Domain + R8 Vendor Integrity + R12 Reference-Asset Understanding | TASK-082 | `done` ✅ (11/11 AC — pre-route creative 0.85 + 2 workflow creative + vendor_integrity check #12 + ReferenceAssetUnderstanding; full suite 2034) |
-| P4a/b | Ecosystem & DX | R5 SkillDistiller + R7 Static Deploy (optional) | TASK-083 | `todo` |
+| P4a/b | Ecosystem & DX | R5 SkillDistiller + R7 Static Deploy (optional) | TASK-083 | `done` ✅ (11/11 AC — distiller 7 bước deterministic + deploy verify/manifest/dry/apply; full suite 2052 — **M11 HOÀN TẤT 6/6 task**) |
 
 Dependency order: R2 → R3 → (R10 ∥ R1) → R9 → (R4 ∥ R11) → R6 → (R8 ∥ R12) → R5 → R7
 

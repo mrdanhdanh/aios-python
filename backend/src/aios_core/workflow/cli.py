@@ -73,9 +73,16 @@ def main(argv: list[str] | None = None) -> int:
     exec_list = execution_sub.add_parser("list", help="List recent executions")
     exec_list.add_argument("--limit", type=int, default=20)
 
-    skill = sub.add_parser("skill", help="Skill commands (M10-F4)")
+    skill = sub.add_parser("skill", help="Skill commands (M10-F4 + M11-P4a R5)")
     skill_sub = skill.add_subparsers(dest="skill_command", required=True)
     skill_sub.add_parser("list", help="List skills")
+    skill_distill = skill_sub.add_parser("distill", help="Distill skill from repo URL (M11-P4a, R5)")
+    skill_distill.add_argument("url", help="Skill repo URL (github)")
+    skill_distill.add_argument("--out", default="distilled", help="Output directory")
+
+    deploy = sub.add_parser("deploy", help="Deploy commands (M11-P4b, R7)")
+    deploy.add_argument("--static", metavar="DIR", help="Static dir to deploy")
+    deploy.add_argument("--apply", action="store_true", help="Apply (write marker) — default dry-run")
 
     capability = sub.add_parser("capability", help="Capability commands (M10-F4)")
     capability_sub = capability.add_subparsers(dest="capability_command", required=True)
@@ -225,6 +232,10 @@ def main(argv: list[str] | None = None) -> int:
         return _execution_list(args.limit)
     if args.command == "skill" and args.skill_command == "list":
         return _skill_list()
+    if args.command == "skill" and args.skill_command == "distill":
+        return _skill_distill(args.url, args.out)
+    if args.command == "deploy" and args.static:
+        return _deploy_static(args.static, args.apply)
     if args.command == "capability" and args.capability_command == "list":
         return _capability_list()
     if args.command == "reference" and args.reference_command == "describe":
@@ -559,6 +570,40 @@ def _skill_list() -> int:
     for s in skills:
         print(f"{getattr(s, 'id', s)} | {getattr(s, 'state', '?')}")
     return 0
+
+
+def _skill_distill(url: str, out: str) -> int:
+    """Distill skill từ repo URL — R5 (M11-P4a, TASK-083)."""
+    from ..ecosystem.distiller import SkillDistillError, SkillDistiller
+
+    try:
+        report = SkillDistiller().distill(url, out)
+    except SkillDistillError as exc:
+        print(f"ERROR: {exc} (fail-closed — INV-035)")
+        return 1
+    print(f"Distilled OK — license: {report.license_status}")
+    print(f"  files: {', '.join(report.distilled_files)}")
+    print(f"  manifest: {report.manifest_path}")
+    print(f"  capabilities: {', '.join(report.capabilities) or '-'}")
+    if report.warnings:
+        for w in report.warnings:
+            print(f"  WARN: {w}")
+    return 0
+
+
+def _deploy_static(dir_path: str, apply: bool) -> int:
+    """Deploy static dir — R7 (M11-P4b, TASK-083). Dry-run default."""
+    from ..ecosystem.deploy import StaticDeploy
+
+    report = StaticDeploy().deploy(dir_path, dry_run=not apply)
+    print(f"Deploy [{report.status}] — {report.dir}")
+    print(f"  files: {report.files} · bytes: {report.total_bytes}")
+    print(f"  sha256: {report.total_sha256}")
+    if report.marker:
+        print(f"  marker: {report.marker}")
+    if report.hint:
+        print(f"  hint: {report.hint}")
+    return 0 if report.status == "ok" else 1
 
 
 def _capability_list() -> int:
