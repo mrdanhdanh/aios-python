@@ -1655,6 +1655,7 @@ Golden Scenarios=PASS · Critical Bugs=0 · Architecture Viol.=0 · Policy Bypas
 Và quan trọng nhất: `Core Runtime + Orchestrator + Intelligence + Harness + Enterprise + Ecosystem + Autonomous → ONE COHERENT SYSTEM`.
 Sau M10: **không tạo M11 = thêm feature**; thay vào đó `AIOS 1.1 Compatibility · 1.2 Performance · 1.3 Ecosystem · 1.x Enterprise · 2.0 Architecture Evolution`.
 > ⚠️ **AMEND 2026-08-16 (Issue #4)**: user duyệt tạo **M11 — Deterministic Artifact & Interaction Runtime** (P16) — milestone bổ sung sau M10, additive trên AIOS 1.0, giới thiệu INV-035 (xem §M11 bên dưới).
+> ⚠️ **AMEND 2026-08-16 (Issue #7)**: user duyệt tạo **M12 — AIOS 1.1 Compatibility** (P17) — bước đầu của roadmap §43, KHÔNG thêm Core feature/invariant, INV-001..035 giữ nguyên (xem §M12 bên dưới).
 
 → Kết quả: AIOS 1.0 — một AI Operating System hoàn chỉnh, có kiến trúc bị freeze (INV-001..INV-034), contract ổn định (semantic versioning), runtime durable, autonomous bounded (Governor/Kill-Switch), secure (Identity/Audit/Tamper-evident), observable, có Certification Suite + Golden Scenarios + Conformance + Migration engine, chứng minh qua 10 năng lực và Golden Demo — đủ chuẩn gọi là **AIOS 1.0**
 
@@ -1719,6 +1720,49 @@ R2 → R3 → (R10 ∥ R1) → R9 → (R4 ∥ R11) → R6 → (R8 ∥ R12) → R
 - Contract 1.0: +AssetPipeline contract (R9)
 - Version bump: AIOS 1.0 → M11 (minor — backward-compatible, additive)
 
+### M12 – AIOS 1.1 Compatibility (P17 — Compatibility & Upgrade)
+> 🔄 **IN-PROGRESS 2026-08-16 (Issue #7)** — roadmap §43: `AIOS 1.1 Compatibility · 1.2 Performance · 1.3 Ecosystem · 1.x Enterprise · 2.0 Architecture Evolution`.
+> ```
+> M10: AIOS can reliably execute logic.
+> M11: AIOS can reliably execute AND verify logic + state + render + asset + interaction.
+> M12: AIOS 1.1 — mọi thành phần (plugin/contract/workflow/SDK) tương thích 1.0→1.1, migration engine hoạt động thật.
+> ```
+> M12 = **AIOS 1.1 Compatibility** — KHÔNG thêm Core feature, KHÔNG thêm invariant (INV-001..035 giữ nguyên frozen). Chứng minh hệ thống có thể **nâng cấp an toàn 1.0→1.1** và **chạy backward-compatible**: plugin v0→v1 · contract v0→v1 · workflow v0→v1.
+
+#### 1. Mục tiêu (5 nâng cấp C1–C5)
+```
+M12
+├── P0  C1  Version & Compatibility Baseline — version bump 1.0→1.1 toàn hệ thống (contract/config/CLI/metadata) + Compatibility Matrix registry
+├── P1  C2  Migration 1.0→1.1 thật — upgrade pipeline end-to-end trên dữ liệu thật (plan → backup → dry-run → validate → rollback)
+├── P2  C3  Backward Compatibility — plugin v0→v1 · contract v0→v1 · workflow v0→v1 chạy được trên 1.1 + test chéo cũ→mới
+├── P3  C4  Compatibility Conformance — mở rộng `aiagent conformance` (area `compatibility` + gate) KHÔNG phá 10 areas/6 gates hiện có
+└── P4  C5  Docs & ADR — PLAN §M12 + ADR-0007 (compatibility policy) + migration guide 1.0→1.1
+```
+
+#### 2. Dependency order (kiến trúc)
+```
+C1 → C2 → C3 → (C4 ∥ C5)
+```
+- C1 là nền (version bump đồng bộ trước khi migration/test)
+- C2 dựa trên Migration 1.0 (M10 TASK-074 — plan/backup/dry-run/validate/rollback đã có)
+- C3 độc lập với C2 (test tương thích, không cần upgrade thật)
+- C4 + C5 chạy song song ở cuối (bằng chứng + tài liệu)
+
+#### 3. Roadmap & tasks
+| Phase | Nội dung | Nâng cấp | Task | Trạng thái |
+|-------|----------|----------|------|------------|
+| P0 | Version & Compatibility Baseline | C1 version bump 1.0→1.1 + compatibility matrix | TASK-084 | `todo` |
+| P1 | Migration 1.0→1.1 thật | C2 upgrade pipeline end-to-end (plan/backup/dry-run/validate/rollback) | TASK-085 | `todo` |
+| P2 | Backward Compatibility | C3 plugin/contract/workflow v0→v1 trên 1.1 + test chéo | TASK-086 | `todo` |
+| P3 | Compatibility Conformance | C4 area `compatibility` + gate (giữ 10 areas/6 gates) | TASK-087 | `todo` |
+| P4 | Docs & ADR | C5 ADR-0007 + migration guide 1.0→1.1 + PLAN §M12 | TASK-088 | `todo` |
+
+#### 4. Compliance & version
+- INV-001..035 giữ nguyên frozen (KHÔNG thêm invariant mới)
+- Contract 1.0 → 1.1: bump minor + compatibility matrix (backward-compatible)
+- Version: AIOS 1.0 → **1.1** (minor — backward-compatible, additive)
+- Conformance: +area `compatibility` (10 areas/6 gates hiện có không đổi)
+
 ### Tỷ trọng toàn dự án (theo thành phần)
 | Thành phần | Tỷ trọng |
 |-----------|----------|
@@ -1746,8 +1790,9 @@ R2 → R3 → (R10 ∥ R1) → R9 → (R4 ∥ R11) → R6 → (R8 ∥ R12) → R
 - **M9**: Autonomous Goal Engine (TASK-050) định nghĩa goal có success/constraints/permissions/autonomy level; Autonomous Planner (TASK-051) + Dynamic Replanning; World Model (TASK-052) tách World State khỏi Memory; Autonomous Loop (TASK-053) plan→act→observe→learn; Autonomy Governor (TASK-054) + Budget/Risk gate (INV-030); Autonomous Recovery (TASK-055) có circuit breaker; Long-Horizon (TASK-056) checkpoint/resume; Autonomous Memory (TASK-057) + Learning Loop; Experimentation (TASK-058) qua Sandbox/Harness (INV-033); Multi-Agent (TASK-059); Evaluation-driven (TASK-060); Stuck Detection (TASK-061); Scheduler (TASK-062); enforced INV-030..INV-034
 - **M10**: Architecture Freeze (TASK-063) sinh `docs/architecture/*` + Constitution 1.0 (INV-001..INV-034 frozen, vi phạm = release blocker); Contract 1.0 (TASK-064) freeze 10 contracts + semantic versioning + `aiagent contract-check`; Runtime Hardening (TASK-065) + Durable Execution 1.0 (TASK-066) failure matrix + checkpoint/resume + idempotency; Autonomy Safety (TASK-067) + Kill Switch (TASK-068) mandatory enforcement + `emergency-stop`; Reliability (TASK-069) SLO + non-averaged gates; Security Baseline (TASK-070) + Agent Identity + tamper-evident audit; Developer Experience (TASK-071) + Dashboard 1.0 (TASK-072); Certification Suite (TASK-073) + Golden Scenarios GS-001..020 + `aiagent conformance`; Migration 1.0 (TASK-074); Performance & Cost (TASK-075); 5 release gates (Arch/Sec/Contract/Reliability/Autonomous) đều PASS → AIOS 1.0 READY
 - **M11**: Verification Integrity (TASK-078) — R2 INV-035 fail-closed (Verification State Model PASS/FAIL/ERROR/BLOCKED + non-terminal UNKNOWN/NOT_EXECUTED/MISSING_EVIDENCE/SKIPPED, cấm SKIPPED→PASS, conformance visual policy, CI fail-closed gate); Deterministic Visual Runtime (TASK-079) — R3 RenderReplay/DeterministicHarness (record input timeline + seed → replay → assert pixel-stable); Visual Observability (TASK-080) — R1 VisualEvidence (Screenshot + DOM Snapshot + Render State + Input Timeline + Seed + Pixel Diff — metric sau evidence) + R10 UI State Contract (`UI State → Render → Screenshot`, debug bằng reasoning); Asset Capability Architecture (TASK-081) — R9 AssetPipeline Contract + R4 Registry kind=asset + R11 Discovery/Routing (đóng gap "reuse vs reimplement"); Creative Domain + Vendor + Reference (TASK-082) — R6 domain `creative` trong Decision Pipeline + R8 VendorIntegrity trong `aiagent security-check` + R12 Reference-Asset Understanding (vision ingest → structured description); Ecosystem & DX (TASK-083) — R5 SkillDistiller (`aiagent skill distill`) + R7 Static Deploy (`aiagent deploy --static`); INV-035 enforced (vi phạm = release blocker)
+- **M12**: Version & Compatibility Baseline (TASK-084) — C1 version bump AIOS 1.0→1.1 đồng bộ (contract/config/CLI/metadata) + Compatibility Matrix registry; Migration 1.0→1.1 thật (TASK-085) — C2 upgrade pipeline end-to-end trên dữ liệu thật: plan → backup → dry-run → validate → rollback (tái dùng Migration 1.0 M10 TASK-074); Backward Compatibility (TASK-086) — C3 plugin v0→v1 · contract v0→v1 · workflow v0→v1 chạy trên 1.1 + test chéo cũ→mới; Compatibility Conformance (TASK-087) — C4 mở rộng `aiagent conformance` area `compatibility` + gate (KHÔNG phá 10 areas/6 gates hiện có); Docs & ADR (TASK-088) — C5 ADR-0007 (compatibility policy) + migration guide 1.0→1.1; INV-001..035 giữ nguyên frozen (KHÔNG thêm invariant mới)
 - Xuyên suốt: pytest + contract tests CI; permission enforcement test (ask→deny); rule engine unit test với kết quả xác định trước
 
 ## Scope
-- In: M0 (development foundation: VS Code agent + progress/log system) + 10 milestone (M1–M10), AIOS Orchestrator v1+v2 (Decision Pipeline 4 tầng offline-first, 22 module) + 3 assistant + system doctor, 6 tool types, skill 3 nguồn + lifecycle 10 trạng thái, SDK python + typescript, upgrade pipeline, evaluation framework, sandbox pool, policy engine, goal manager + task queue, system catalog, knowledge graph, **M5 Core Intelligence** (Memory Coordinator, Context Optimizer, Model Router, Planning Engine, Execution Graph, Parallel Scheduler), **M6 AIOS Harness** (5 năng lực H1–H5: Kernel, Execution Verification, Test & Simulation, Evaluation & Benchmark, Doctor & Readiness — subsystem dưới `aios/harness/`, không sửa Runtime/Orchestrator, không phá architecture INV-017..021), M7 Enterprise (Identity/Principal/RBAC-ABAC, Multi-Tenancy + isolation levels, Distributed Runtime + Runtime Node/Router, Distributed Scheduler + Lease/Failover, Quota/Cost/Resource Governance, Credential/Network/Sandbox Isolation, HA/Audit/Recovery, Enterprise Operations + Dashboard — INV-022..029), M8 Ecosystem (Public AIOS SDK + Plugin Runtime + Extension Contracts + Ecosystem Registry + Developer Kit + Ecosystem Hub + Certification — TASK-043..049, không thêm invariant), M9 Autonomous (Goal Engine/Planner/World Model/Loop/Governor/Recovery/Long-Horizon/Memory/Experimentation/Multi-Agent/Evaluation/Stuck/Scheduler — TASK-050..062, 5 invariant INV-030..034), M10 AIOS 1.0 (Architecture Freeze/Contract 1.0/Runtime Hardening/Durable Execution/Autonomy Safety/Kill Switch/Reliability/Security Baseline/Developer Experience/Dashboard/Certification/Migration/Performance — TASK-063..075, freeze INV-001..INV-034, không thêm invariant mới), **M11 Deterministic Artifact & Interaction Runtime** (Issue #4 — Verification Integrity INV-035/RenderReplay DeterministicHarness/VisualEvidence + UI State Contract/Asset Capability Architecture + Creative Domain + Vendor Integrity + Reference-Asset/SkillDistiller + Static Deploy — TASK-078..083, thêm INV-035, additive trên M10, không vi phạm INV-001..034)
+- In: M0 (development foundation: VS Code agent + progress/log system) + 10 milestone (M1–M10), AIOS Orchestrator v1+v2 (Decision Pipeline 4 tầng offline-first, 22 module) + 3 assistant + system doctor, 6 tool types, skill 3 nguồn + lifecycle 10 trạng thái, SDK python + typescript, upgrade pipeline, evaluation framework, sandbox pool, policy engine, goal manager + task queue, system catalog, knowledge graph, **M5 Core Intelligence** (Memory Coordinator, Context Optimizer, Model Router, Planning Engine, Execution Graph, Parallel Scheduler), **M6 AIOS Harness** (5 năng lực H1–H5: Kernel, Execution Verification, Test & Simulation, Evaluation & Benchmark, Doctor & Readiness — subsystem dưới `aios/harness/`, không sửa Runtime/Orchestrator, không phá architecture INV-017..021), M7 Enterprise (Identity/Principal/RBAC-ABAC, Multi-Tenancy + isolation levels, Distributed Runtime + Runtime Node/Router, Distributed Scheduler + Lease/Failover, Quota/Cost/Resource Governance, Credential/Network/Sandbox Isolation, HA/Audit/Recovery, Enterprise Operations + Dashboard — INV-022..029), M8 Ecosystem (Public AIOS SDK + Plugin Runtime + Extension Contracts + Ecosystem Registry + Developer Kit + Ecosystem Hub + Certification — TASK-043..049, không thêm invariant), M9 Autonomous (Goal Engine/Planner/World Model/Loop/Governor/Recovery/Long-Horizon/Memory/Experimentation/Multi-Agent/Evaluation/Stuck/Scheduler — TASK-050..062, 5 invariant INV-030..034), M10 AIOS 1.0 (Architecture Freeze/Contract 1.0/Runtime Hardening/Durable Execution/Autonomy Safety/Kill Switch/Reliability/Security Baseline/Developer Experience/Dashboard/Certification/Migration/Performance — TASK-063..075, freeze INV-001..INV-034, không thêm invariant mới), **M11 Deterministic Artifact & Interaction Runtime** (Issue #4 — Verification Integrity INV-035/RenderReplay DeterministicHarness/VisualEvidence + UI State Contract/Asset Capability Architecture + Creative Domain + Vendor Integrity + Reference-Asset/SkillDistiller + Static Deploy — TASK-078..083, thêm INV-035, additive trên M10, không vi phạm INV-001..034), **M12 AIOS 1.1 Compatibility** (Issue #7 — Version & Compatibility Baseline C1/Migration 1.0→1.1 thật C2/Backward Compatibility C3/Compatibility Conformance C4/Docs & ADR C5 — TASK-084..088, KHÔNG thêm invariant, INV-001..035 giữ nguyên frozen)
 - Excluded (sau M10, không thuộc v1): fine-tune model riêng, non-Local (cloud-only) deployment

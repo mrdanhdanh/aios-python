@@ -3,7 +3,22 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
-## 🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
+## � M12 — AIOS 1.1 Compatibility (2026-08-16 — IN-PROGRESS, Issue #7)
+
+> PLAN.md §M12 (P17): **Issue #7** — user duyệt "nâng cấp hệ thống" → roadmap §43: AIOS 1.1 Compatibility (bước đầu sau M11). KHÔNG thêm Core feature, KHÔNG thêm invariant — INV-001..035 giữ nguyên frozen. 5 nâng cấp C1–C5, 5 task (TASK-084..088).
+> **Nhánh**: `feature/ISSUE-7-aios-1-1-compatibility` (từ `verify` @ `d4185a6`) — PR draft chờ tạo.
+
+| Phase | Nội dung | Nâng cấp | Task | Trạng thái |
+|-------|----------|----------|------|------------|
+| P0 | Version & Compatibility Baseline | C1 version bump 1.0→1.1 toàn hệ thống (contract/config/CLI/metadata) + Compatibility Matrix registry | TASK-084 | `todo` |
+| P1 | Migration 1.0→1.1 thật | C2 upgrade pipeline end-to-end trên dữ liệu thật (plan → backup → dry-run → validate → rollback) | TASK-085 | `todo` |
+| P2 | Backward Compatibility | C3 plugin v0→v1 · contract v0→v1 · workflow v0→v1 chạy trên 1.1 + test chéo | TASK-086 | `todo` |
+| P3 | Compatibility Conformance | C4 mở rộng `aiagent conformance` area `compatibility` + gate (giữ 10 areas/6 gates) | TASK-087 | `todo` |
+| P4 | Docs & ADR | C5 ADR-0007 (compatibility policy) + migration guide 1.0→1.1 + PLAN §M12 | TASK-088 | `todo` |
+
+Dependency order: C1 → C2 → C3 → (C4 ∥ C5)
+
+## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).
 > **Vòng đời KHÉP KÍN**: PR #5 (feature → verify) MERGED `57345ca` → verify PASS (2052/2052 + conformance READY) → **PR #6** (promotion `release: verify → master (2026-08-16)`) MERGED `3b513c3` → **Issue #4 CLOSED** → nhánh feature đã xóa. master = verify = `3b513c3` (ADR-0005).
