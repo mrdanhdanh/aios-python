@@ -97,13 +97,14 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("performance", help="Performance metrics (M10-F4, TASK-075)")
 
-    migrate = sub.add_parser("migrate", help="Migration 1.0 (M10-F5, TASK-074)")
-    migrate.add_argument("kind", help="config|workflow|plugin")
+    migrate = sub.add_parser("migrate", help="Migration 1.0 (M10-F5, TASK-074) + 1.0→1.1 (M12 C2)")
+    migrate.add_argument("kind", help="config|workflow|plugin|contract (1.0→1.1)")
     migrate.add_argument("from_version", help="Version gốc (semver)")
     migrate.add_argument("to_version", help="Version đích (semver)")
     migrate.add_argument("--dry-run", action="store_true", help="Không thay đổi gì")
     migrate.add_argument("--apply", action="store_true", help="Thực hiện migration")
-    migrate.add_argument("--input", default="-i.json", help="File input JSON (default: stdin-style stub)")
+    migrate.add_argument("--input", default=None,
+                         help="File input JSON (nhánh 1.0→1.1; default: stub)")
     migrate.add_argument("--journal", default="aios/data/migrations.db",
                          help="Migration journal DB path (test isolation)")
 
@@ -719,9 +720,9 @@ def _performance() -> int:
 
 
 def _migrate(kind: str, from_version: str, to_version: str,
-             dry_run: bool, apply: bool, input_file: str,
+             dry_run: bool, apply: bool, input_file: str | None,
              journal_path: str = "aios/data/migrations.db") -> int:
-    """Migration 1.0 (M10-F5, TASK-074)."""
+    """Migration 1.0 (M10-F5, TASK-074) + nhánh AIOS 1.0→1.1 (M12 C2, TASK-085)."""
     from ..upgrade.migration import (
         MigrationEngine,
         MigrationFormats,
@@ -730,6 +731,71 @@ def _migrate(kind: str, from_version: str, to_version: str,
         MigrationStep,
     )
 
+    # -- M12 C2: nhánh 1.0.0 → 1.1.0 (matrix-gated, plan chuẩn) --------------
+    if from_version == "1.0.0" and to_version == "1.1.0":
+        from ..upgrade.backup import BackupStore
+        from ..upgrade.compatibility import AIOS_VERSION
+        from ..upgrade.migration_110 import (
+            Aios110Migrator,
+            Aios110Result,
+            get_plan,
+            SUPPORTED_KINDS,
+        )
+
+        if kind not in SUPPORTED_KINDS:
+            print(f"FAILED: kind {kind!r} không hỗ trợ migration 1.0→1.1 "
+                  f"({','.join(SUPPORTED_KINDS)})")
+            return 1
+        # stub khớp matrix (C1-03) — hoặc đọc --input (C2-02)
+        if input_file:
+            try:
+                with open(input_file, "r", encoding="utf-8") as fh:
+                    payload = json.load(fh)
+            except Exception as exc:  # noqa: BLE001
+                print(f"FAILED: đọc --input {input_file!r} lỗi: {exc}")
+                return 1
+        elif kind == "config":
+            payload = {}
+        elif kind == "plugin":
+            payload = {"id": "demo", "version": "1.0.0", "aios": {"min": "1.0.0"}}
+        elif kind == "workflow":
+            payload = {"name": "demo_flow", "version": "1.0.0",
+                       "nodes": [{"id": "n1", "type": "task", "name": "n1"}]}
+        else:  # contract
+            payload = {"id": "agent", "version": "1.0.0"}
+
+        migrator = Aios110Migrator(
+            engine=MigrationEngine(journal=MigrationJournal(journal_path)),
+            backup_store=BackupStore(journal_path.replace("migrations.db", "backups.db")),
+        )
+        try:
+            if dry_run:
+                result = migrator.dry_run(kind, payload)
+                print(json.dumps({
+                    "dry_run": True,
+                    "kind": kind,
+                    "steps": result.payload.get("_dry_run_steps", []),
+                    "matrix": result.matrix,
+                }, indent=2))
+                return 0
+            if apply:
+                result = migrator.apply(kind, payload)
+                print(json.dumps({
+                    "applied": True,
+                    "migration_id": get_plan(kind, migrator.component_id(kind, payload)).migration_id,
+                    "backup_id": result.backup_id,
+                    "journal": result.journal_status,
+                    "matrix": result.matrix,
+                    "payload": result.payload,
+                }, indent=2, default=str))
+                return 0
+        except Exception as exc:  # noqa: BLE001
+            print(f"FAILED: {exc}")
+            return 1
+        print("Chọn --dry-run hoặc --apply")
+        return 2
+
+    # -- nhánh cũ (v0→v1) — giữ nguyên hành vi ---------------------------------
     # input payload stub (demo): config/workflow/plugin v0
     if kind == "config":
         payload = {"autonomous": {"budget": {"max_duration_s": 7200.0}}}
