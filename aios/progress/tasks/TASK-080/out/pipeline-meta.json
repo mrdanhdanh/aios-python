@@ -1,0 +1,18 @@
+{
+  "source": "aios\\progress\\tasks\\TASK-080\\sample_raw.png",
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 64,
+  "align": "feet",
+  "scale_strategy": "fit",
+  "component_mode": "largest",
+  "sheet": "sheet-transparent.png",
+  "frames": 4,
+  "gif": "animation.gif",
+  "qc_summary": {
+    "frames": 4,
+    "body_scale_cv": 0.0,
+    "anchor_y_std": 0.0,
+    "edge_touch_frames": 0
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "kind": "skill",
+  "id": "pixel-game-dev",
+  "metadata": {
+    "name": "Pixel Game Dev (Web)",
+    "version": "1.0.0",
+    "source": "git",
+    "license": "MIT",
+    "skill_type": "meta-skill",
+    "description": "Meta-skill cô đọng kiến thức web game / pixel game: Phaser 4 (filter pixel-art), KAPLAY, PixiJS, công cụ vẽ (Piskel/Pixelorama/Aseprite), palette (LOSPEC/mulfok32). Ánh xạ sang Yuniebel's Cat.",
+    "capabilities": ["web-game-dev", "pixel-art-advisory", "engine-selection"],
+    "permissions": ["read"],
+    "host_agents": ["aios-orchestrator", "codex", "claude"],
+    "vendored_from": "self-learned (Phaser 4, KAPLAY, PixiJS, agent-sprite-forge, LOSPEC)",
+    "path": "skills/pixel-game-dev",
+    "runtime_note": "Tài liệu tham khảo (knowledge). AIOS index metadata qua catalog; agent đọc SKILL.md + references khi tư vấn."
+  }
+}

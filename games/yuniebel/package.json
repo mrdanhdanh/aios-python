@@ -1,0 +1,21 @@
+{
+  "name": "yuniebel",
+  "version": "2.0.0",
+  "description": "Webgame 2D pixel 'Yuniebel's Cat' — làm lại hoàn toàn (TASK-078): 100% static (HTML/CSS/JS thuần, 0 dependency). Chạy offline bằng index.html hoặc GitHub Pages.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test:core": "node test/core.test.js",
+    "test:smoke": "node test/smoke.test.js",
+    "test:e2e": "playwright test",
+    "test": "node test/core.test.js && node test/smoke.test.js && playwright test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
+}

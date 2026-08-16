@@ -1,0 +1,175 @@
+/* style.css — Yuniebel's Cat (TASK-078) — pixel style + letterbox */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: #0a0a14;
+  overflow: hidden;
+  font-family: "Courier New", monospace;
+  image-rendering: pixelated;
+}
+
+#wrap {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+
+#game {
+  background: #000;
+  border: 4px solid #2a2a3a;
+  border-radius: 4px;
+  box-shadow: 0 0 40px rgba(60, 60, 120, 0.35);
+  image-rendering: pixelated;
+}
+
+/* ===== UI overlay ===== */
+#task-box {
+  position: absolute; top: 10px; left: 10px;
+  background: rgba(16, 16, 24, 0.92);
+  border: 2px solid #ffd93b;
+  color: #ffd93b;
+  padding: 8px 12px;
+  font-size: 13px;
+  min-width: 180px;
+  z-index: 10;
+}
+#task-close {
+  position: absolute; top: 4px; right: 4px;
+  background: none; border: none;
+  color: #ffd93b; font-size: 14px; cursor: pointer;
+}
+#task-title { font-weight: bold; letter-spacing: 2px; margin-bottom: 4px; }
+#task-text { color: #fff; white-space: pre-wrap; }
+
+#ui-toggle, #mute-btn {
+  position: absolute; top: 10px;
+  background: rgba(16, 16, 24, 0.85);
+  border: 2px solid #ffd93b;
+  color: #ffd93b;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  z-index: 10;
+  font-family: "Courier New", monospace;
+}
+#ui-toggle { right: 10px; }
+#mute-btn { right: 56px; }
+
+/* ===== Hội thoại ===== */
+#dialogue {
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  background: #101018;
+  border: 3px solid #ffd93b;
+  color: #ffd93b;
+  padding: 10px 18px;
+  font-size: 16px;
+  max-width: 80%;
+  text-align: center;
+  z-index: 12;
+  border-radius: 2px;
+}
+#dialogue.thought { border-color: #8ec9ff; color: #8ec9ff; font-style: italic; }
+
+/* ===== Hộp lựa chọn ===== */
+#choice-box {
+  position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%);
+  background: #101018;
+  border: 3px solid #ffd93b;
+  color: #ffd93b;
+  padding: 16px 22px;
+  z-index: 20;
+  text-align: center;
+  border-radius: 2px;
+}
+.choice-title { margin-bottom: 12px; font-weight: bold; }
+.choice-btn {
+  display: block; width: 100%;
+  background: #1a1a28;
+  border: 2px solid #ffd93b;
+  color: #fff;
+  padding: 8px 20px;
+  margin: 6px 0;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: "Courier New", monospace;
+}
+.choice-btn:hover { background: #2a2a44; }
+
+/* ===== Scare counter ===== */
+#scare-counter {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  background: rgba(16, 16, 24, 0.85);
+  border: 2px solid #ffd93b;
+  color: #ffd93b;
+  padding: 4px 14px;
+  font-size: 14px;
+  z-index: 10;
+}
+
+/* ===== Hint ===== */
+#hint {
+  position: absolute; bottom: 8px; right: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  z-index: 10;
+}
+
+/* ===== D-pad ===== */
+#dpad {
+  position: absolute; bottom: 16px; left: 16px;
+  display: grid; grid-template-columns: 44px 44px 44px; grid-template-rows: 44px 44px;
+  gap: 4px;
+  z-index: 15;
+}
+.pad {
+  background: rgba(16, 16, 24, 0.75);
+  border: 2px solid #ffd93b;
+  color: #ffd93b;
+  font-size: 18px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#pad-up { grid-column: 2; }
+#pad-left { grid-column: 1; grid-row: 2; }
+#pad-down { grid-column: 2; grid-row: 2; }
+#pad-right { grid-column: 3; grid-row: 2; }
+
+/* ===== Overlay screens ===== */
+.overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+  background: rgba(8, 8, 20, 0.25); /* để thấy rõ cảnh nền (trời xanh, mây, mèo) — brief ảnh 1 */
+  z-index: 30;
+  text-align: center;
+}
+.pixel-title {
+  color: #ffd93b;
+  font-size: 34px;
+  letter-spacing: 4px;
+  text-shadow: 3px 3px 0 #7a4a00;
+  font-family: "Courier New", monospace;
+}
+.subtitle { color: #fff; font-size: 15px; }
+.tiny { color: rgba(255, 255, 255, 0.55); font-size: 12px; }
+.over-title { color: #ff3b3b; text-shadow: 3px 3px 0 #5a0a0a; }
+.end-title { color: #ffd93b; }
+
+.big-btn {
+  background: #2ea44f;
+  border: 4px solid #1a1a2e;
+  color: #ffb52e;
+  font-size: 26px;
+  font-weight: bold;
+  padding: 12px 48px;
+  cursor: pointer;
+  font-family: "Courier New", monospace;
+  box-shadow: 4px 4px 0 #1a1a2e;
+  letter-spacing: 3px;
+}
+.big-btn:hover { background: #38c05e; transform: translate(-1px, -1px); }
+
+.hidden { display: none !important; }

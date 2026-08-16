@@ -1,0 +1,182 @@
+{
+  "meta": [
+    {
+      "key": "cat",
+      "sheet": "cat.png",
+      "frameW": 48,
+      "frameH": 48,
+      "scale": 3,
+      "frames": 8
+    },
+    {
+      "key": "butterfly",
+      "sheet": "butterfly.png",
+      "frameW": 48,
+      "frameH": 48,
+      "scale": 3,
+      "frames": 4
+    },
+    {
+      "key": "ghost",
+      "sheet": "ghost.png",
+      "frameW": 54,
+      "frameH": 72,
+      "scale": 3,
+      "frames": 2
+    },
+    {
+      "key": "owner",
+      "sheet": "owner.png",
+      "frameW": 48,
+      "frameH": 48,
+      "scale": 3,
+      "frames": 1
+    },
+    {
+      "key": "cake",
+      "sheet": "cake.png",
+      "frameW": 60,
+      "frameH": 48,
+      "scale": 3,
+      "frames": 2
+    }
+  ],
+  "frames": [
+    {
+      "name": "cat-walk-0",
+      "sheet": "cat",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "cat-walk-1",
+      "sheet": "cat",
+      "x": 48,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "cat-walk-2",
+      "sheet": "cat",
+      "x": 96,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "cat-walk-3",
+      "sheet": "cat",
+      "x": 144,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "cat-idle",
+      "sheet": "cat",
+      "x": 192,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "cat-blink",
+      "sheet": "cat",
+      "x": 240,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "cat-tail-0",
+      "sheet": "cat",
+      "x": 288,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "cat-tail-1",
+      "sheet": "cat",
+      "x": 336,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "butterfly-0",
+      "sheet": "butterfly",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "butterfly-1",
+      "sheet": "butterfly",
+      "x": 48,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "butterfly-2",
+      "sheet": "butterfly",
+      "x": 96,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "butterfly-3",
+      "sheet": "butterfly",
+      "x": 144,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "ghost-0",
+      "sheet": "ghost",
+      "x": 0,
+      "y": 0,
+      "w": 54,
+      "h": 72
+    },
+    {
+      "name": "ghost-1",
+      "sheet": "ghost",
+      "x": 54,
+      "y": 0,
+      "w": 54,
+      "h": 72
+    },
+    {
+      "name": "owner-0",
+      "sheet": "owner",
+      "x": 0,
+      "y": 0,
+      "w": 48,
+      "h": 48
+    },
+    {
+      "name": "cake-0",
+      "sheet": "cake",
+      "x": 0,
+      "y": 0,
+      "w": 60,
+      "h": 48
+    },
+    {
+      "name": "cake-1",
+      "sheet": "cake",
+      "x": 60,
+      "y": 0,
+      "w": 60,
+      "h": 48
+    }
+  ]
+}

@@ -3,6 +3,62 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+> **Ghi chú merge `verify` → `operation/test-A` (2026-08-16)**: hai nhánh phát triển song song → trùng id TASK-077 (verify: quy trình Issue-Driven; test-A: webgame Yuniebel). Giữ bản verify tại `TASK-077/` (đã trên master), bản game lưu tại `TASK-077-webgame/`. Entry của cả hai nhánh đều được giữ nguyên.
+
+## ✅ TASK-082 — Nâng cấp Phaser 4 hướng E: sprite sheet PNG + fx + parallax + transition (2026-08-16)
+
+- **Kết quả**: **DONE** — user chọn hướng E (A+B+C+D) + "tự hoạt động, tự quyết định". Nâng cấp toàn diện `games/yuniebel-phaser/`:
+  - **(A) Sprite sheet PNG thật** — `tools/gen-sprites.mjs` (0 dependency, PNG encoder thuần, deterministic — chạy 2 lần SHA256 giống hệt) sinh `src/assets/{cat,butterfly,ghost,owner,cake}.png` + `sprites.json` (17 frames: mèo walk 4f + idle-cycle blink/đuôi, bướm vỗ cánh 4f, ma float 2f, chủ, bánh kem nến cháy 2f) + Phaser Animations (add.sprite); mèo origin 0.5 pos p.x*3+24 (hitbox khớp cũ), flipX quanh tâm.
+  - **(B) FX deterministic** — `src/fx/fx.js` (PRNG mulberry32 seeded, 0 Math.random): bụi 14 hạt GARDEN ngày, đom đóm 10 đêm, hơi thở ma 8, tia lửa lò sưởi 6 BIRTHDAY (LIVING không lò sưởi); **light pool radial gradient** thay overlay phẳng (ambient α theo scene + nguồn sáng: player/đèn hiên/cửa sổ/ma/đồng hồ/sconce/lò sưởi/nến/đuốc tường 11 — camX trừ đúng).
+  - **(C) Parallax + camera** — farTex mây 3 lớp drift (scrollFactor 0.25, redraw rtime) + nearTex cỏ/hoa 1200×270 (1.15); **shake manual deterministic** (sin/cos — camera effects Phaser không update + Math.random) + zoom lerp 1.04 khi scare 5.
+  - **(D) Transition mượt** — fade 0.6s ease-out (t²×0.75), night tint lerp 1.5s theo timers.dark (guard NaN: timers.dark ?? 5*(1-darkness)).
+- **Test**: **88/88 PASS** — vitest **50/50** (core 26 + smoke 3 + fx 15 + sprite-sheet 6: PNG decode/SHA256/vendor baseline) + Playwright **38/38** (e2e 8 + visual 30: 25 shots + 5 đặc biệt — cat-walk anim, freeze-ngay, light pool probe, shake/zoom, flip bbox). **23/23 AC ĐẠT** (AC-1..23; AC-15 vendor byte-identical, AC-18 vanilla untouched). Build PASS + dist/assets 5 PNG (assetsInlineLimit 0).
+- **Bug phát hiện khi test**: (1) `src/fx/fx.js` lightSources đọc sai index `src[4]` → crash L_SEARCH (pageerror + bisect phase); (2) camera effects Phaser 4 không update tự động + Math.random → chuyển manual; (3) `add.image` không có anims → `add.sprite`; (4) PNG Playwright filter Paeth → png-decode hỗ trợ 5 filters + RGB/RGBA; (5) WebGL getImageData rỗng → probe qua PNG decode; (6) WebServer EBUSY → quy trình clean build/preview.
+- **Hard gate**: plan → spec v3.1 (23 AC) → critique ×2 (28 + 16 = 44 vấn đề resolved) → tasks (14 mục) → review (2 P1 + 4 P2 resolved, tọa độ verify vendor) → implement → test → evaluate. Xem chi tiết: `aios/progress/tasks/TASK-082/`
+
+## ✅ TASK-081 — Scaffold Phaser 4 (Vite) cho Yuniebel's Cat (2026-08-15)
+
+- **Kết quả**: **DONE** — Tạo bản Phaser 4 (Vite) của webgame `games/yuniebel/` tại `games/yuniebel-phaser/`. Vendor `core.js`/`sprites.js`/`audio.js` **byte-identical** (SHA256 = bản vanilla, AC-16 ✓); 1 `GameScene` re-render bg CanvasTexture mỗi frame + sprite Player/Butterfly + camera scroll + DOM overlay UI preserve. Debug hook `?test=1` (chỉ test, chơi thật không hook). Hard gate: plan + spec v3 (16 AC) + critique×2 + tasks + review **APPROVED** + implement + test (vitest + playwright) + evaluate.
+- **Artifacts**:
+  - `games/yuniebel-phaser/` — `package.json` (type:module, phaser@4.2.1, vite/vitest/jsdom/@playwright/test), `vite.config.js` (base './'), `index.html` + `style.css` (canvas#game 480×270 + overlay DOM port vanilla ids), `src/main.js` (Phaser boot + input + resize + debug hook), `src/scenes/GameScene.js` (1 scene render), `src/ui/ui.js` (camX/mood/handleSoundFlags/syncUI), `src/vendor/{core,sprites,audio,loader}.js` (loader.js = UMD adapter ?raw+indirect eval, vendor không sửa).
+  - `games/yuniebel-phaser/test/` — `core.test.js` (27 vitest), `smoke.test.js` (3 vitest), `e2e.spec.js` (8 playwright), `visual.spec.js` (19 playwright: 17 shot + R1 + AC-7b), `brief/{COMPARISON.md,refs/1..6.png}`.
+  - `games/yuniebel-phaser/diagnose.mjs` — script chẩn đoán boot.
+- **Test**: **56/56 PASS** — Vitest **29/29** (core 27 + smoke 3, 0 failed suite) + Playwright **27/27** (e2e 8 + visual 19). **16/16 AC ĐẠT** (AC-13 vanilla untouched, AC-16 vendor identical, AC-14 CI build).
+- **Fix test phase**: (1) Phaser.AUTO crash custom canvas → `type:renderType` WEBGL/Canvas; (2) determinism khi freeze → đóng băng render time vào `renderBg`; (3) vitest double-run specs → `include:["test/**/*.test.js"]`; (4) ESM require/__dirname → import/fileURLToPath.
+- **CI**: `.github/workflows/pages.yml` đã cập nhật (setup-node@20 + `npm ci && npm run build` + `rm -rf node_modules` trước upload).
+- Xem chi tiết: `aios/progress/tasks/TASK-081/` (plan + spec v1/v3 + critique×2 + tasks + review + test + implementation/NOTES.md)
+
+## ✅ TASK-080 — Game-Dev Skills: agent-sprite-forge + pixel-game-dev (2026-08-15)
+
+- **Kết quả**: **DONE** — Option 1 user chọn ("thực hiện 1, tự học và cô đọng lại các skill/repo"): mang skill/repo web-game & pixel-game về repo dưới dạng skill package.
+- **Artifacts**:
+  - `skills/agent-sprite-forge/` — agent skill cô đọng từ [0x0funky/agent-sprite-forge](https://github.com/0x0funky/agent-sprite-forge) (MIT): `manifest.json` (SkillManifest conform: source=git, capabilities/permissions không rỗng), `SKILL.md` ($generate2dsprite + $generate2dmap, hard rules nền #FF00FF, lưới nhiều dòng, tách lớp), `references/`, `agents/openai.yaml`, `scripts/generate2dsprite.py` (Pillow: chroma-key, cắt frame, export PNG trong suốt + GIF + metadata).
+  - `skills/pixel-game-dev/` — meta-skill tự học cô đọng (Phaser4 filter pixel-art, KAPLAY, PixiJS, công cụ vẽ, palette LOSPEC/mulfok32, ánh xạ Yuniebel's Cat).
+  - `catalog/skill-agent-sprite-forge.json`, `catalog/skill-pixel-game-dev.json` — CatalogEntry (`kind=skill`).
+  - `skills/README.md` — giải thích SKILLS_DIR + catalog.
+- **Test**: `test_validate_artifacts.py` **ALL PASS** (manifest ×2 + catalog ×2). AC3: script sinh `sheet-transparent.png` (128×128, RGBA, **0 magenta**) + 4 frames + `animation.gif` + `pipeline-meta.json`. **6/6 AC ĐẠT**.
+- **Hard gate**: spec (AC1-6) + critique×2 (C1-01..05, C2-01..03) + tasks + review **APPROVED** + test + evaluation.
+- Xem chi tiết: `aios/progress/tasks/TASK-080/` (spec + critique×2 + tasks + review + test + evaluation + implementation/ + test_validate_artifacts.py)
+
+## ✅ TASK-079 — Fix mèo biến mất sau START (bug TASK-078) (2026-08-15)
+
+- **Kết quả**: **DONE** — root cause: scale mismatch giữa sprite logical 160×90 (×3 → canvas 480×270) và world core gấp 3 → mèo vẽ ra ngoài canvas sau START, background không khớp walls/zones. Đã chuyển toàn bộ core về logical grid (GARDEN/HALLWAY 320×90 camera scroll, còn lại 160×90), mở rộng drawGarden/drawHallway với camera translate + save/restore, sửa camX(), khớp nội thất với walls, cập nhật test ÷3 + **thêm 4 pixel tests chống tái phát** (AC-1 mèo hiện tại spawn, AC-4 nhà khớp wall, AC-10 camera scroll, AC-5 mèo hiện diện). Phát hiện kèm: test visual TASK-078 "17/17 khớp brief" là sai — brief không có ảnh ref nên `toHaveScreenshot` bị skip.
+- **Test**: **59/59 PASS** — core 27 + smoke 4 + Playwright 28 (gồm 2 test chơi thật không hook: title→sinh nhật 45s, title→game over 22s + AC-2 di chuyển mới). **10/10 AC ĐẠT**.
+- **Hard gate**: plan + spec + critique ×3 (critique-1: 5 P1/10 P2/6 P3; critique-2: 2 P1/1 P2/6 P3; critique-3 xác nhận: 1 P1/1 P2/3 P3 — đủ 3 vòng) + tasks + review trước (CHANGES REQUESTED → R1-R5 resolved) + review sau (Code APPROVED).
+- Xem chi tiết: `aios/progress/tasks/TASK-079/` (plan + spec + critique ×3 + tasks + review + review-post + test + evaluation + implementation/)
+
+## ✅ TASK-078 — Làm lại hoàn toàn game "Yuniebel's Cat" theo kịch bản + 5 ảnh tham khảo (2026-08-15)
+
+- **Kết quả**: **DONE** — viết lại từ đầu `games/yuniebel/` (bản cũ TASK-077 bị chê xấu). 13 câu thoại nguyên văn brief-scenario.md, 9 task text, 10 mood nhạc nền + 27 SFX WebAudio, 7 cảnh vẽ theo 5 ảnh tham khảo (trời động ngày→hoàng hôn→đêm + đèn hiên, 5 kiểu hù riêng biệt, ma xanh đầu lâu chặn cửa, vết máu lớn + mắt sáng, lò sưởi + bánh kem sinh nhật).
+- **Test (theo yêu cầu "chụp ảnh so brief")**: **54/54 PASS** — core 27 + smoke 4 + Playwright 23 (2 test chơi thật không hook: title→sinh nhật 42.7s, title→game over 21.4s; 17 ảnh chụp màn hình đối chiếu brief → COMPARISON.md **17/17 khớp**). Post-review R-01..R-12 resolved. **14/14 AC ĐẠT**.
+- Xem chi tiết: `aios/progress/tasks/TASK-078/` (plan + spec + critique×2 + tasks + review + review-post + test + evaluation + shots/ 17 ảnh)
+
+## ✅ TASK-077 — Webgame 2D Pixel "Yuniebel" (2026-08-15)
+
+- **Kết quả**: tạo `games/yuniebel/` — webgame 2D pixel 100% static (HTML/CSS/JS, 0 dependency). Sprites canvas primitives (mèo orange可爱 tóc hồng, chủ, ma, bướm, bánh kem) + 7 backgrounds pre-rendered. 6 cảnh + title/game over/end, 17 AC PASS.
+- **Cấu trúc**: `index.html` + `style.css` + `src/` (core.js logic thuần 58/58 PASS + sprites.js canvas primitives + audio.js WebAudio + game.js loop/render/input) + `test/` (core.test.js 58 PASS + smoke.test.js 28 PASS)
+- **Deploy**: `.github/workflows/pages.yml` (GitHub Pages, paths: games/**)
+- Xem chi tiết: `aios/progress/tasks/TASK-077/` (spec + critique×2 + tasks + review + test + evaluation)
 ## ✅ TASK-077 — Quy trình Issue → Branch → PR → Merge thủ công → verify → master (2026-08-16)
 
 - **Kết quả**: thiết lập **Issue-Driven Development** đầy đủ theo yêu cầu người dùng: (1) 3 GitHub issue templates (`bug-report`/`feature-upgrade`/`idea-proposal` — issue forms chuẩn `about`, không `description`) + `config.yml` (tắt blank issue); (2) PR template bắt buộc link issue / `[bypass]`; (3) action `.github/workflows/pr-validation.yml` (github-script@v7 — luồng quyết định 7 bước: draft skip → `release:` base=master skip body → base=verify → body `[bypass]` → `type/ISSUE-N` + link → `type/bypass-slug` + tag → fail; permissions read-only, concurrency; KHÔNG auto-merge/approve); (4) `docs/workflows/issue-pr-workflow.md` (5 giai đoạn + quy ước nhánh `<type>/ISSUE-N-slug` từ verify + lệnh gh/git PowerShell); (5) `docs/adr/0006-issue-pr-workflow.md` (accepted, extends ADR-0005, **main = master** giữ nguyên); (6) `AGENTS.md` §4.2 bắt buộc + `PLAN.md` cập nhật.
@@ -81,6 +137,8 @@
 | Mục | Nội dung | Trạng thái | Ghi chú |
 |-----|----------|------------|---------|
 | Secret scan | GitHub Actions Gitleaks — quét secret trên push/PR master + manual trigger | `done` | `.github/workflows/secret-scan.yml` (2026-08-14) |
+| Hàng rào GARDEN | `[bypass]` — fix hàng rào không liền: đổi từ "cọc + thanh ngang 6px quanh cọc" sang **2 thanh ngang liền x 0..320 + 18 cọc đều 18px**; khắc phục luôn lệch spec TASK-079 (rào trước chỉ trải tới x=280) | `done` | theo yêu cầu người dùng 2026-08-15; core 27/27 + smoke 4/4 + Playwright 28/28 |
+| Nhà/cửa/phòng khách/bếp | `[bypass]` — (1) GARDEN: nhà hạ chân 30..68 cắm vào cỏ (trước bay y 16..50), cửa to 14×16, wall tách 2 khối chừa cửa 284..300; (2) LIVING: sofa khối liền, kệ khớp wall, chậu cây dời góc, cửa bếp rộng + khung gỗ + mũi tên; (3) KITCHEN: spawn 20,73 xa vết máu (trước 80,73 chồng vết máu — nhiệm vụ tự xong), task K_BLOOD/K_CHOICE → "Kiểm tra vùng tối!" | `done` | theo yêu cầu người dùng 2026-08-15; core 27/27 + smoke 4/4 + Playwright 28/28 |
 | Remote | Chuyển origin → repo GitHub mới `mrdanhdanh/aios-python` (PUBLIC) | `done` | commit e42bae4 (2026-08-14) |
 | DoD checklist | **Definition of Done — Closing Checklist** (AGENTS.md §3.1 + PLAN.md): bắt buộc cập nhật LOG.md + PROGRESS.md + PLAN.md + STATS.md + task folder + commit sau MỖI task — tránh quên ghi tài liệu | `done` | theo yêu cầu người dùng 2026-08-15 |
 | README docs | `[bypass]` — cập nhật `docs/README.md` (GitHub fallback render khi root không có README.md) khớp trạng thái AIOS 1.0: mô tả 7 tầng + CERTIFIED, bảng M0–M10, mục kiểm tra sức khỏe (`aiagent doctor/conformance/arch-health`), link constitution-1.0.md; không tạo README root mới | `done` | theo yêu cầu người dùng 2026-08-15 |

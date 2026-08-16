@@ -1,0 +1,46 @@
+# Agent Skill metadata (OpenAI Codex / Grok Build style)
+# Cô đọng từ 0x0funky/agent-sprite-forge — giữ cấu trúc agents/openai.yaml chuẩn.
+name: agent-sprite-forge
+version: "1.0.0"
+description: >
+  Codex/Grok skill for game-ready 2D sprites, layered maps, and engine-ready
+  prototypes. Includes $generate2dsprite and $generate2dmap. Local processors
+  (scripts/generate2dsprite.py) do chroma-key cleanup, frame extraction, alignment,
+  GIF/PNG export, and metadata.
+skills:
+  - id: generate2dsprite
+    triggers:
+      - "sprite"
+      - "animation sheet"
+      - "character"
+      - "npc"
+      - "creature"
+      - "spell"
+      - "projectile"
+      - "impact"
+      - "fx"
+    entry: ../SKILL.md
+    scripts:
+      - ../scripts/generate2dsprite.py
+  - id: generate2dmap
+    triggers:
+      - "map"
+      - "tilemap"
+      - "level"
+      - "stage"
+      - "room"
+      - "prop pack"
+      - "collision"
+      - "zones"
+    entry: ../SKILL.md
+    scripts:
+      - ../scripts/generate2dsprite.py
+requirements:
+  python:
+    - Pillow
+    - numpy
+  optional:
+    - ffmpeg   # chỉ cho $video2dsprite (upstream, không bundled ở bản cô đọng này)
+notes:
+  - "Host agent runs image_gen; scripts only postprocess."
+  - "Upstream: https://github.com/0x0funky/agent-sprite-forge (MIT)"

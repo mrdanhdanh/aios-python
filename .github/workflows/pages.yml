@@ -1,0 +1,45 @@
+name: Deploy GitHub Pages — Games
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "games/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      # TASK-081 (R6): pin Node để build bản Phaser (Vite) ổn định
+      - name: Setup Node (pin 20)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # TASK-081 (AC-14): build games/yuniebel-phaser (Vite + Phaser 4)
+      - name: Build yuniebel-phaser
+        working-directory: games/yuniebel-phaser
+        run: |
+          npm ci
+          npm run build
+          rm -rf node_modules   # AC-14/P2-5: tránh artifact phình node_modules
+      - name: Upload artifact (games/)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: games
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

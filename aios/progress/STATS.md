@@ -251,12 +251,39 @@
 | Findings | 1 P2 (F1: 2 invariant chưa enforce trực tiếp — INV-008/012 → +2 test) + 2 P3 (F2 certification layer rule; F3 auth/authz WARN ghi nhận 1.1) |
 | Kết luận | **M10 ĐẠT (ACCEPTED)** — không P1; AIOS 1.0 READY |
 
+## Post-M10 — Game-Dev Skills (TASK-080, 2026-08-15)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task | 1 (TASK-080) — **DONE** |
+| Mục tiêu | Option 1 user ("thực hiện 1, tự học + cô đọng skill/repo web-game & pixel-game") |
+| Skills tạo | 2 (`agent-sprite-forge` cô đọng github 0x0funky; `pixel-game-dev` meta-skill tự học) |
+| Catalog entries | 2 (`catalog/skill-*.json`, kind=skill) |
+| Test | `test_validate_artifacts.py` ALL PASS (2 manifest + 2 catalog); AC3 script sinh sheet/frames/gif/meta (0 magenta) |
+| AC | **6/6 PASS** |
+| Hard gate | spec + critique×2 + tasks + review APPROVED + test + evaluation (đủ 8 file) |
+| Không đổi logic hệ thống | chỉ thêm skill package + catalog (file-based, ngoài runtime) |
+| Bypass | 0 |
+
+## Post-M10 — Games: Yuniebel Phaser (TASK-081, 2026-08-15)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Task | 1 (TASK-081) — **DONE** |
+| Mục tiêu | Scaffold Phaser 4 (Vite) cho webgame Yuniebel's Cat, migrate scene/dialogue từ bản vanilla `games/yuniebel/` (vendor byte-identical) |
+| Cấu trúc | `games/yuniebel-phaser/` — Vite + Phaser 4.2.1 + vitest + @playwright/test; vendor core/sprites/audio SHA256 = vanilla |
+| Test | **56/56 PASS** — Vitest **29/29** (core 27 + smoke 3) + Playwright **27/27** (e2e 8 + visual 19) |
+| AC | **16/16 PASS** (AC-13 vanilla untouched `git diff --quiet` = 0; AC-16 vendor identical; AC-14 CI build Node 20) |
+| Hard gate | plan + spec v3 (16 AC) + critique×2 + tasks + review APPROVED + implement + test + evaluate (đủ 8 file) |
+| Bug fix test phase | 4 (Phaser AUTO→renderType; freeze determinism render-time; vitest include; ESM require/__dirname) |
+| CI | `.github/workflows/pages.yml` setup-node@20 + build + rm node_modules |
+
 ## Tổng kết toàn dự án (M0–M10)
 
 | Chỉ số | Giá trị |
 |--------|---------|
 | Milestone | 11/11 done (M0–M10) |
-| Task | **75 task** (M0:1, M1:9, M2:7, M3:3, M4:3, M5:6, M6:6, M7:8, M8:7, M9:13, M10:13) |
+| Task | **76 task** (M0:1, M1:9, M2:7, M3:3, M4:3, M5:6, M6:6, M7:8, M8:7, M9:13, M10:13, Post-M10:2 [TASK-080 skills + TASK-081 games]) |
 | Tests | **1939 pytest + 13 vitest dashboard + 19 vitest extension** |
 | Invariants | INV-001..034 frozen (Constitution 1.0) |
 | Deliverable cuối | `aiagent conformance` → **AIOS 1.0 READY** |

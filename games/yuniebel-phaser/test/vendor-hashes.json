@@ -1,0 +1,9 @@
+{
+  "note": "SHA256 baseline TASK-081 (vendor byte-identical — AC-16). Tính 2026-08-16 trước TASK-082 implement.",
+  "vendor": {
+    "core.js": "7daef780896ade050faf82a4655e179e30abe4b6b06b8de44e2d32f61b744316",
+    "sprites.js": "2b293406a8d55dbdf5f5b2fcc3bf284b5f5e88f9e37501ce264e430fb86ea194",
+    "audio.js": "71053fddbb498c6ff2198fa952fd0b4713010cb95690661f92923c57898d67f8",
+    "loader.js": "59f8bd56e997551167c3a82da8d6f94a63f012f15ea6772f450d5daf9ad988a7"
+  }
+}
