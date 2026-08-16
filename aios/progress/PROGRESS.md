@@ -3,10 +3,10 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
-## 🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅)
+## 🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).
-> **Vòng đời**: PR #5 (feature → verify) MERGED `57345ca` → verify PASS (2052/2052 + conformance READY) → **PR #6** (promotion `release: verify → master (2026-08-16)`) chờ user merge → đóng Issue #4.
+> **Vòng đời KHÉP KÍN**: PR #5 (feature → verify) MERGED `57345ca` → verify PASS (2052/2052 + conformance READY) → **PR #6** (promotion `release: verify → master (2026-08-16)`) MERGED `3b513c3` → **Issue #4 CLOSED** → nhánh feature đã xóa. master = verify = `3b513c3` (ADR-0005).
 
 | Phase | Nội dung | Nâng cấp | Task | Trạng thái |
 |-------|----------|----------|------|------------|
