@@ -251,15 +251,32 @@
 | Findings | 1 P2 (F1: 2 invariant chưa enforce trực tiếp — INV-008/012 → +2 test) + 2 P3 (F2 certification layer rule; F3 auth/authz WARN ghi nhận 1.1) |
 | Kết luận | **M10 ĐẠT (ACCEPTED)** — không P1; AIOS 1.0 READY |
 
-## Tổng kết toàn dự án (M0–M10)
+## M11 — Deterministic Artifact & Interaction Runtime ✅ (2026-08-16, Issue #4)
 
 | Chỉ số | Giá trị |
 |--------|---------|
-| Milestone | 11/11 done (M0–M10) |
-| Task | **75 task** (M0:1, M1:9, M2:7, M3:3, M4:3, M5:6, M6:6, M7:8, M8:7, M9:13, M10:13) |
-| Tests | **1939 pytest + 13 vitest dashboard + 19 vitest extension** |
-| Invariants | INV-001..034 frozen (Constitution 1.0) |
-| Deliverable cuối | `aiagent conformance` → **AIOS 1.0 READY** |
+| Task tổng | 6 (TASK-078 Verification Fail-Closed, 079 RenderReplay/DeterministicHarness, 080 VisualEvidence+UIState, 081 Asset Capability Architecture, 082 Creative+Vendor+Reference, 083 SkillDistiller+StaticDeploy) — TẤT CẢ done |
+| Task done | 6/6 (đủ 8-file hard gate mỗi task) |
+| Tests (cuối M11) | **2052 pass** (M10: 1939 → +113: 30+18+16+15+16+18 unit mới) |
+| Phase | P0 Verification Integrity (078) → P1 Deterministic Visual Runtime (079) → P2 Visual Observability (080) → P3 Asset Capability (081) + P3b/c/d (082) → P4 Ecosystem & DX (083) — 6 commit phase |
+| Invariants | **+INV-035** (Verification Fail-Closed — Core Invariant MỚI, không vi phạm INV-001..034): Verification State Model (PASS duy nhất terminal success; FAIL/ERROR/BLOCKED; non-terminal UNKNOWN/NOT_EXECUTED/MISSING_EVIDENCE/SKIPPED — cấm → PASS) |
+| Deliverable | `aiagent conformance` → **AIOS 1.0 READY** (10/10 areas — +verification · 20/20 GS · 6/6 gates — +gate_f_verification); `aiagent verify-state` (INV-035 fail-closed YES); `aiagent render-replay` (stable=True); `aiagent visual-probe` (bắt state_diff scale 3→2); `aiagent asset list/match/produce` (skill agent-sprite-forge thật); `aiagent reference describe`; `aiagent skill distill`; `aiagent deploy --static`; `aiagent security-check` SECURE (12 checks — +vendor_integrity R8) |
+| Package mới | `verification/` (Verification Kernel INV-035) · `rendering/` (asset/contracts/evidence/harness/idempotency/matcher/prng/probe/reference/registry/replay/timeline/ui_state/workflows) · `observability/visual.py` · `ecosystem/{distiller,deploy}.py` |
+| Nâng cấp R1–R12 | **12/12 xong**: R2 INV-035 · R3 RenderReplay/DeterministicHarness · R1 VisualEvidence/VisualRegressionProbe · R10 UI State Contract · R9 AssetPipeline Contract · R4 Asset Registry · R11 Discovery/Routing · R6 Creative Domain · R8 Vendor Integrity · R12 Reference-Asset · R5 SkillDistiller · R7 Static Deploy |
+| Roadmap | P0 → P1 → P2 → P3 → P4 đủ 5 tầng (dependency R2→R3→(R10∥R1)→R9→(R4∥R11)→R6→(R8∥R12)→R5→R7) |
+| Milestone review | **TỰ REVIEW** — full suite 2052 + conformance READY (10 areas/6 gates) + doctor healthy + arch-health 0 violations + security SECURE |
+| Findings | 0 P1/P2 — 3 bài học chính: (1) allow-list M8 ecosystem chỉ semver/metadata (arch scanner bắt distiller import skills → mirror validation); (2) deploy marker `.aios/` phải exclude khỏi manifest (determinism); (3) pre-route creative phải optional (`creative_matcher=None` → hành vi cũ) |
+| Kết luận | **M11 ĐẠT (ACCEPTED)** — 6/6 task, 81 task toàn dự án |
+
+## Tổng kết toàn dự án (M0–M11)
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Milestone | 12/12 done (M0–M11) |
+| Task | **81 task** (M0:1, M1:9, M2:7, M3:3, M4:3, M5:6, M6:6, M7:8, M8:7, M9:13, M10:13, M11:6) |
+| Tests | **2052 pytest + 13 vitest dashboard + 19 vitest extension** |
+| Invariants | INV-001..035 (Constitution 1.0 + M11 amendment INV-035) |
+| Deliverable cuối | `aiagent conformance` → **AIOS 1.0 READY** (10 areas · 20 GS · 6 gates) |
 
 ## Bài học M3-M4 (bổ sung)
 

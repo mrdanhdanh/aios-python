@@ -1659,7 +1659,7 @@ Sau M10: **không tạo M11 = thêm feature**; thay vào đó `AIOS 1.1 Compatib
 → Kết quả: AIOS 1.0 — một AI Operating System hoàn chỉnh, có kiến trúc bị freeze (INV-001..INV-034), contract ổn định (semantic versioning), runtime durable, autonomous bounded (Governor/Kill-Switch), secure (Identity/Audit/Tamper-evident), observable, có Certification Suite + Golden Scenarios + Conformance + Migration engine, chứng minh qua 10 năng lực và Golden Demo — đủ chuẩn gọi là **AIOS 1.0**
 
 ### M11 – Deterministic Artifact & Interaction Runtime (P16 — Creative/Asset/UI Engineering)
-> 🆕 **DONE quyết định 2026-08-16 (Issue #4)**: user duyệt xử lý TOÀN BỘ M11 (P0–P4) theo proposal `docs/proposals/m11-creative-engineering.md` (review user 8.8/10, branch-independent). M11 giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034): bắt buộc Constitution update (M11 amendment trên M10 Constitution) + Governance update + Conformance rule update + Contract/Policy registry update + version bump.
+> ✅ **DONE 2026-08-16 (Issue #4)** — 6/6 task (TASK-078..083), 5 phase hoàn tất; full suite **2052 pass**; conformance **AIOS 1.0 READY** (10 areas + 6 gates, có verification INV-035); doctor healthy + arch-health 0 violations. 12 nâng cấp R1–R12 xong (P0 Verification Integrity → P1 Deterministic Visual Runtime → P2 Visual Observability → P3 Asset Capability Architecture + Creative/Vendor/Reference → P4 Ecosystem & DX). Proposal `docs/proposals/m11-creative-engineering.md` (review user 8.8/10, branch-independent). M11 giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034): Constitution update (M11 amendment trên M10 Constitution) + Governance update + Conformance rule update (10 areas/6 gates) + Contract/Policy registry update + version bump. Chi tiết: `aios/progress/PROGRESS.md`.
 > ```
 > M10: AIOS can reliably execute logic.
 > M11: AIOS can reliably execute AND verify logic + state + render + asset + interaction.
@@ -1705,12 +1705,12 @@ R2 → R3 → (R10 ∥ R1) → R9 → (R4 ∥ R11) → R6 → (R8 ∥ R12) → R
 #### 4. Roadmap 5 tầng & tasks
 | Phase | Nội dung | Nâng cấp | Task | Trạng thái |
 |-------|----------|----------|------|------------|
-| P0 | Verification Integrity | R2 INV-035 + Verification State Model + conformance visual policy + CI fail-closed gate + retroactive audit | TASK-078 | `todo` |
-| P1 | Deterministic Visual Runtime | R3 RenderReplay/DeterministicHarness (record input timeline + seed → replay → assert pixel-stable) | TASK-079 | `todo` |
-| P2+P2b | Visual Observability | R1 VisualEvidence (Screenshot + DOM Snapshot + Render State + Input Timeline + Seed + Pixel Diff — pixel-diff KHÔNG thành SLO sớm) + R10 UI State Contract (`UI State → Render → Screenshot`) | TASK-080 | `todo` |
-| P3 | Asset Capability Architecture (1 slice) | R9 AssetPipeline Contract (Sprite/Tileset/Map/Audio/Animation/UI Asset) + R4 Registry kind=asset + R11 Creative Matcher Discovery/Routing | TASK-081 | `todo` |
-| P3b/c/d | Creative Domain + Vendor + Reference | R6 domain creative trong Decision Pipeline + R8 VendorIntegrity vào `aiagent security-check` + R12 Reference-Asset Understanding | TASK-082 | `todo` |
-| P4a/b | Ecosystem & DX | R5 SkillDistiller (`aiagent skill distill <url>`) + R7 Static Deploy (`aiagent deploy --static <dir>`, optional) | TASK-083 | `todo` |
+| P0 | Verification Integrity | R2 INV-035 + Verification State Model + conformance visual policy + CI fail-closed gate + retroactive audit | TASK-078 | `done` ✅ (12/12 AC — Verification Kernel + 10 areas/6 gates conformance) |
+| P1 | Deterministic Visual Runtime | R3 RenderReplay/DeterministicHarness (record input timeline + seed → replay → assert pixel-stable) | TASK-079 | `done` ✅ (10/10 AC — rendering/ package) |
+| P2+P2b | Visual Observability | R1 VisualEvidence (Screenshot + DOM Snapshot + Render State + Input Timeline + Seed + Pixel Diff — pixel-diff KHÔNG thành SLO sớm) + R10 UI State Contract (`UI State → Render → Screenshot`) | TASK-080 | `done` ✅ (10/10 AC — probe bắt state_diff scale 3→2) |
+| P3 | Asset Capability Architecture (1 slice) | R9 AssetPipeline Contract (Sprite/Tileset/Map/Audio/Animation/UI Asset) + R4 Registry kind=asset + R11 Creative Matcher Discovery/Routing | TASK-081 | `done` ✅ (10/10 AC — registry wire skill thật) |
+| P3b/c/d | Creative Domain + Vendor + Reference | R6 domain creative trong Decision Pipeline + R8 VendorIntegrity vào `aiagent security-check` + R12 Reference-Asset Understanding | TASK-082 | `done` ✅ (11/11 AC — pre-route 0.85 + vendor check #12 + reference) |
+| P4a/b | Ecosystem & DX | R5 SkillDistiller (`aiagent skill distill <url>`) + R7 Static Deploy (`aiagent deploy --static <dir>`, optional) | TASK-083 | `done` ✅ (11/11 AC — **M11 HOÀN TẤT 6/6**) |
 
 #### 5. Compliance & version
 - Constitution: M11 amendment trên M10 Constitution (INV-035 thêm vào, INV-001..034 giữ nguyên frozen)
