@@ -1763,15 +1763,16 @@ C1 → C2 → C3 → (C4 ∥ C5)
 - Version: AIOS 1.0 → **1.1** (minor — backward-compatible, additive)
 - Conformance: +area `compatibility` (10 areas/6 gates hiện có không đổi)
 
-### M13 – Harness Hardening & Behavioral Conformance (P18 — Trust & Production-Grade Harness)
+### M13 – Harness Trust & Behavioral Conformance (P18 — TRUST: Establish Harness Trust)
 > 📋 **PLANNED (chưa bắt đầu)** — bước tiếp theo SAU M12 (AIOS 1.1 Compatibility). KHÔNG sửa Runtime/Orchestrator (giữ INV-017..021). Mở rộng Harness từ "test/certify framework" → **trust layer tự xác minh (self-validating) + production-grade**.
 > ```
 > M10: AIOS can reliably execute logic.
 > M11: AIOS can reliably execute AND verify logic + state + render + asset + interaction (INV-035 fail-closed).
 > M12: AIOS 1.1 — nâng cấp an toàn 1.0→1.1, backward-compatible.
-> M13: Harness tự chứng minh nó đang kiểm chứng ĐÚNG (meta-harness) + behavioral conformance under load/soak/failure + tách System Readiness ≠ Harness Trust.
+> M13: Establish Harness Trust — meta-harness chứng minh verifier đúng + behavioral conformance under load/soak/failure + tách System Readiness ≠ Harness Trust.
 > ```
-> M13 = **Harness Hardening** — biến Harness thành **trust/gating infrastructure** thực thụ: structural → behavioral → temporal → load → soak → failure-recovery, có Meta-Harness chứng minh Harness "thất bại đúng cách" khi bị phá, và release gate yêu cầu CẢ System Readiness VÀ Harness Trust đều PASS.
+> M13 = **TRUST** — *"Can I trust the Harness?"* — biến Harness thành **trust/gating infrastructure** thực thụ: structural → behavioral → temporal → load → soak → failure-recovery, có Meta-Harness chứng minh Harness "thất bại đúng cách" khi bị phá (với verification path độc lập), và release gate yêu cầu CẢ System Readiness VÀ Harness Trust đều PASS.
+> **Exit condition**: chứng minh Harness đáng tin (Establish Harness Trust).
 >
 > **Nguồn**: tự đánh giá độ harness 2026-08-16 (4/5 — Certified & Gated, chưa Autonomous) + đề xuất người dùng (5 ưu tiên: Meta-Harness / Behavioral Conformance / Harness Coverage / Self-Healing có permission boundary / tách Harness Trust ≠ System Readiness) + roadmap M12→M14.
 
@@ -1794,7 +1795,7 @@ AIOS Runtime
 ```
 M13
 ├── P0  Behavioral Conformance — structural → behavioral → temporal → load → soak → failure-recovery
-├── P1  Harness Coverage — Runtime/Agent/Workflow/State/Event/Artifact/Failure/Contract/Verification/Scenario + Doctor readiness scoring
+├── P1  Harness Coverage — Component/Contract/State/Transition/Event/Failure-mode/Scenario/Verification-path/Artifact + Negative-path (PASS/FAIL/BLOCKED/VIOLATION/TIMEOUT/EXCEPTION/CORRUPTED-EVIDENCE/REPLAY-MISMATCH) + Doctor readiness scoring
 ├── P2  Meta-Harness — verify the verifier (false ±, malformed evidence, broken verifier, corrupted artifact, replay mismatch)
 ├── P3  Trust Separation — System Readiness ≠ Harness Trust; release gate = cả 2 PASS
 └── P4  Docs & ADR — ADR Harness Trust invariant + behavioral conformance spec + PLAN §M13
@@ -1804,7 +1805,7 @@ M13
 ```
 P0 → P1 → P2 → (P3 ∥ P4)
 ```
-- P0 nền: behavioral conformance engine (execute N lần + replay + inject faults + compare evidence + deterministic check + regression gate)
+- P0 nền: behavioral conformance engine (execute N lần configurable: quick=100/standard=1k/stress=10k/soak=duration-based + replay + inject faults + compare evidence + deterministic check + regression gate)
 - P1 độc lập trên P0: coverage instrumentation + readiness scoring
 - P2 dựa trên P0/P1: meta-harness adversarial
 - P3 + P4 song song cuối: tách trust + tài liệu
@@ -1812,8 +1813,8 @@ P0 → P1 → P2 → (P3 ∥ P4)
 #### 4. Roadmap & tasks
 | Phase | Nội dung | Ưu tiên | Task | Trạng thái |
 |-------|----------|---------|------|------------|
-| P0 | Behavioral Conformance — scenario S001 chạy 10k lần + replay + fault-inject + so sánh evidence + regression gate | Behavioral | TASK-089 | `todo` |
-| P1 | Harness Coverage (9 nhóm) + Doctor Readiness scoring (Structural/Contract/Behavioral/Failure/Replay/Scenario/Production) | Coverage | TASK-090 | `todo` |
+| P0 | Behavioral Conformance — scenario S001 chạy N lần (configurable: quick=100/standard=1k/stress=10k/soak=duration) + replay + fault-inject + so sánh evidence + regression gate | Behavioral | TASK-089 | `todo` |
+| P1 | Harness Coverage model (Component/Contract/State/Transition/Event/Failure-mode/Scenario/Verification-path/Artifact + Negative-path) + Doctor Readiness scoring | Coverage | TASK-090 | `todo` |
 | P2 | Meta-Harness — cố tình sinh false positive/negative, malformed evidence, broken verifier, corrupted artifact, replay mismatch → chứng minh fail-closed | Meta | TASK-091 | `todo` |
 | P3 | Tách System Readiness vs Harness Trust (2 score độc lập) + release gate yêu cầu cả 2 PASS | Trust | TASK-092 | `todo` |
 | P4 | Docs & ADR — ADR Harness Trust + behavioral conformance spec + PLAN §M13 | Docs | TASK-093 | `todo` |
@@ -1828,6 +1829,24 @@ Structural        "Có cơ chế này không?"
     + Failure Recovery "Tự phục hồi đúng cách?"
 ```
 
+#### 5b. Coverage model (P1) — test count ≠ coverage
+```
+Harness Coverage
+├── Component Coverage
+├── Contract Coverage
+├── State Coverage
+├── Transition Coverage
+├── Event Coverage
+├── Failure-mode Coverage
+├── Scenario Coverage
+├── Verification-path Coverage
+└── Artifact Coverage
+
+Negative-path coverage (quan trọng với trust layer):
+PASS / FAIL / BLOCKED / VIOLATION / TIMEOUT / EXCEPTION / CORRUPTED-EVIDENCE / REPLAY-MISMATCH
+```
+> Không quy "2052 tests → 90% coverage". Coverage là **model đa chiều** ở trên, không phải test count.
+
 #### 6. Harness Readiness scoring (P1) — ví dụ mục tiêu
 ```
 Harness Readiness
@@ -1841,18 +1860,32 @@ Harness Readiness
 Overall: 89%   Status: READY
 ```
 
-#### 7. Meta-Harness (P2) — verify the verifier
+#### 7. Meta-Harness (P2) — verify the verifier (independent path)
 ```
 AIOS → Harness → Verification → Meta-Harness → Trust Verdict
 ```
 Meta-Harness cố tình tạo: false positive · false negative · malformed evidence · broken verifier · skipped verification · corrupted artifact · inconsistent state · replay mismatch. Mục tiêu: chứng minh Harness **thất bại đúng cách** khi bị phá (quan trọng hơn hàng trăm unit test).
+
+> **🔴 Nguyên tắc chống circular Meta-Harness**: Meta-Harness PHẢI có một verification path **độc lập tối thiểu** với path mà nó đang chứng nhận (không dùng chính verifier infrastructure đang được kiểm tra).
+```
+Production verifier
+        ↓
+Meta test oracle
+        ↓
+Expected invariant
+```
+Ví dụ: Verifier says PASS nhưng Expected state = FAILED → Meta-Harness MUST detect violation. Đây quan trọng hơn số lượng Meta-Harness test.
 
 #### 8. Compliance & version
 - INV-001..035 giữ nguyên frozen (KHÔNG thêm Core invariant mới trừ khi M13-P3 đề xuất **INV-036 Harness Trust** qua ADR riêng)
 - Harness vẫn chỉ gọi Runtime qua public API (INV-017); evidence-first (INV-018); verification fail-closed (INV-035)
 - Mọi đề xuất INV phải qua ADR + Constitution amend (không tự ý thêm)
 - Version: AIOS 1.1 (không bump version ở M13 trừ khi có thay đổi contract công khai)
+- **4 invariant xuyên suốt Harness Track (bất biến)**: `FAIL-CLOSED` + `INDEPENDENT VERIFICATION` + `PERMISSION BOUNDARY` + `CERTIFIED BASELINE / ROLLBACK`. M13 thiết lập 2 đầu (Fail-Closed đã có INV-035; Independent Verification qua Meta-Harness path độc lập); M14 bổ sung Certified Baseline/Rollback; Permission Boundary xuyên suốt M13→M15.
+- **M13 pipeline**: `Execute → Verify → Behavioral Conformance → Meta-Verify → Measure Coverage → Establish Harness Trust → Release Gate`
+- **Exit condition (M13 = TRUST)**: chứng minh Harness đáng tin — Meta-Harness với path độc lập phát hiện mọi vi phạm verifier, behavioral conformance ổn định qua N lần, release gate yêu cầu cả System Readiness + Harness Trust PASS.
 
+> **📌 Harness Track (M13→M15) FROZEN** — 6 điểm chỉnh sửa từ review người dùng đã áp dụng (M13=TRUST · M14=HEAL · M15=AUTONOMY). 4 invariant xuyên suốt: FAIL-CLOSED + INDEPENDENT VERIFICATION + PERMISSION BOUNDARY + CERTIFIED BASELINE/ROLLBACK.
 > **Forward roadmap (sau M13)**:
 > - **M13.1** (tách P1) — Harness Coverage + Production/Soak sâu hơn
 > - **M13.2** (tách P2) — Meta-Harness chuyên biệt + CI gate
@@ -2100,7 +2133,7 @@ Kill-switch           — dừng mọi autonomous action tức thì
 - **M10**: Architecture Freeze (TASK-063) sinh `docs/architecture/*` + Constitution 1.0 (INV-001..INV-034 frozen, vi phạm = release blocker); Contract 1.0 (TASK-064) freeze 10 contracts + semantic versioning + `aiagent contract-check`; Runtime Hardening (TASK-065) + Durable Execution 1.0 (TASK-066) failure matrix + checkpoint/resume + idempotency; Autonomy Safety (TASK-067) + Kill Switch (TASK-068) mandatory enforcement + `emergency-stop`; Reliability (TASK-069) SLO + non-averaged gates; Security Baseline (TASK-070) + Agent Identity + tamper-evident audit; Developer Experience (TASK-071) + Dashboard 1.0 (TASK-072); Certification Suite (TASK-073) + Golden Scenarios GS-001..020 + `aiagent conformance`; Migration 1.0 (TASK-074); Performance & Cost (TASK-075); 5 release gates (Arch/Sec/Contract/Reliability/Autonomous) đều PASS → AIOS 1.0 READY
 - **M11**: Verification Integrity (TASK-078) — R2 INV-035 fail-closed (Verification State Model PASS/FAIL/ERROR/BLOCKED + non-terminal UNKNOWN/NOT_EXECUTED/MISSING_EVIDENCE/SKIPPED, cấm SKIPPED→PASS, conformance visual policy, CI fail-closed gate); Deterministic Visual Runtime (TASK-079) — R3 RenderReplay/DeterministicHarness (record input timeline + seed → replay → assert pixel-stable); Visual Observability (TASK-080) — R1 VisualEvidence (Screenshot + DOM Snapshot + Render State + Input Timeline + Seed + Pixel Diff — metric sau evidence) + R10 UI State Contract (`UI State → Render → Screenshot`, debug bằng reasoning); Asset Capability Architecture (TASK-081) — R9 AssetPipeline Contract + R4 Registry kind=asset + R11 Discovery/Routing (đóng gap "reuse vs reimplement"); Creative Domain + Vendor + Reference (TASK-082) — R6 domain `creative` trong Decision Pipeline + R8 VendorIntegrity trong `aiagent security-check` + R12 Reference-Asset Understanding (vision ingest → structured description); Ecosystem & DX (TASK-083) — R5 SkillDistiller (`aiagent skill distill`) + R7 Static Deploy (`aiagent deploy --static`); INV-035 enforced (vi phạm = release blocker)
 - **M12**: Version & Compatibility Baseline (TASK-084) — C1 version bump AIOS 1.0→1.1 đồng bộ (contract/config/CLI/metadata) + Compatibility Matrix registry; Migration 1.0→1.1 thật (TASK-085) — C2 upgrade pipeline end-to-end trên dữ liệu thật: plan → backup → dry-run → validate → rollback (tái dùng Migration 1.0 M10 TASK-074); Backward Compatibility (TASK-086) — C3 plugin v0→v1 · contract v0→v1 · workflow v0→v1 chạy trên 1.1 + test chéo cũ→mới; Compatibility Conformance (TASK-087) — C4 mở rộng `aiagent conformance` area `compatibility` + gate (KHÔNG phá 10 areas/6 gates hiện có); Docs & ADR (TASK-088) — C5 ADR-0007 (compatibility policy) + migration guide 1.0→1.1; INV-001..035 giữ nguyên frozen (KHÔNG thêm invariant mới)
-- **M13**: Harness Hardening & Behavioral Conformance — Behavioral Conformance (TASK-089) P0 execute N lần + replay + fault-inject + evidence compare + regression gate; Harness Coverage (TASK-090) 9 nhóm coverage + Doctor readiness scoring; Meta-Harness (TASK-091) verify-the-verifier adversarial (false ±/malformed/broken/corrupted/replay-mismatch → fail-closed); Trust Separation (TASK-092) System Readiness ≠ Harness Trust, release gate cả 2 PASS; Docs/ADR (TASK-093) ADR Harness Trust + behavioral spec; INV-001..035 giữ nguyên, đề xuất INV-036 qua ADR riêng
+- **M13 (TRUST)**: Harness Trust & Behavioral Conformance — Behavioral Conformance (TASK-089) P0 execute N lần (configurable: quick=100/std=1k/stress=10k/soak=duration) + replay + fault-inject + evidence compare + regression gate; Harness Coverage (TASK-090) coverage model 9 chiều + negative-path + Doctor readiness scoring; Meta-Harness (TASK-091) verify-the-verifier với verification path ĐỘC LẬP (chống circular) adversarial fail-closed; Trust Separation (TASK-092) System Readiness ≠ Harness Trust, release gate cả 2 PASS; Docs/ADR (TASK-093) ADR Harness Trust + behavioral spec + INV-036; 4 invariant track giữ nguyên
 - **M14**: Closed-loop Remediation — Detect&Diagnose (TASK-094) failure corpus + localization; Candidate Generate+Risk (TASK-095) low/med/high; Simulation+Meta-Verify Gate (TASK-096) verify fix KHÔNG relax criteria; Permission Broker+Human Approval+Apply+Re-test+Certify (TASK-097); Docs/ADR (TASK-098) INV-037 Remediation Integrity + kill-switch; anti-pattern: harness KHÔNG tự sửa tiêu chuẩn để tự PASS
 - **M15**: Autonomous Harness — Loop Orchestrator (TASK-099); Improvement Engine (TASK-100) failure-corpus learning; Continuous Certification (TASK-101) low-risk auto; Trust Budget/Autonomy Levels+kill-switch (TASK-102); Docs/ADR (TASK-103) INV-038 Autonomy Boundary + Autonomy Constitution; giữ fail-closed + permission boundary + human oversight high-risk
 - Xuyên suốt: pytest + contract tests CI; permission enforcement test (ask→deny); rule engine unit test với kết quả xác định trước
