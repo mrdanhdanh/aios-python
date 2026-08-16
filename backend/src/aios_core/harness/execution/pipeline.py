@@ -18,13 +18,18 @@ def run_checks(
     base_dir: str,
     runners: dict[CheckKind, Runner] | None = None,
 ) -> list[CheckResult]:
-    """Execute deterministic checks; unsupported/skipped → skipped=True (C1-03)."""
+    """Execute deterministic checks; unsupported/skipped → skipped=True (C1-03).
+
+    INV-035 (M11-P0): exception → error field (không pass, fail-closed).
+    """
     results: list[CheckResult] = []
     for check in checks:
         try:
             ok, detail = _run_one(check, base_dir, runners or {})
         except Exception as exc:  # noqa: BLE001 — check-level isolation
-            results.append(CheckResult(check=check, passed=False, detail=f"error: {exc}"))
+            results.append(CheckResult(check=check, passed=False,
+                                       detail=f"error: {exc}",
+                                       error=str(exc)))
             continue
         if ok is None:
             results.append(CheckResult(check=check, skipped=True,
@@ -78,12 +83,14 @@ def compute_verdict(
     truncated: bool = False,  # R3-6
 ) -> Verdict:
     """C2-06: FAIL (check-derived) > INCONCLUSIVE (thiếu evidence) > PASS.
-    Bất kỳ FAIL nào → FAIL; skipped postcondition/invariant → INCONCLUSIVE
-    (C1-03); thiếu evidence → INCONCLUSIVE; else PASS/PASS_WITH_WARNING."""
-    failures = [r for r in check_results if r.passed is False and not r.skipped]
+    INV-035 (M11-P0): bất kỳ FAIL nào → FAIL; skipped/error → INCONCLUSIVE
+    (KHÔNG PASS — fail-closed, kể cả nếu passed=True); thiếu evidence →
+    INCONCLUSIVE; else PASS/PASS_WITH_WARNING."""
+    failures = [r for r in check_results
+                if not r.effectively_passed and not r.skipped and not r.error]
     if failures:
         return Verdict.FAIL
-    skipped = [r for r in check_results if r.skipped]
+    skipped = [r for r in check_results if r.skipped or r.error]
     if skipped:
         return Verdict.INCONCLUSIVE
     if not has_critical_evidence or truncated:
@@ -112,9 +119,12 @@ def build_result(
         summary=summary,
         metrics={
             "checks_total": len(check_results),
-            "checks_passed": sum(1 for r in check_results if r.passed),
-            "checks_failed": len([r for r in check_results if not r.passed and not r.skipped]),
-            "checks_skipped": sum(1 for r in check_results if r.skipped),
+            # INV-035: passed chỉ tính khi effectively_passed (không skip/error)
+            "checks_passed": sum(1 for r in check_results if r.effectively_passed),
+            "checks_failed": len([r for r in check_results
+                                  if not r.effectively_passed and not r.skipped
+                                  and not r.error]),
+            "checks_skipped": sum(1 for r in check_results if r.skipped or r.error),
             "critical_evidence": bool(has_critical_evidence),
             "truncated": bool(truncated),
             "by_kind": by_kind,

@@ -95,7 +95,9 @@ def main(argv: list[str] | None = None) -> int:
     migrate.add_argument("--journal", default="aios/data/migrations.db",
                          help="Migration journal DB path (test isolation)")
 
-    sub.add_parser("conformance", help="AIOS 1.0 conformance — 9 areas + 5 gates (M10-F5, TASK-073)")
+    sub.add_parser("conformance", help="AIOS conformance — 10 areas + 6 gates (M10-F5 + M11 INV-035)")
+
+    sub.add_parser("verify-state", help="INV-035 verification state model + fail-closed gate (M11-P0)")
 
     serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
     serve.add_argument("--host", default="127.0.0.1", help="Bind host")
@@ -197,6 +199,8 @@ def main(argv: list[str] | None = None) -> int:
                         args.dry_run, args.apply, args.input, args.journal)
     if args.command == "conformance":
         return _conformance()
+    if args.command == "verify-state":
+        return _verify_state()
     if args.command == "serve":
         return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
@@ -633,12 +637,25 @@ def _migrate(kind: str, from_version: str, to_version: str,
 
 
 def _conformance() -> int:
-    """AIOS 1.0 conformance — 9 areas + 20 GS + 5 release gates (TASK-073)."""
+    """AIOS conformance — 10 areas + 20 GS + 6 release gates (M10 + M11)."""
     from ..harness.certification import ConformanceRunner, format_conformance
 
     report = ConformanceRunner().run()
     print(format_conformance(report))
     return 0 if report.ready else 1
+
+
+def _verify_state() -> int:
+    """INV-035 — verification state model + fail-closed gate (M11-P0, TASK-078)."""
+    from ..verification import VerificationGate, default_mechanisms
+    from ..verification.gate import format_gate_report
+    from ..verification.normalize import describe_transition_table
+
+    print(describe_transition_table())
+    print("")
+    report = VerificationGate(default_mechanisms()).check_all()
+    print(format_gate_report(report))
+    return 0 if report.fail_closed else 1
 
 
 def _catalog_list() -> int:

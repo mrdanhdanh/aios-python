@@ -37,12 +37,24 @@ class VerificationTask(BaseModel):
 
 
 class CheckResult(BaseModel):
+    """Kết quả một check.
+
+    INV-035 (M11-P0): skipped=True → KHÔNG pass bất kể passed;
+    error non-empty → KHÔNG pass bất kể passed (fail-closed).
+    """
+
     model_config = ConfigDict(extra="forbid")
 
     check: Check
     passed: bool = False
     detail: str = ""
     skipped: bool = False
+    error: str = ""  # M11-P0: error non-empty → không pass (INV-035)
+
+    @property
+    def effectively_passed(self) -> bool:
+        """passed chỉ có hiệu lực khi không skipped và không error (INV-035)."""
+        return self.passed and not self.skipped and not self.error
 
 
 class Verdict(str, Enum):

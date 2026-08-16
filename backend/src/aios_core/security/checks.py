@@ -193,13 +193,23 @@ class SecurityChecks:
 
 
 class SecurityChecker:
-    """Chạy 11 checks → SecurityReport."""
+    """Chạy 11 checks → SecurityReport.
+
+    INV-035 (M11-P0): nếu run_all raise (không thể chạy check) → đánh dấu
+    skipped thay vì báo PASS sai — fail-closed.
+    """
 
     def __init__(self, checks: SecurityChecks | None = None) -> None:
         self.checks = checks or SecurityChecks()
 
     def run(self) -> SecurityReport:
-        return SecurityReport(items=self.checks.run_all())
+        try:
+            return SecurityReport(items=self.checks.run_all())
+        except Exception as exc:  # noqa: BLE001 — fail-closed (INV-035)
+            return SecurityReport(
+                items=[],
+                skipped=[f"all: {exc}"],
+            )
 
 
 # -- rendering ----------------------------------------------------------------

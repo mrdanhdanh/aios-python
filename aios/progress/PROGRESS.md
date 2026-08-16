@@ -9,7 +9,7 @@
 
 | Phase | Nội dung | Nâng cấp | Task | Trạng thái |
 |-------|----------|----------|------|------------|
-| P0 | Verification Integrity | R2 INV-035 Verification Fail-Closed (+ Verification State Model, conformance visual policy, CI fail-closed gate, retroactive audit) | TASK-078 | `todo` |
+| P0 | Verification Integrity | R2 INV-035 Verification Fail-Closed (+ Verification State Model, conformance visual policy, CI fail-closed gate, retroactive audit) | TASK-078 | `done` ✅ (12/12 AC — 30 unit + conformance 10 areas/6 gates + full suite 1969) |
 | P1 | Deterministic Visual Runtime | R3 RenderReplay / DeterministicHarness (record input timeline + seed → replay → assert pixel-stable) | TASK-079 | `todo` |
 | P2+P2b | Visual Observability | R1 VisualEvidence / VisualRegressionProbe + R10 UI State Contract (`UI State → Render → Screenshot`) | TASK-080 | `todo` |
 | P3 | Asset Capability Architecture | R9 AssetPipeline Contract + R4 Registry kind=asset + R11 Discovery/Routing (1 slice) | TASK-081 | `todo` |
