@@ -6,8 +6,8 @@
 ## ✅ TASK-077 — Quy trình Issue → Branch → PR → Merge thủ công → verify → master (2026-08-16)
 
 - **Kết quả**: thiết lập **Issue-Driven Development** đầy đủ theo yêu cầu người dùng: (1) 3 GitHub issue templates (`bug-report`/`feature-upgrade`/`idea-proposal` — issue forms chuẩn `about`, không `description`) + `config.yml` (tắt blank issue); (2) PR template bắt buộc link issue / `[bypass]`; (3) action `.github/workflows/pr-validation.yml` (github-script@v7 — luồng quyết định 7 bước: draft skip → `release:` base=master skip body → base=verify → body `[bypass]` → `type/ISSUE-N` + link → `type/bypass-slug` + tag → fail; permissions read-only, concurrency; KHÔNG auto-merge/approve); (4) `docs/workflows/issue-pr-workflow.md` (5 giai đoạn + quy ước nhánh `<type>/ISSUE-N-slug` từ verify + lệnh gh/git PowerShell); (5) `docs/adr/0006-issue-pr-workflow.md` (accepted, extends ADR-0005, **main = master** giữ nguyên); (6) `AGENTS.md` §4.2 bắt buộc + `PLAN.md` cập nhật.
+- **Vòng đời đã khép kín (dogfooding 100%)**: hard gate → implement → **PR #2** (feature → verify, merged `30e2a23`) → verify PASS (78/78) → **PR #3** promotion (`release: verify → master (2026-08-16)`, merged `4454c9d`) — **PR Validation chạy thật & PASS trên chính PR #3** (xác nhận điểm C2-05); master = verify = `4454c9d`; nhánh `docs/issue-pr-workflow` đã xóa.
 - **Test**: `validate_task077.py` thật — **78 PASS / 0 FAIL** (parse 5/5, schema 30/30, mô phỏng luồng quyết định 20/20 case, docs 23/23). Hard gate đủ 8-file + implementation/.
-- **Dogfooding**: PR của chính task này sẽ có body `[bypass]` (không có ISSUE-N); PR đầu tiên không chạy action (workflow chưa trên default branch) — xác nhận bằng PR thử nghiệm nhỏ sau khi merge vào verify/master.
 - Xem chi tiết: `LOG.md` entry 2026-08-16 TASK-077.
 
 ## 🔒 Quy tắc branching mới (BẮT BUỘC từ 2026-08-15 — ADR-0005 + ADR-0006)
