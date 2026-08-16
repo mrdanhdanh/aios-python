@@ -33,6 +33,35 @@ Dependency order: C1 → C2 → C3 → (C4 ∥ C5)
 | P4 | Docs & ADR — ADR Harness Trust + behavioral spec + PLAN §M13 | Docs | TASK-093 | `todo` |
 
 Dependency order: P0 → P1 → P2 → (P3 ∥ P4)
+## 📋 M14 — Closed-loop Remediation (PLANNED — sau M13)
+
+> PLAN.md §M14 (P19): đóng vòng lặp tự phục hồi (Detect→Diagnose→Generate→Risk→Simulation→Meta-Verify→Permission Broker→Human Approval→Apply→Re-test→Certify). **NGUYÊN TẮC**: Harness KHÔNG tự sửa tiêu chuẩn để tự PASS; mọi apply thực cần Permission Broker + Human Approval. Cần M13 (Meta-Harness + Trust Separation) làm nền.
+> **Trạng thái**: `todo` — chưa bắt đầu.
+
+| Phase | Nội dung | Task | Trạng thái |
+|-------|----------|------|------------|
+| P0 | Detect & Diagnose — failure corpus + localization | TASK-094 | `todo` |
+| P1 | Candidate Generate + Risk Scoring | TASK-095 | `todo` |
+| P2 | Simulation + Meta-Verify Gate (KHÔNG relax criteria) | TASK-096 | `todo` |
+| P3 | Permission Broker + Human Approval + Apply + Re-test + Certify | TASK-097 | `todo` |
+| P4 | Docs & ADR — INV-037 Remediation Integrity + kill-switch | TASK-098 | `todo` |
+
+Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
+
+## 📋 M15 — Autonomous Harness (PLANNED — sau M14)
+
+> PLAN.md §M15 (P20): đích cuối harness track — vòng lặp tự chủ (autonomous) detect→diagnose→fix→verify→apply→certify, Improvement Engine, Continuous Certification, Trust Budget/Autonomy Levels + kill-switch. Giữ fail-closed + permission boundary + human oversight high-risk. Cần M14 làm nền.
+> **Trạng thái**: `todo` — chưa bắt đầu.
+
+| Phase | Nội dung | Task | Trạng thái |
+|-------|----------|------|------------|
+| P0 | Autonomous Loop Orchestrator | TASK-099 | `todo` |
+| P1 | Improvement Engine (failure-corpus learning) | TASK-100 | `todo` |
+| P2 | Continuous Certification (low-risk auto) | TASK-101 | `todo` |
+| P3 | Trust Budget / Autonomy Levels + kill-switch | TASK-102 | `todo` |
+| P4 | Docs & ADR — INV-038 Autonomy Boundary + Autonomy Constitution | TASK-103 | `todo` |
+
+Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).

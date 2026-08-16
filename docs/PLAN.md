@@ -1857,8 +1857,8 @@ Meta-Harness cố tình tạo: false positive · false negative · malformed evi
 > - **M13.1** (tách P1) — Harness Coverage + Production/Soak sâu hơn
 > - **M13.2** (tách P2) — Meta-Harness chuyên biệt + CI gate
 > - **M14** — Closed-loop Remediation (Detect→Diagnose→Generate→Risk→Simulation→Meta-Verify→Human Approval→Permission Broker→Apply→Re-test→Certify) — **KHÔNG** cho Harness tự sửa tiêu chuẩn để tự PASS (anti-pattern cực nguy hiểm)
-> - **M14.1** — Human Approval + Permission Broker boundary
-> - **M14.2** — Safe Autonomous Repair (human-in-loop + permission gate)
+> - **M14.1** (phase P3 của M14) — Human Approval + Permission Broker boundary
+> - **M14.2** (phase P3 của M14) — Safe Autonomous Repair (human-in-loop + permission gate)
 > - **M15** — Autonomous Harness. Kiến trúc đích:
 > ```
 >                  ┌──────────────────────┐
@@ -1898,6 +1898,180 @@ Meta-Harness cố tình tạo: false positive · false negative · malformed evi
 >                  └──────────────────────┘
 > ```
 
+### M14 – Closed-loop Remediation (P19 — Self-Healing with Permission Boundary)
+> 📋 **PLANNED (chưa bắt đầu)** — sau M13 (cần Meta-Harness + Trust Separation làm nền). Đóng vòng lặp tự phục hồi: phát hiện hỏng → chuẩn đoán → đề xuất sửa → mô phỏng xác minh → phê duyệt → áp dụng → tái kiểm → chứng nhận. **NGUYÊN TẮC SỐNG CÒN**: Harness **KHÔNG BAO GIỜ** tự nới lỏng/sửa tiêu chuẩn để tự PASS (anti-pattern). Mọi apply thực phải qua Permission Broker + Human Approval.
+> ```
+> M13: Harness tự chứng minh nó kiểm chứng ĐÚNG (trust layer).
+> M14: Hệ thống tự ĐỀ XUẤT & KIỂM CHỨNG sửa chữa, nhưng apply phải có permission + human approval.
+> M15: Vòng lặp chạy tự chủ (autonomous) trong boundary, continuous certification.
+> ```
+> Nguồn: đề xuất người dùng (Self-Healing có permission boundary + tách trust) + roadmap M13 closed-loop.
+
+#### 1. Bối cảnh — Self-Healing có biên giới
+```
+Failed Run / Drift
+      │
+      ▼
+┌──────────────┐
+│  Detect +    │  evidence từ Harness/Meta-Harness
+│  Diagnose    │
+└──────┬───────┘
+       │ localization + failure signature
+       ▼
+┌──────────────┐
+│  Generate +  │  candidate fixes + risk score
+│  Risk        │
+└──────┬───────┘
+       │ low/med/high
+       ▼
+┌──────────────┐
+│ Simulation + │  chạy fix trong sandbox, verify qua
+│ Meta-Verify  │  Harness + Meta-Harness (KHÔNG relax criteria)
+└──────┬───────┘
+       │ PASS?
+       ▼
+┌──────────────┐
+│ Permission   │  broker + Human Approval
+│ Broker       │
+└──────┬───────┘
+       │ approved?
+       ▼
+┌──────────────┐
+│ Apply + Re-  │  apply thật + re-test + Certify + Audit
+│ test+Certify │
+└──────────────┘
+```
+
+#### 2. Mục tiêu (5 phase)
+```
+M14
+├── P0  Detect & Diagnose — evidence → failure signature → component localization
+├── P1  Candidate Generate + Risk Scoring — đề xuất sửa + phân loại rủi ro
+├── P2  Simulation + Meta-Verify Gate — verify fix trong sandbox (KHÔNG nới lỏng tiêu chuẩn)
+├── P3  Permission Broker + Human Approval + Apply + Re-test + Certify
+└── P4  Docs & ADR — closed-loop policy + permission boundary + kill-switch
+```
+
+#### 3. Dependency order
+```
+P0 → P1 → P2 → P3 → (P4 docs song song cuối)
+```
+- P0 nền: thu thập evidence từ failed runs, localize
+- P1 sinh candidate + risk
+- P2 mô phỏng + meta-verify (cốt lõi an toàn)
+- P3 gate + apply (cần human approval cho med/high risk)
+- P4 tài liệu + ADR
+
+#### 4. Roadmap & tasks
+| Phase | Nội dung | Task | Trạng thái |
+|-------|----------|------|------------|
+| P0 | Detect & Diagnose — failure corpus, signature, localization | TASK-094 | `todo` |
+| P1 | Candidate Generate + Risk Scoring (low/med/high) | TASK-095 | `todo` |
+| P2 | Simulation + Meta-Verify Gate (verify fix, KHÔNG relax criteria) | TASK-096 | `todo` |
+| P3 | Permission Broker + Human Approval + Apply + Re-test + Certify + Audit | TASK-097 | `todo` |
+| P4 | Docs & ADR — closed-loop policy + permission boundary + kill-switch | TASK-098 | `todo` |
+
+#### 5. Anti-pattern cấm (INV mới đề xuất)
+```
+CẤM: Harness tự sửa test/expectation để loại bỏ failure.
+CẤM: Meta-Harness báo PASS khi verifier bị bypass.
+CẤM: Apply tự động lên production cho med/high risk không có Human Approval.
+=> Đề xuất INV-037 (Remediation Integrity) qua ADR riêng (M14-P4).
+```
+
+#### 6. Compliance & version
+- INV-001..035 giữ nguyên; INV-036 (Harness Trust, từ M13-P3) nếu được duyệt; INV-037 (Remediation Integrity) đề xuất tại M14-P4 qua ADR.
+- Mọi đề xuất INV phải qua ADR + Constitution amend.
+- Version: AIOS 1.1 (không bump trừ khi thay đổi contract công khai).
+
+### M15 – Autonomous Harness (P20 — Self-Validating, Self-Healing, Self-Improving)
+> 📋 **PLANNED (chưa bắt đầu)** — đích cuối của harness track (sau M14). Harness tự vận hành vòng lặp detect→diagnose→fix→verify→apply→certify một cách tự chủ, PHÁT HIỆN VÀ TỰ SỬA các hỏng hóc thường quy trong boundary, có Trust Budget / Autonomy Levels theo risk, continuous certification, và kill-switch. Giữ nguyên: fail-closed + permission boundary + independent verification + human oversight cho high-risk.
+> ```
+> M13: trust layer (verify the verifier)
+> M14: self-healing có permission + human approval
+> M15: autonomous — vòng lặp chạy tự chủ, continuous improvement, human oversight chỉ cho high-risk
+> ```
+> Nguồn: đề xuất người dùng (Autonomous Harness — kiến trúc đích) + roadmap M14.
+
+#### 1. Bối cảnh — Harness tự chủ
+```
+                 ┌──────────────────────┐
+                 │       AIOS           │
+                 └──────────┬───────────┘
+                            │
+                 ┌──────────▼───────────┐
+                 │       Harness        │
+                 │ Verify/Test/Simulate │
+                 └──────────┬───────────┘
+                            │
+                 ┌──────────▼───────────┐
+                 │    Meta-Harness      │
+                 │  Verify the verifier │
+                 └──────────┬───────────┘
+                            │
+                 ┌──────────▼───────────┐
+                 │ Improvement Engine   │
+                 └──────────┬───────────┘
+                            │
+                     Risk / Simulation
+                            │
+                 ┌──────────▼───────────┐
+                 │ Permission Broker    │
+                 └──────────┬───────────┘
+                            │
+                      Human Approval
+                            │
+                 ┌──────────▼───────────┐
+                 │ Remediation Executor │
+                 └──────────┬───────────┘
+                            │
+                       Re-verify
+                            │
+                 ┌──────────▼───────────┐
+                 │ Certification Gate   │
+                 └──────────────────────┘
+```
+
+#### 2. Mục tiêu (5 phase)
+```
+M15
+├── P0  Autonomous Loop Orchestrator — điều phối vòng lặp không can thiệp thường quy
+├── P1  Improvement Engine — học từ failure corpus, rank candidate fixes
+├── P2  Continuous Certification — certify mọi change, low-risk không cần gate thủ công
+├── P3  Trust Budget / Autonomy Levels — supervised / assisted / autonomous theo risk
+└── P4  Docs & ADR — Autonomy Constitution + kill-switch + audit trail
+```
+
+#### 3. Dependency order
+```
+P0 → P1 → P2 → P3 → (P4 docs song song cuối)
+```
+- Phụ thuộc M14 (closed-loop + permission broker + human approval đã có)
+- P0 orchestrator; P1 learning; P2 continuous cert; P3 autonomy levels; P4 constitution
+
+#### 4. Roadmap & tasks
+| Phase | Nội dung | Task | Trạng thái |
+|-------|----------|------|------------|
+| P0 | Autonomous Loop Orchestrator — schedule + coordinate remediation loop | TASK-099 | `todo` |
+| P1 | Improvement Engine — failure corpus learning + candidate ranking | TASK-100 | `todo` |
+| P2 | Continuous Certification — certify per-change, low-risk auto | TASK-101 | `todo` |
+| P3 | Trust Budget / Autonomy Levels (supervised/assisted/autonomous) + kill-switch | TASK-102 | `todo` |
+| P4 | Docs & ADR — Autonomy Constitution + audit trail + safe-stop | TASK-103 | `todo` |
+
+#### 5. Autonomy Levels (P3) — ví dụ
+```
+Level 0  Supervised   — mọi apply cần Human Approval (mặc định an toàn)
+Level 1  Assisted     — low-risk auto-apply, med/high cần approval
+Level 2  Autonomous   — routine failures tự sửa + tự certify, high-risk vẫn cần human
+Kill-switch           — dừng mọi autonomous action tức thì
+```
+
+#### 6. Compliance & version
+- INV-001..037 giữ nguyên; INV-038 (Autonomy Boundary) đề xuất tại M15-P4 qua ADR.
+- BẮT BUỘC: fail-closed + permission boundary + independent verification + human oversight cho high-risk KHÔNG bị gỡ bỏ bởi autonomy.
+- Mọi đề xuất INV phải qua ADR + Constitution amend.
+- Version: AIOS 1.1 → **1.2** (nếu có thay đổi contract công khai) hoặc giữ 1.1 nếu chỉ nội bộ harness.
+
 ### Tỷ trọng toàn dự án (theo thành phần)
 | Thành phần | Tỷ trọng |
 |-----------|----------|
@@ -1927,6 +2101,8 @@ Meta-Harness cố tình tạo: false positive · false negative · malformed evi
 - **M11**: Verification Integrity (TASK-078) — R2 INV-035 fail-closed (Verification State Model PASS/FAIL/ERROR/BLOCKED + non-terminal UNKNOWN/NOT_EXECUTED/MISSING_EVIDENCE/SKIPPED, cấm SKIPPED→PASS, conformance visual policy, CI fail-closed gate); Deterministic Visual Runtime (TASK-079) — R3 RenderReplay/DeterministicHarness (record input timeline + seed → replay → assert pixel-stable); Visual Observability (TASK-080) — R1 VisualEvidence (Screenshot + DOM Snapshot + Render State + Input Timeline + Seed + Pixel Diff — metric sau evidence) + R10 UI State Contract (`UI State → Render → Screenshot`, debug bằng reasoning); Asset Capability Architecture (TASK-081) — R9 AssetPipeline Contract + R4 Registry kind=asset + R11 Discovery/Routing (đóng gap "reuse vs reimplement"); Creative Domain + Vendor + Reference (TASK-082) — R6 domain `creative` trong Decision Pipeline + R8 VendorIntegrity trong `aiagent security-check` + R12 Reference-Asset Understanding (vision ingest → structured description); Ecosystem & DX (TASK-083) — R5 SkillDistiller (`aiagent skill distill`) + R7 Static Deploy (`aiagent deploy --static`); INV-035 enforced (vi phạm = release blocker)
 - **M12**: Version & Compatibility Baseline (TASK-084) — C1 version bump AIOS 1.0→1.1 đồng bộ (contract/config/CLI/metadata) + Compatibility Matrix registry; Migration 1.0→1.1 thật (TASK-085) — C2 upgrade pipeline end-to-end trên dữ liệu thật: plan → backup → dry-run → validate → rollback (tái dùng Migration 1.0 M10 TASK-074); Backward Compatibility (TASK-086) — C3 plugin v0→v1 · contract v0→v1 · workflow v0→v1 chạy trên 1.1 + test chéo cũ→mới; Compatibility Conformance (TASK-087) — C4 mở rộng `aiagent conformance` area `compatibility` + gate (KHÔNG phá 10 areas/6 gates hiện có); Docs & ADR (TASK-088) — C5 ADR-0007 (compatibility policy) + migration guide 1.0→1.1; INV-001..035 giữ nguyên frozen (KHÔNG thêm invariant mới)
 - **M13**: Harness Hardening & Behavioral Conformance — Behavioral Conformance (TASK-089) P0 execute N lần + replay + fault-inject + evidence compare + regression gate; Harness Coverage (TASK-090) 9 nhóm coverage + Doctor readiness scoring; Meta-Harness (TASK-091) verify-the-verifier adversarial (false ±/malformed/broken/corrupted/replay-mismatch → fail-closed); Trust Separation (TASK-092) System Readiness ≠ Harness Trust, release gate cả 2 PASS; Docs/ADR (TASK-093) ADR Harness Trust + behavioral spec; INV-001..035 giữ nguyên, đề xuất INV-036 qua ADR riêng
+- **M14**: Closed-loop Remediation — Detect&Diagnose (TASK-094) failure corpus + localization; Candidate Generate+Risk (TASK-095) low/med/high; Simulation+Meta-Verify Gate (TASK-096) verify fix KHÔNG relax criteria; Permission Broker+Human Approval+Apply+Re-test+Certify (TASK-097); Docs/ADR (TASK-098) INV-037 Remediation Integrity + kill-switch; anti-pattern: harness KHÔNG tự sửa tiêu chuẩn để tự PASS
+- **M15**: Autonomous Harness — Loop Orchestrator (TASK-099); Improvement Engine (TASK-100) failure-corpus learning; Continuous Certification (TASK-101) low-risk auto; Trust Budget/Autonomy Levels+kill-switch (TASK-102); Docs/ADR (TASK-103) INV-038 Autonomy Boundary + Autonomy Constitution; giữ fail-closed + permission boundary + human oversight high-risk
 - Xuyên suốt: pytest + contract tests CI; permission enforcement test (ask→deny); rule engine unit test với kết quả xác định trước
 
 ## Scope
