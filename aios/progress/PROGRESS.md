@@ -10,7 +10,7 @@
 
 | Phase | Nội dung | Nâng cấp | Task | Trạng thái |
 |-------|----------|----------|------|------------|
-| P0 | Version & Compatibility Baseline | C1 version bump 1.0→1.1 toàn hệ thống (contract/config/CLI/metadata) + Compatibility Matrix registry | TASK-084 | `todo` |
+| P0 | Version & Compatibility Baseline | C1 version bump 1.0→1.1 toàn hệ thống (contract/config/CLI/metadata) + Compatibility Matrix registry | TASK-084 | `in-progress` 🔄 (spec v3 + critique ×2 resolved — chờ tasks.md/review/implement; user tạm dừng) |
 | P1 | Migration 1.0→1.1 thật | C2 upgrade pipeline end-to-end trên dữ liệu thật (plan → backup → dry-run → validate → rollback) | TASK-085 | `todo` |
 | P2 | Backward Compatibility | C3 plugin v0→v1 · contract v0→v1 · workflow v0→v1 chạy trên 1.1 + test chéo | TASK-086 | `todo` |
 | P3 | Compatibility Conformance | C4 mở rộng `aiagent conformance` area `compatibility` + gate (giữ 10 areas/6 gates) | TASK-087 | `todo` |
