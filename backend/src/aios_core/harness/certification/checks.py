@@ -140,9 +140,48 @@ class AreaChecks:
         except Exception as exc:  # noqa: BLE001
             return self._result("ecosystem", False, str(exc))
 
+    def verification(self) -> AreaResult:
+        """INV-035 (M11-P0): Verification Kernel tồn tại + fail-closed thật.
+
+        Chạy component thật (không hard-code PASS — R1): gate với một
+        mechanism mock trả non-terminal + claim PASS → verdict không PASS.
+        """
+        try:
+            from ...verification import (
+                VerificationGate,
+                VerificationOutcome,
+                VerificationState,
+                VerificationVerdict,
+            )
+
+            class _BadMechanism:
+                id = "mock-nonterminal"
+                name = "Mock non-terminal"
+                version = "0.0.0"
+
+                def check(self) -> VerificationOutcome:
+                    # Cố tình vi phạm: state SKIPPED nhưng claim PASS
+                    return VerificationOutcome(
+                        mechanism_id=self.id,
+                        state=VerificationState.SKIPPED,
+                        verdict=VerificationVerdict.PASS,
+                        evidence="mock skip → PASS claim",
+                    )
+
+            report = VerificationGate([_BadMechanism()]).check_all()
+            ok = not report.fail_closed and len(report.violations) == 1
+            return self._result(
+                "verification", ok,
+                "INV-035: gate chặn non-terminal→PASS "
+                f"(violations={report.violations})",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return self._result("verification", False, str(exc))
+
     def run_all(self) -> list[AreaResult]:
         return [
             self.architecture(), self.contracts(), self.runtime(),
             self.policy(), self.security(), self.autonomy(),
             self.harness(), self.enterprise(), self.ecosystem(),
+            self.verification(),
         ]

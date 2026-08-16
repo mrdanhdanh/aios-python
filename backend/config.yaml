@@ -145,3 +145,8 @@ durability:
   policy:
     mode: resume
     require_verify: true
+
+security:
+  # M11-P3c (R8) — Vendor Integrity: {path: pinned_sha256} byte-identical.
+  # Rỗng = không có vendor bundle pinned (PASS).
+  vendor_bundles: {}

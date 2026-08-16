@@ -67,9 +67,10 @@ def test_ready_requires_all():
 def test_gate_definitions():
     runner = ConformanceRunner()
     gates = runner.release_gates()
+    # M11-P0 (TASK-078): thêm gate_f_verification (INV-035 fail-closed)
     assert set(gates.keys()) == {
         "gate_a_architecture", "gate_b_security", "gate_c_contract",
-        "gate_d_reliability", "gate_e_autonomous",
+        "gate_d_reliability", "gate_e_autonomous", "gate_f_verification",
     }
     assert all(gates.values()), f"gates fail: {gates}"
 

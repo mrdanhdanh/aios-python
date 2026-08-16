@@ -354,6 +354,18 @@ class DurabilityPolicySettings(BaseModel):
     require_verify: bool = True
 
 
+class SecuritySettings(BaseModel):
+    """M11-P3c (TASK-082, R8) — Vendor Integrity config.
+
+    vendor_bundles: {path: pinned_sha256} — verify byte-identical trong
+    security-check. Rỗng = không có vendor bundle pinned (PASS, không fail oan).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    vendor_bundles: dict[str, str] = {}
+
+
 class DurabilitySettings(BaseModel):
     """TASK-066 — Durable Execution 1.0 (M10-F2)."""
 
@@ -398,6 +410,7 @@ class Settings(BaseSettings):
     enterprise: EnterpriseSettings = EnterpriseSettings()
     autonomous: AutonomousSettings = AutonomousSettings()
     durability: DurabilitySettings = DurabilitySettings()
+    security: SecuritySettings = SecuritySettings()
 
 
 def _yaml_extra_keys_guard(data: dict) -> None:
