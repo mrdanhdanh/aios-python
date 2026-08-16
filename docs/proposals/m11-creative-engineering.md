@@ -21,7 +21,7 @@ M10: AIOS can reliably execute logic.
 M11: AIOS can reliably execute AND verify logic + state + render + asset + interaction.
 ```
 
-Đề xuất **M11** gồm 10 nâng cấp (R1–R10) mở rộng trực tiếp M10, không phá vỡ INV-001..034.
+Đề xuất **M11** gồm 12 nâng cấp (R1–R12) mở rộng trực tiếp M10, không phá vỡ INV-001..034.
 **Cụm cốt lõi (R2 → R3 → R1)**: Verification Policy → Deterministic Harness → Visual Evidence,
 mở đường cho CAD, diagram, document rendering, image/video/3D generation — mọi workflow có artifact phi-text.
 
@@ -42,8 +42,8 @@ mở đường cho CAD, diagram, document rendering, image/video/3D generation �
 | Game redo (brief) | 64 files, 3119+ / 1334− (làm lại + 17 screenshots) | Chụp ảnh so brief + 5 ảnh tham khảo |
 | Fix cat biến mất | 19 files, 2517+ (logical grid) + 17 PNG refresh | Fix cat biến mất do scale mismatch |
 | Game-dev skills | 35 files, 1061+ (skills từ repo ngoài) | Distill thủ công 2 skill package |
-| Phaser 4 scaffold | Phaser 4 Vite, vendor byte-identical SHA256 (AC-16), 56/56 test | Verify thủ công third-party bundle |
-| CI | `pages.yml` sửa tay (Node 20 + build + `rm node_modules`) | Không có deploy capability |
+| Phaser 4 scaffold | Phaser 4 Vite, verify thủ công SHA256 vendor bundle byte-identical, 56/56 test | Verify thủ công third-party bundle |
+| CI | GitHub Pages CI workflow sửa tay (Node 20 + build + dọn node_modules) | Không có deploy capability |
 
 **Sự kiện then chốt (từ LOG.md)**:
 - Review của webgame phát hiện "17/17 khớp brief" thực chất **bị skip** — brief không có ảnh ref nên
@@ -61,32 +61,35 @@ mở đường cho CAD, diagram, document rendering, image/video/3D generation �
 
 ---
 
-## 1b. Tín hiệu bổ sung — nâng cấp game Phaser 4 (sprite/fx/parallax/transition)
+## 1b. Tín hiệu bổ sung — nâng cấp game Phaser 4 (sprite sheet PNG + fx + parallax + transition)
 
-Một đợt nâng cấp tiếp theo của cùng webgame (hướng E = sprite sheet PNG + fx + parallax + transition,
-88/88 test / 23/23 AC, thực hiện autonomous) cung cấp bằng chứng bổ sung rất mạnh cho M11 — và cho thấy
-các primitive M11 đề xuất **chưa tồn tại ở tầng hệ thống**, buộc worker phải tự implement lại:
+Một đợt nâng cấp tiếp theo của cùng webgame (sprite sheet PNG thật + fx xác định + parallax +
+transition, **88/88 test / 23/23 AC**, thực hiện autonomous) cung cấp bằng chứng bổ sung rất mạnh cho
+M11 — và cho thấy các primitive M11 đề xuất **chưa tồn tại ở tầng hệ thống**, buộc worker phải tự
+implement lại từ đầu:
 
-- **Asset-generation viết tay từ đầu** — worker tạo script encoder PNG riêng (CRC32 + zlib, palette vendor)
-  thay vì dùng skill `agent-sprite-forge` đã có. → Củng cố **R4/R9**: AssetPipeline contract + Capability
-  Registry chưa discoverable/routable; worker không route được "generate sprite" tới skill sẵn có.
-  *(Sub-gap mới **R4a** — capability discovery gap: skill tồn tại nhưng worker không tìm/thấy dùng được.)*
-- **Determinism bolt-on từng layer** — mọi layer mới phải tự respect freeze (`rtime` đóng băng, particle
-  dùng PRNG seeded mulberry32, `anims.pauseAll()` khi frozen). → Củng cố **R3** cực mạnh: cần
-  `RenderReplay`/`DeterministicHarness` ở tầng runtime, không phải tự implement mỗi lần.
-  *(Sub-gap mới **R3a** — determinism là per-layer duct-tape, không phải guarantee của runtime.)*
-- **Vendor-hash re-implement trong test** — `vendor-hashes.json` (SHA256 baseline) tự viết trong test
-  (C2-11/C3-06) thay vì capability hệ thống. → Củng cố **R8** (Vendor Integrity) — nên là `aiagent
-  security-check`, không phải test tự làm.
-- **Fail-closed tự vá ở test** — worker phải thêm cơ chế "non-empty + byte-compare frozen" vào visual
-  regression (C2-09) trực tiếp vì bài học false-positive. → Bằng chứng thực tế **R2** cần là invariant
-  hệ thống, không phải duct-tape mỗi task.
+- **Asset-generation viết tay từ đầu** — worker tạo một script encoder PNG riêng (0 dependency, tự
+  implement CRC32 + zlib, palette khớp vendor) thay vì dùng skill sprite-forge **đã có sẵn trong repo**.
+  → Củng cố **R4/R9/R11**: AssetPipeline contract + Capability Registry chưa discoverable/routable;
+  worker không route được "generate sprite" tới skill sẵn có → dẫn đến **R11** (Capability Discovery &
+  Routing).
+- **Determinism bolt-on từng layer** — mọi layer mới phải tự respect freeze (đóng băng thời gian render,
+  particle dùng PRNG seeded `mulberry32`, gọi `anims.pauseAll()` khi frozen). → Củng cố **R3** cực mạnh:
+  cần `RenderReplay`/`DeterministicHarness` ở tầng runtime, không phải tự implement mỗi lần (triệu chứng
+  "per-layer duct-tape" chính là thiếu R3).
+- **Vendor-hash re-implement trong test** — worker tự viết một file JSON baseline chứa SHA256 của các
+  vendor bundle, assert byte-identical (yêu cầu acceptance: vendor-hash phải khớp baseline) thay vì
+  capability hệ thống. → Củng cố **R8** (Vendor Integrity) — nên là `aiagent security-check`, không phải
+  test tự làm.
+- **Fail-closed tự vá ở test** — worker phải thêm cơ chế "screenshot frozen phải non-empty + byte-compare"
+  vào visual regression (yêu cầu acceptance: ảnh đông không được rỗng, so sánh byte) trực tiếp vì bài học
+  false-positive. → Bằng chứng thực tế **R2** cần là invariant hệ thống, không phải duct-tape mỗi task.
 - **Render là pure function của (state, time, seed)** — worker định nghĩa rõ "frozen state" và render
   thuần hàm. → Củng cố **R10** (UI State Contract): UI State → Render → Screenshot.
-- **Reference-asset hiểu bằng vision model** — worker dùng `imagedata.md` (mô tả ảnh từ vision model) làm
-  cầu nối giữa brief ảnh và code. AIOS không có capability first-class để ingest/structure reference
-  visual asset. → **Candidate R11**: "Reference-Asset Understanding" (xem §8 — có thể gộp R6 hoặc R10,
-  hoặc đứng riêng).
+- **Reference-asset hiểu bằng vision model** — worker dùng một file mô tả ảnh do vision model sinh ra (6
+  reference image: 5 kiểu hù dọa hành lang, 1 cảnh sinh nhật, 1 cảnh phòng khách+máu, 1 màn hình title
+  START) làm cầu nối giữa brief ảnh và code. AIOS không có capability first-class để ingest/structure
+  reference visual asset. → **R12**: Reference-Asset Understanding (xem §3 / §8).
 - **Autonomous worker tái implement primitive** — task chạy autonomous nhưng worker KHÔNG có AIOS
   capability cho asset-gen/determinism/vendor-integrity → tự viết lại. Đây chính là gap M11 đóng: worker
   nên gọi capability có sẵn, không reimplement.
@@ -107,10 +110,10 @@ các primitive M11 đề xuất **chưa tồn tại ở tầng hệ thống**, b
 
 ---
 
-## 3. Đề xuất nâng cấp (R1–R10, đã điều chỉnh theo review)
+## 3. Đề xuất nâng cấp (R1–R12, đã điều chỉnh theo review + bổ sung R11/R12 từ §1b)
 
-> Dependency order (architecture): **R2 → R3 → R1 → R9 → R4 → R8 → R6 → R5 → R7**
-> (R3 nền tảng trước R1; R4+R9 gộp thành Asset Capability Architecture; R5 rớt xuống Ecosystem Extension; R7 trì hoãn P4)
+> Dependency order (architecture): **R2 → R3 → R1 → R9 → R4 → R11 → R8 → R6 → R10 → R12 → R5 → R7**
+> (R3 nền tảng trước R1; R4+R9 gộp thành Asset Capability Architecture; R11 Capability Discovery + R12 Reference-Asset bổ sung từ §1b; R5 rớt xuống Ecosystem Extension; R7 trì hoãn P4)
 
 ### R2 — INV-035: Verification Fail-Closed (CORE INVARIANT)
 - **Evidence**: Kết quả visual test báo "17/17 PASS" thực chất skip vì thiếu ảnh ref.
@@ -151,7 +154,7 @@ các primitive M11 đề xuất **chưa tồn tại ở tầng hệ thống**, b
 - **Maps-to**: M10-P2 (SLO registry).
 
 ### R9 + R4 — Asset Capability Architecture (GỘP)
-- **Evidence**: `generate2dsprite.py` script rời; agent-sprite-forge chroma #FF00FF chưa chuẩn.
+- **Evidence**: script sinh sprite standalone (chroma-key #FF00FF) rời rạc; skill sprite-forge chưa chuẩn.
 - **Gap**: Capability Registry chỉ backend tools; không có AssetPipeline contract.
 - **Proposal**: Gộp thành một kiến trúc lớn:
   ```
@@ -177,7 +180,7 @@ các primitive M11 đề xuất **chưa tồn tại ở tầng hệ thống**, b
 - **Maps-to**: Orchestrator Decision Pipeline (PLAN.md §AIOS Orchestrator).
 
 ### R8 — Vendor Integrity verification
-- **Evidence**: Scaffold Phaser 4 (Vite): AC-16 verify thủ công SHA256 vendor bundle byte-identical.
+- **Evidence**: Scaffold Phaser 4 (Vite): verify thủ công SHA256 vendor bundle byte-identical (thủ công, không phải capability).
 - **Gap**: `security-check` (M10) chưa cover third-party bundle hash.
 - **Proposal**: Thêm `VendorIntegrity` vào `aiagent security-check` — tự verify hash pinned bundles; freeze invariant.
 - **Maps-to**: M10-P3 (Security Baseline).
@@ -209,6 +212,27 @@ các primitive M11 đề xuất **chưa tồn tại ở tầng hệ thống**, b
 - **Gap**: CLI không có deploy; nhưng thực tế không chứng minh correctness bị phá vỡ.
 - **Proposal**: `aiagent deploy --static <dir>` → P4 / optional. R2/R3/R9 là correctness primitives quan trọng hơn.
 - **Maps-to**: M3 (Dashboard/Extension) + M10-P4 (DX).
+
+### R11 — Capability Discovery & Routing (từ tín hiệu §1b)
+- **Evidence**: Trong đợt nâng cấp game Phaser 4, worker viết script encoder PNG riêng (0 dependency) thay vì
+  dùng skill sprite-forge **đã có sẵn trong repo** — vì Orchestrator không route được "generate sprite"
+  tới Capability/Skill tương ứng.
+- **Gap**: Capability Registry lưu tool backend, thiếu cơ chế discoverability/routing cho creative asset
+  (kind=asset); worker không biết skill nào đang tồn tại → tự implement lại.
+- **Proposal**: Thêm layer "Capability Discovery" vào Orchestrator Matcher: khi worker nhận yêu cầu
+  creative/asset, matcher tự gợi ý/route tới Capability/Skill hiện có (offline-first) thay vì để worker
+  tự viết. Đóng gap "reuse vs reimplement" — trọng tâm của M11.
+- **Maps-to**: M1 (Capability Registry) + Orchestrator Decision Pipeline.
+
+### R12 — Reference-Asset Understanding (từ tín hiệu §1b)
+- **Evidence**: Worker dùng file mô tả ảnh do vision model sinh ra (6 reference image: 5 kiểu hù dọa hành
+  lang, cảnh sinh nhật, phòng khách+máu, màn hình title START) làm cầu nối brief ảnh → code. AIOS không có
+  capability first-class để ingest/structure reference visual asset.
+- **Gap**: Không có capability ingest reference image → structured description → generation input.
+- **Proposal**: Capability "Reference-Asset Understanding" — ingest reference image qua vision model →
+  cấu trúc hóa (scene / object / style / palette) → feed vào AssetPipeline / Render. Mở rộng **R6**
+  (Creative Domain).
+- **Maps-to**: R6 (Creative Domain) + R9 (AssetPipeline) + Vision capability.
 
 ---
 
@@ -250,8 +274,10 @@ P2 — Visual Observability
 P3 — Asset & Creative Architecture
  ├── R9  AssetPipeline Contract
  ├── R4  Asset Capability
+ ├── R11 Capability Discovery & Routing
  ├── R6  Creative Domain
- └── R8  Vendor Integrity
+ ├── R8  Vendor Integrity
+ └── R12 Reference-Asset Understanding
 
 P4 — Ecosystem & DX
  ├── R5  SkillDistiller (Ecosystem Extension)
@@ -270,7 +296,15 @@ Contract (R9)
      ↓
 Capability (R4)
      ↓
-Decision (R6)
+Capability Discovery (R11)
+     ↓
+Vendor Integrity (R8)
+     ↓
+Decision / Creative Domain (R6)
+     ↓
+UI State (R10)
+     ↓
+Reference-Asset (R12)
      ↓
 Ecosystem (R5) + DX (R7)
 ```
@@ -324,6 +358,8 @@ M11-P3a → AssetPipeline Contract (R9)
 M11-P3b → Asset Capability (R4)
 M11-P3c → Creative Domain (R6)
 M11-P3d → Vendor Integrity (R8)
+M11-P3e → Capability Discovery & Routing (R11)
+M11-P3f → Reference-Asset Understanding (R12)
 M11-P4a → SkillDistiller (R5, Ecosystem)
 M11-P4b → Static Deploy (R7, optional)
 ```
@@ -335,9 +371,9 @@ M11-P4b → Static Deploy (R7, optional)
 3. R5 SkillDistiller form: CLI `aiagent skill distill <url>` hay `agent` tool? → phase M11-P4a.
 4. R7 deploy hosts: GitHub Pages only hay S3/Netlify? → phase M11-P4b.
 5. R10 UIState schema: định hình chuẩn JSON trong phase M11-P2b.
-6. **R11 candidate — Reference-Asset Understanding**: từ nâng cấp game Phaser 4, worker dùng `imagedata.md`
-   (vision-model description) làm cầu nối brief ảnh → code. Có nên thành capability riêng (R11) hay gộp
-   vào R6 (Creative Domain) / R10 (UI State)? → chờ quyết định trước M11-P3.
+6. **R12 — Reference-Asset Understanding**: từ nâng cấp game Phaser 4, worker dùng file mô tả ảnh do
+   vision model sinh ra (6 reference image) làm cầu nối brief ảnh → code. Đã quyết định: đứng riêng là
+   **R12**, mở rộng **R6** (Creative Domain) — ingest reference image → structured description → generation.
 
 ## 9. Ghi chú tuân thủ
 
