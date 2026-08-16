@@ -99,6 +99,14 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("verify-state", help="INV-035 verification state model + fail-closed gate (M11-P0)")
 
+    replay = sub.add_parser("render-replay", help="Pixel-stable replay (M11-P1, TASK-079)")
+    replay.add_argument("--seed", type=int, default=42, help="PRNG seed (default 42)")
+    replay.add_argument("--frames", type=int, default=60, help="Số frame replay (default 60)")
+    replay.add_argument("--width", type=int, default=64)
+    replay.add_argument("--height", type=int, default=64)
+    replay.add_argument("--freeze", choices=["none", "fixed", "paused"], default="none")
+    replay.add_argument("--show-hashes", action="store_true", help="In hash từng frame")
+
     serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
     serve.add_argument("--host", default="127.0.0.1", help="Bind host")
     serve.add_argument("--port", type=int, default=8000, help="Bind port")
@@ -201,6 +209,9 @@ def main(argv: list[str] | None = None) -> int:
         return _conformance()
     if args.command == "verify-state":
         return _verify_state()
+    if args.command == "render-replay":
+        return _render_replay(args.seed, args.frames, args.width, args.height,
+                              args.freeze, args.show_hashes)
     if args.command == "serve":
         return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
@@ -656,6 +667,46 @@ def _verify_state() -> int:
     report = VerificationGate(default_mechanisms()).check_all()
     print(format_gate_report(report))
     return 0 if report.fail_closed else 1
+
+
+def _render_replay(
+    seed: int, frames: int, width: int, height: int,
+    freeze: str, show_hashes: bool,
+) -> int:
+    """M11-P1 (TASK-079): DeterministicHarness với mock render_fn.
+
+    Mock render: pixel = (frame_index*7 + t*13 + seed) % 256 → deterministic.
+    """
+    from ..rendering import DeterministicHarness, RenderTimeline
+    from ..rendering.contracts import RenderFn
+
+    def mock_render(frame) -> bytes:  # noqa: ANN001
+        buf = bytearray(width * height * 3)
+        for i in range(len(buf)):
+            buf[i] = (frame.frame_index * 7 + int(frame.t * 13) + frame.seed) % 256
+        return bytes(buf)
+
+    timeline = RenderTimeline()
+    timeline.record("keydown", 100, {"key": "start"})
+    timeline.record("pointer", 500, {"x": 10, "y": 20})
+
+    harness = DeterministicHarness(mock_render, width=width, height=height,
+                                   freeze_policy=freeze)
+    result = harness.run(timeline, seed=seed, num_frames=frames)
+
+    print(f"RenderReplay — {width}×{height}, seed={seed}, "
+          f"{frames} frames, freeze={freeze}")
+    print("=" * 50)
+    print(f"stable: {result.stable}")
+    if result.diff_frames:
+        print(f"diff_frames ({len(result.diff_frames)}): {result.diff_frames[:20]}")
+    if show_hashes and result.frames_a:
+        for f in result.frames_a[:5]:
+            print(f"  frame {f.frame_index}: t={f.t:.3f} "
+                  f"hash={f.pixel_hash[:12]}…")
+    print(f"outcome: {result.outcome.state.value} "
+          f"({result.outcome.evidence})")
+    return 0 if result.stable else 1
 
 
 def _catalog_list() -> int:
