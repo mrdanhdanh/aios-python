@@ -16,7 +16,7 @@ from aios_core.security import (
 
 
 # ---------------------------------------------------------------------------
-# AC1: đủ 11 items
+# AC1: đủ 12 items (M11-P3c R8 thêm vendor_integrity)
 # ---------------------------------------------------------------------------
 
 def test_has_11_items():
@@ -26,8 +26,9 @@ def test_has_11_items():
         "identity", "authentication", "authorization", "secrets", "encryption",
         "audit", "plugin_signing", "supply_chain", "sandbox",
         "network_policy", "data_boundary",
+        "vendor_integrity",  # M11-P3c/R8
     }
-    assert len(report.items) == 11
+    assert len(report.items) == 12
 
 
 # ---------------------------------------------------------------------------

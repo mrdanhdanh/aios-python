@@ -3,6 +3,21 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — in-progress)
+
+> PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034). Nhánh: `feature/ISSUE-4-m11-deterministic-runtime` (từ verify) + PR #5 draft.
+
+| Phase | Nội dung | Nâng cấp | Task | Trạng thái |
+|-------|----------|----------|------|------------|
+| P0 | Verification Integrity | R2 INV-035 Verification Fail-Closed (+ Verification State Model, conformance visual policy, CI fail-closed gate, retroactive audit) | TASK-078 | `done` ✅ (12/12 AC — 30 unit + conformance 10 areas/6 gates + full suite 1969) |
+| P1 | Deterministic Visual Runtime | R3 RenderReplay / DeterministicHarness (record input timeline + seed → replay → assert pixel-stable) | TASK-079 | `done` ✅ (10/10 AC — rendering/ package + 18 tests + full suite 1987) |
+| P2+P2b | Visual Observability | R1 VisualEvidence / VisualRegressionProbe + R10 UI State Contract (`UI State → Render → Screenshot`) | TASK-080 | `done` ✅ (10/10 AC — probe bắt state_diff scale 3→2 + missing-ref fail-closed; full suite 2003) |
+| P3 | Asset Capability Architecture | R9 AssetPipeline Contract + R4 Registry kind=asset + R11 Discovery/Routing (1 slice) | TASK-081 | `done` ✅ (10/10 AC — registry wire skill agent-sprite-forge thật + matcher offline; full suite 2018) |
+| P3b/c/d | Creative + Vendor + Reference | R6 Creative Domain + R8 Vendor Integrity + R12 Reference-Asset Understanding | TASK-082 | `done` ✅ (11/11 AC — pre-route creative 0.85 + 2 workflow creative + vendor_integrity check #12 + ReferenceAssetUnderstanding; full suite 2034) |
+| P4a/b | Ecosystem & DX | R5 SkillDistiller + R7 Static Deploy (optional) | TASK-083 | `done` ✅ (11/11 AC — distiller 7 bước deterministic + deploy verify/manifest/dry/apply; full suite 2052 — **M11 HOÀN TẤT 6/6 task**) |
+
+Dependency order: R2 → R3 → (R10 ∥ R1) → R9 → (R4 ∥ R11) → R6 → (R8 ∥ R12) → R5 → R7
+
 ## ✅ TASK-077 — Quy trình Issue → Branch → PR → Merge thủ công → verify → master (2026-08-16)
 
 - **Kết quả**: thiết lập **Issue-Driven Development** đầy đủ theo yêu cầu người dùng: (1) 3 GitHub issue templates (`bug-report`/`feature-upgrade`/`idea-proposal` — issue forms chuẩn `about`, không `description`) + `config.yml` (tắt blank issue); (2) PR template bắt buộc link issue / `[bypass]`; (3) action `.github/workflows/pr-validation.yml` (github-script@v7 — luồng quyết định 7 bước: draft skip → `release:` base=master skip body → base=verify → body `[bypass]` → `type/ISSUE-N` + link → `type/bypass-slug` + tag → fail; permissions read-only, concurrency; KHÔNG auto-merge/approve); (4) `docs/workflows/issue-pr-workflow.md` (5 giai đoạn + quy ước nhánh `<type>/ISSUE-N-slug` từ verify + lệnh gh/git PowerShell); (5) `docs/adr/0006-issue-pr-workflow.md` (accepted, extends ADR-0005, **main = master** giữ nguyên); (6) `AGENTS.md` §4.2 bắt buộc + `PLAN.md` cập nhật.

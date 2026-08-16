@@ -43,6 +43,9 @@ class SecurityItem(BaseModel):
 @dataclass
 class SecurityReport:
     items: list[SecurityItem] = field(default_factory=list)
+    # INV-035 (M11-P0): check bị skip/error → liệt kê ở đây — KHÔNG được
+    # coi là pass (fail-closed). Empty = mọi check đã chạy thật.
+    skipped: list[str] = field(default_factory=list)
 
     @property
     def failures(self) -> list[SecurityItem]:
@@ -61,8 +64,11 @@ class SecurityReport:
         passed = sum(1 for i in self.items if i.status == SecurityStatus.PASS)
         warn = sum(1 for i in self.items if i.status == SecurityStatus.WARN)
         failed = len(self.failures)
+        skipped = len(self.skipped)
         verdict = "SECURE" if not self.blocking else "BLOCKED (critical FAIL)"
+        if skipped:
+            verdict = "INCONCLUSIVE (skipped — INV-035, không tính pass)"
         return (
             f"Security: {passed}/{total} pass · {warn} warn · {failed} fail "
-            f"→ {verdict}"
+            f"· {skipped} skipped → {verdict}"
         )

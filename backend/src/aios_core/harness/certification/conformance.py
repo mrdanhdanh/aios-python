@@ -11,7 +11,7 @@ from .golden import GOLDEN_SCENARIOS
 
 
 class ConformanceRunner:
-    """9 areas + 20 GS + 5 release gates → AIOS 1.0 READY/NOT READY."""
+    """10 areas + 20 GS + 6 release gates → AIOS READY/NOT READY."""
 
     def __init__(self, kernel: Any | None = None) -> None:
         self.kernel = kernel
@@ -73,6 +73,15 @@ class ConformanceRunner:
             gates["gate_e_autonomous"] = ks_ok and not slo_fail_any()
         except Exception:  # noqa: BLE001
             gates["gate_e_autonomous"] = False
+        # Gate F — Verification (INV-035, M11-P0): fail-closed với
+        # default mechanisms thật (security/contract/harness-execution)
+        try:
+            from ...verification import VerificationGate, default_mechanisms
+
+            gate_report = VerificationGate(default_mechanisms()).check_all()
+            gates["gate_f_verification"] = gate_report.fail_closed
+        except Exception:  # noqa: BLE001
+            gates["gate_f_verification"] = False
         return gates
 
     def _golden(self) -> list[tuple[str, bool]]:

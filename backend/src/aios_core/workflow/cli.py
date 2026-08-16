@@ -73,13 +73,25 @@ def main(argv: list[str] | None = None) -> int:
     exec_list = execution_sub.add_parser("list", help="List recent executions")
     exec_list.add_argument("--limit", type=int, default=20)
 
-    skill = sub.add_parser("skill", help="Skill commands (M10-F4)")
+    skill = sub.add_parser("skill", help="Skill commands (M10-F4 + M11-P4a R5)")
     skill_sub = skill.add_subparsers(dest="skill_command", required=True)
     skill_sub.add_parser("list", help="List skills")
+    skill_distill = skill_sub.add_parser("distill", help="Distill skill from repo URL (M11-P4a, R5)")
+    skill_distill.add_argument("url", help="Skill repo URL (github)")
+    skill_distill.add_argument("--out", default="distilled", help="Output directory")
+
+    deploy = sub.add_parser("deploy", help="Deploy commands (M11-P4b, R7)")
+    deploy.add_argument("--static", metavar="DIR", help="Static dir to deploy")
+    deploy.add_argument("--apply", action="store_true", help="Apply (write marker) — default dry-run")
 
     capability = sub.add_parser("capability", help="Capability commands (M10-F4)")
     capability_sub = capability.add_subparsers(dest="capability_command", required=True)
     capability_sub.add_parser("list", help="List capabilities")
+
+    reference = sub.add_parser("reference", help="Reference-Asset commands (M11-P3d, R12)")
+    reference_sub = reference.add_subparsers(dest="reference_command", required=True)
+    ref_describe = reference_sub.add_parser("describe", help="Describe a reference image (mock vision)")
+    ref_describe.add_argument("image", help="Path to reference image")
 
     sub.add_parser("cost", help="Cost dashboard (M10-F4, TASK-075)")
 
@@ -95,7 +107,41 @@ def main(argv: list[str] | None = None) -> int:
     migrate.add_argument("--journal", default="aios/data/migrations.db",
                          help="Migration journal DB path (test isolation)")
 
-    sub.add_parser("conformance", help="AIOS 1.0 conformance — 9 areas + 5 gates (M10-F5, TASK-073)")
+    sub.add_parser("conformance", help="AIOS conformance — 10 areas + 6 gates (M10-F5 + M11 INV-035)")
+
+    sub.add_parser("verify-state", help="INV-035 verification state model + fail-closed gate (M11-P0)")
+
+    replay = sub.add_parser("render-replay", help="Pixel-stable replay (M11-P1, TASK-079)")
+    replay.add_argument("--seed", type=int, default=42, help="PRNG seed (default 42)")
+    replay.add_argument("--frames", type=int, default=60, help="Số frame replay (default 60)")
+    replay.add_argument("--width", type=int, default=64)
+    replay.add_argument("--height", type=int, default=64)
+    replay.add_argument("--freeze", choices=["none", "fixed", "paused"], default="none")
+    replay.add_argument("--show-hashes", action="store_true", help="In hash từng frame")
+
+    probe = sub.add_parser("visual-probe", help="Visual regression probe (M11-P2, TASK-080)")
+    probe.add_argument("--dump-ref", metavar="FILE", help="Ghi mock evidence ref vào JSON file")
+    probe.add_argument("--dump-current", metavar="FILE", help="Ghi mock evidence current vào JSON file")
+    probe.add_argument("--ref", metavar="FILE", help="Đọc evidence ref từ JSON")
+    probe.add_argument("--current", metavar="FILE", help="Đọc evidence current từ JSON")
+    probe.add_argument("--threshold", type=int, default=30, help="Pixel threshold (default 30)")
+    probe.add_argument("--missing-ref", action="store_true", help="Mô phỏng thiếu ref (MISSING_EVIDENCE)")
+
+    asset = sub.add_parser("asset", help="Asset capability commands (M11-P3, TASK-081)")
+    asset_sub = asset.add_subparsers(dest="asset_command", required=True)
+    asset_sub.add_parser("list", help="List asset capabilities")
+    discover = asset_sub.add_parser("discover", help="Discover capabilities theo kind")
+    discover.add_argument("kind", choices=["sprite", "tileset", "map", "audio",
+                                            "animation", "ui_asset"])
+    match = asset_sub.add_parser("match", help="Match request → capabilities (R11)")
+    match.add_argument("request", help="Vd: \"generate sprite\"")
+    produce = asset_sub.add_parser("produce", help="Produce asset qua pipeline (R9)")
+    produce.add_argument("capability_id")
+    produce.add_argument("--kind", required=True, choices=["sprite", "tileset", "map",
+                                                           "audio", "animation", "ui_asset"])
+    produce.add_argument("--name", default="asset")
+    produce.add_argument("--seed", type=int, default=0)
+    produce.add_argument("--params-json", default="{}", help="JSON params")
 
     serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
     serve.add_argument("--host", default="127.0.0.1", help="Bind host")
@@ -186,8 +232,14 @@ def main(argv: list[str] | None = None) -> int:
         return _execution_list(args.limit)
     if args.command == "skill" and args.skill_command == "list":
         return _skill_list()
+    if args.command == "skill" and args.skill_command == "distill":
+        return _skill_distill(args.url, args.out)
+    if args.command == "deploy" and args.static:
+        return _deploy_static(args.static, args.apply)
     if args.command == "capability" and args.capability_command == "list":
         return _capability_list()
+    if args.command == "reference" and args.reference_command == "describe":
+        return _reference_describe(args.image)
     if args.command == "cost":
         return _cost()
     if args.command == "performance":
@@ -197,6 +249,23 @@ def main(argv: list[str] | None = None) -> int:
                         args.dry_run, args.apply, args.input, args.journal)
     if args.command == "conformance":
         return _conformance()
+    if args.command == "verify-state":
+        return _verify_state()
+    if args.command == "render-replay":
+        return _render_replay(args.seed, args.frames, args.width, args.height,
+                              args.freeze, args.show_hashes)
+    if args.command == "visual-probe":
+        return _visual_probe(args.dump_ref, args.dump_current, args.ref,
+                             args.current, args.threshold, args.missing_ref)
+    if args.command == "asset" and args.asset_command == "list":
+        return _asset_list()
+    if args.command == "asset" and args.asset_command == "discover":
+        return _asset_discover(args.kind)
+    if args.command == "asset" and args.asset_command == "match":
+        return _asset_match(args.request)
+    if args.command == "asset" and args.asset_command == "produce":
+        return _asset_produce(args.capability_id, args.kind, args.name,
+                              args.seed, args.params_json)
     if args.command == "serve":
         return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
@@ -503,6 +572,40 @@ def _skill_list() -> int:
     return 0
 
 
+def _skill_distill(url: str, out: str) -> int:
+    """Distill skill từ repo URL — R5 (M11-P4a, TASK-083)."""
+    from ..ecosystem.distiller import SkillDistillError, SkillDistiller
+
+    try:
+        report = SkillDistiller().distill(url, out)
+    except SkillDistillError as exc:
+        print(f"ERROR: {exc} (fail-closed — INV-035)")
+        return 1
+    print(f"Distilled OK — license: {report.license_status}")
+    print(f"  files: {', '.join(report.distilled_files)}")
+    print(f"  manifest: {report.manifest_path}")
+    print(f"  capabilities: {', '.join(report.capabilities) or '-'}")
+    if report.warnings:
+        for w in report.warnings:
+            print(f"  WARN: {w}")
+    return 0
+
+
+def _deploy_static(dir_path: str, apply: bool) -> int:
+    """Deploy static dir — R7 (M11-P4b, TASK-083). Dry-run default."""
+    from ..ecosystem.deploy import StaticDeploy
+
+    report = StaticDeploy().deploy(dir_path, dry_run=not apply)
+    print(f"Deploy [{report.status}] — {report.dir}")
+    print(f"  files: {report.files} · bytes: {report.total_bytes}")
+    print(f"  sha256: {report.total_sha256}")
+    if report.marker:
+        print(f"  marker: {report.marker}")
+    if report.hint:
+        print(f"  hint: {report.hint}")
+    return 0 if report.status == "ok" else 1
+
+
 def _capability_list() -> int:
     """List capabilities (M10-F4, TASK-071)."""
     from ..capabilities import CapabilityRegistry
@@ -514,6 +617,25 @@ def _capability_list() -> int:
         return 0
     for c in caps:
         print(f"{c.name}")
+    return 0
+
+
+def _reference_describe(image: str) -> int:
+    """Describe reference image — R12 (M11-P3d, TASK-082), mock vision."""
+    from ..rendering import AssetError, ReferenceAssetUnderstanding
+
+    try:
+        desc = ReferenceAssetUnderstanding().ingest(image)
+    except AssetError as exc:
+        print(f"ERROR: {exc} (fail-closed — INV-035)")
+        return 1
+    print("Reference description (mock vision):")
+    print(f"  scene:   {desc.scene}")
+    print(f"  style:   {desc.style}")
+    print(f"  objects: {', '.join(desc.objects) or '-'}")
+    print(f"  palette: {', '.join(desc.palette) or '-'}")
+    if desc.raw_text:
+        print(f"  raw:     {desc.raw_text}")
     return 0
 
 
@@ -633,12 +755,214 @@ def _migrate(kind: str, from_version: str, to_version: str,
 
 
 def _conformance() -> int:
-    """AIOS 1.0 conformance — 9 areas + 20 GS + 5 release gates (TASK-073)."""
+    """AIOS conformance — 10 areas + 20 GS + 6 release gates (M10 + M11)."""
     from ..harness.certification import ConformanceRunner, format_conformance
 
     report = ConformanceRunner().run()
     print(format_conformance(report))
     return 0 if report.ready else 1
+
+
+def _verify_state() -> int:
+    """INV-035 — verification state model + fail-closed gate (M11-P0, TASK-078)."""
+    from ..verification import VerificationGate, default_mechanisms
+    from ..verification.gate import format_gate_report
+    from ..verification.normalize import describe_transition_table
+
+    print(describe_transition_table())
+    print("")
+    report = VerificationGate(default_mechanisms()).check_all()
+    print(format_gate_report(report))
+    return 0 if report.fail_closed else 1
+
+
+def _render_replay(
+    seed: int, frames: int, width: int, height: int,
+    freeze: str, show_hashes: bool,
+) -> int:
+    """M11-P1 (TASK-079): DeterministicHarness với mock render_fn.
+
+    Mock render: pixel = (frame_index*7 + t*13 + seed) % 256 → deterministic.
+    """
+    from ..rendering import DeterministicHarness, RenderTimeline
+    from ..rendering.contracts import RenderFn
+
+    def mock_render(frame) -> bytes:  # noqa: ANN001
+        buf = bytearray(width * height * 3)
+        for i in range(len(buf)):
+            buf[i] = (frame.frame_index * 7 + int(frame.t * 13) + frame.seed) % 256
+        return bytes(buf)
+
+    timeline = RenderTimeline()
+    timeline.record("keydown", 100, {"key": "start"})
+    timeline.record("pointer", 500, {"x": 10, "y": 20})
+
+    harness = DeterministicHarness(mock_render, width=width, height=height,
+                                   freeze_policy=freeze)
+    result = harness.run(timeline, seed=seed, num_frames=frames)
+
+    print(f"RenderReplay — {width}×{height}, seed={seed}, "
+          f"{frames} frames, freeze={freeze}")
+    print("=" * 50)
+    print(f"stable: {result.stable}")
+    if result.diff_frames:
+        print(f"diff_frames ({len(result.diff_frames)}): {result.diff_frames[:20]}")
+    if show_hashes and result.frames_a:
+        for f in result.frames_a[:5]:
+            print(f"  frame {f.frame_index}: t={f.t:.3f} "
+                  f"hash={f.pixel_hash[:12]}…")
+    print(f"outcome: {result.outcome.state.value} "
+          f"({result.outcome.evidence})")
+    return 0 if result.stable else 1
+
+
+def _mock_visual_evidence(*, changed_state: bool = False) -> dict:
+    """Mock evidence (R10 + R1) — JSON-serializable."""
+    state = {
+        "version": "1.0",
+        "screen": "game",
+        "entities": {"player": {"x": 160, "y": 90, "scale": 3}},
+        "input": {"left": False, "right": True},
+        "t": 0.5,
+        "seed": 42,
+    }
+    if changed_state:
+        state["entities"]["player"]["scale"] = 2  # bug: scale mismatch
+    return {
+        "version": "1.0",
+        "screenshot": "data:image/png;base64,"
+                      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        "dom_snapshot": {"tag": "canvas", "attrs": {"id": "game"}, "children": []},
+        "render_state": state,
+        "input_timeline": [
+            {"type": "keydown", "timestamp": 100.0, "payload": {"key": "start"}},
+        ],
+        "browser_meta": {"browser": "chromium", "os": "windows",
+                         "viewport": [640, 360], "device_scale_factor": 1.0},
+        "seed": 42,
+        "pixel_diff": -1.0,
+    }
+
+
+def _visual_probe(
+    dump_ref: str, dump_current: str, ref_file: str, current_file: str,
+    threshold: int, missing_ref: bool,
+) -> int:
+    """M11-P2 (TASK-080): VisualRegressionProbe — compare evidence fail-closed."""
+    import json
+
+    from ..observability.visual import get_visual_metrics
+    from ..rendering import VisualEvidence, VisualRegressionProbe
+
+    if dump_ref:
+        with open(dump_ref, "w", encoding="utf-8") as f:
+            json.dump(_mock_visual_evidence(), f, ensure_ascii=False, indent=2)
+        print(f"ref evidence → {dump_ref}")
+        return 0
+    if dump_current:
+        with open(dump_current, "w", encoding="utf-8") as f:
+            json.dump(_mock_visual_evidence(changed_state=True), f,
+                      ensure_ascii=False, indent=2)
+        print(f"current evidence → {dump_current}")
+        return 0
+
+    ref: VisualEvidence | None = None
+    current: VisualEvidence | None = None
+    if ref_file:
+        with open(ref_file, encoding="utf-8") as f:
+            ref = VisualEvidence.model_validate(json.load(f))
+    if current_file:
+        with open(current_file, encoding="utf-8") as f:
+            current = VisualEvidence.model_validate(json.load(f))
+    if missing_ref:
+        ref = None  # mô phỏng thiếu ref → MISSING_EVIDENCE
+
+    probe = VisualRegressionProbe(pixel_threshold=threshold)
+    result = probe.compare(ref, current)
+
+    metrics = get_visual_metrics()
+    metrics.record_probe(passed=result.passed, pixel_diff=result.pixel_diff)
+
+    print(f"VisualRegressionProbe — threshold={threshold}")
+    print("=" * 50)
+    print(f"outcome: {result.outcome.state.value} ({result.outcome.verdict.value})")
+    print(f"  evidence: {result.outcome.evidence}")
+    print(f"  pixel_diff: {result.pixel_diff:.2f}%")
+    if result.state_diffs:
+        print(f"  state_diffs ({len(result.state_diffs)}): "
+              f"{result.state_diffs[:5]}")
+    if result.dom_diffs:
+        print(f"  dom_diffs ({len(result.dom_diffs)}): {result.dom_diffs[:5]}")
+    print(f"  metrics: {metrics.snapshot()}")
+    return 0 if result.passed else 1
+
+
+def _asset_registry():
+    """Registry mặc định — singleton + default capabilities từ skills/."""
+    from ..rendering import AssetCapabilityRegistry, default_asset_capabilities
+
+    registry = AssetCapabilityRegistry()
+    for cap in default_asset_capabilities():
+        registry.register(cap)
+    return registry
+
+
+def _asset_list() -> int:
+    registry = _asset_registry()
+    caps = registry.list()
+    if not caps:
+        print("<empty> — chưa có capability asset (register thủ công hoặc merge skills/)")
+        return 0
+    print(f"Asset capabilities ({len(caps)}):")
+    for c in caps:
+        print(f"  {c.id:<24} kinds={c.kinds} source={c.source or '-'}")
+    print(f"counters: {registry.snapshot_counters()}")
+    return 0
+
+
+def _asset_discover(kind: str) -> int:
+    registry = _asset_registry()
+    caps = registry.discover(kind)
+    print(f"Discover kind={kind}: {len(caps)} capability")
+    for c in caps:
+        print(f"  {c.id}: {c.name} — {c.description}")
+    return 0
+
+
+def _asset_match(request: str) -> int:
+    from ..rendering import CreativeMatcher
+
+    matcher = CreativeMatcher(_asset_registry())
+    results = matcher.match(request)
+    print(f"Match request={request!r}: {len(results)} result")
+    for r in results:
+        print(f"  {r.score:>3}  {r.capability_id:<24} {r.reason}")
+    if not results:
+        print("  (no match — không có capability phù hợp)")
+    return 0
+
+
+def _asset_produce(capability_id: str, kind: str, name: str, seed: int,
+                   params_json: str) -> int:
+    import json
+
+    from ..rendering import AssetSpec
+
+    registry = _asset_registry()
+    try:
+        params = json.loads(params_json)
+    except json.JSONDecodeError:
+        params = {}
+    spec = AssetSpec(kind=kind, name=name, seed=seed, params=params)
+    try:
+        out = registry.produce(capability_id, spec)
+    except Exception as exc:  # noqa: BLE001 — fail-closed (ERROR)
+        print(f"produce FAILED: {exc}")
+        return 1
+    print(f"produced: {out.artifact_ref}")
+    print(f"  sha256={out.sha256[:16]}… size={out.size} "
+          f"idempotency={out.idempotency.value}")
+    return 0
 
 
 def _catalog_list() -> int:
