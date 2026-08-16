@@ -1,0 +1,62 @@
+name: Feature / Upgrade Request
+about: Đề xuất tính năng mới hoặc nâng cấp hệ thống AIOS
+title: "[feature]: "
+labels:
+  - enhancement
+  - upgrade
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Đề xuất tính năng mới hoặc nâng cấp thành phần hiện có.
+
+        > Quy trình sau khi mở issue: AIOS Orchestrator nhận issue → tạo nhánh `feature/ISSUE-N-slug` từ `verify` → tạo PR (draft) → sửa → bạn duyệt & merge thủ công vào `verify` → PR promotion lên `master`. Xem `docs/workflows/issue-pr-workflow.md`.
+  - type: input
+    id: title
+    attributes:
+      label: Tóm tắt đề xuất (1 câu)
+      description: Tính năng/nâng cấp này làm gì?
+      placeholder: "VD: Thêm tab X vào Dashboard"
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Vấn đề / động lực
+      description: Vấn đề gì đang gặp mà đề xuất này giải quyết? Ai bị ảnh hưởng?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Đề xuất giải pháp
+      description: Mô tả hành vi mong muốn, giao diện/API mới, thay đổi hành vi hệ thống
+      placeholder: |
+        - Thêm command `aiagent xxx ...`
+        - Thay đổi luồng xử lý ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Phương án thay thế
+      description: Bạn đã cân nhắc phương án nào khác? Tại sao không chọn?
+    validations:
+      required: false
+  - type: textarea
+    id: impact
+    attributes:
+      label: Phạm vi ảnh hưởng
+      description: Thành phần nào bị ảnh hưởng (runtime, CLI, dashboard, SDK, contract, tài liệu...)? Có phá vỡ backward compatibility không?
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist trước khi gửi
+      options:
+        - label: Tôi đã tìm kiếm và không thấy issue nào trùng lặp
+          required: true
+        - label: Đề xuất này phù hợp phạm vi dự án (xem docs/PLAN.md)
+          required: false
