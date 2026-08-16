@@ -19,7 +19,20 @@
 | P4 | Docs & ADR | C5 ADR-0007 (compatibility policy) + migration guide 1.0→1.1 + PLAN §M12 | TASK-088 | `todo` |
 
 Dependency order: C1 → C2 → C3 → (C4 ∥ C5)
+## 📋 M13 — Harness Hardening & Behavioral Conformance (PLANNED — sau M12)
 
+> PLAN.md §M13 (P18): bước tiếp theo SAU M12 (AIOS 1.1 Compatibility). KHÔNG sửa Runtime/Orchestrator (giữ INV-017..021). Mở rộng Harness từ "test/certify framework" → **trust layer tự xác minh (self-validating) + production-grade**. Nguồn: tự đánh giá độ harness 2026-08-16 (4/5 — Certified & Gated, chưa Autonomous) + đề xuất người dùng (5 ưu tiên + roadmap).
+> **Trạng thái**: `todo` — chưa bắt đầu (M12 đang IN-PROGRESS, TASK-084..088).
+
+| Phase | Nội dung | Ưu tiên | Task | Trạng thái |
+|-------|----------|---------|------|------------|
+| P0 | Behavioral Conformance — execute N lần + replay + fault-inject + evidence compare + regression gate | Behavioral | TASK-089 | `todo` |
+| P1 | Harness Coverage (9 nhóm) + Doctor Readiness scoring | Coverage | TASK-090 | `todo` |
+| P2 | Meta-Harness — verify the verifier (adversarial fail-closed) | Meta | TASK-091 | `todo` |
+| P3 | System Readiness ≠ Harness Trust; release gate cả 2 PASS | Trust | TASK-092 | `todo` |
+| P4 | Docs & ADR — ADR Harness Trust + behavioral spec + PLAN §M13 | Docs | TASK-093 | `todo` |
+
+Dependency order: P0 → P1 → P2 → (P3 ∥ P4)
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).
