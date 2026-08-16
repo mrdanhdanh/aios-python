@@ -22,7 +22,7 @@ M11: AIOS can reliably execute AND verify logic + state + render + asset + inter
 ```
 
 Đề xuất **M11** gồm 12 nâng cấp (R1–R12) mở rộng trực tiếp M10, không phá vỡ INV-001..034.
-**Cụm cốt lõi (R2 → R3 → R1)**: Verification Policy → Deterministic Harness → Visual Evidence,
+**Cụm cốt lõi (R2 → R3 → R10 ∥ R1)**: Verification Kernel → Deterministic Harness → (UI State ∥ Visual Evidence),
 mở đường cho CAD, diagram, document rendering, image/video/3D generation — mọi workflow có artifact phi-text.
 
 **Ưu tiên số 1: R2 (INV-035 Verification Fail-Closed)** — vì thực tế chứng minh false-positive đã xảy ra thật
@@ -86,9 +86,9 @@ implement lại từ đầu:
   false-positive. → Bằng chứng thực tế **R2** cần là invariant hệ thống, không phải duct-tape mỗi task.
 - **Render là pure function của (state, time, seed)** — worker định nghĩa rõ "frozen state" và render
   thuần hàm. → Củng cố **R10** (UI State Contract): UI State → Render → Screenshot.
-- **Reference-asset hiểu bằng vision model** — worker dùng một file mô tả ảnh do vision model sinh ra (6
-  reference image: 5 kiểu hù dọa hành lang, 1 cảnh sinh nhật, 1 cảnh phòng khách+máu, 1 màn hình title
-  START) làm cầu nối giữa brief ảnh và code. AIOS không có capability first-class để ingest/structure
+- **Reference-asset hiểu bằng vision model** — worker dùng một file mô tả ảnh do vision model sinh ra (8
+  reference images: 5 kiểu hù dọa hành lang, 1 cảnh sinh nhật, 1 cảnh phòng khách+máu, 1 màn hình title
+  START — 5+1+1+1=8) làm cầu nối giữa brief ảnh và code. AIOS không có capability first-class để ingest/structure
   reference visual asset. → **R12**: Reference-Asset Understanding (xem §3 / §8).
 - **Autonomous worker tái implement primitive** — task chạy autonomous nhưng worker KHÔNG có AIOS
   capability cho asset-gen/determinism/vendor-integrity → tự viết lại. Đây chính là gap M11 đóng: worker
@@ -112,8 +112,8 @@ implement lại từ đầu:
 
 ## 3. Đề xuất nâng cấp (R1–R12, đã điều chỉnh theo review + bổ sung R11/R12 từ §1b)
 
-> Dependency order (architecture): **R2 → R3 → R1 → R9 → R4 → R11 → R8 → R6 → R10 → R12 → R5 → R7**
-> (R3 nền tảng trước R1; R4+R9 gộp thành Asset Capability Architecture; R11 Capability Discovery + R12 Reference-Asset bổ sung từ §1b; R5 rớt xuống Ecosystem Extension; R7 trì hoãn P4)
+> Dependency order (architecture): **R2 → R3 → (R10 ∥ R1) → R9 → (R4 ∥ R11) → R6 → (R8 ∥ R12) → R5 → R7**
+> (R3 nền tảng cho cả R10 UIState và R1 VisualEvidence — chạy song song dưới Determinism; R9 Asset Contract → R4 Registry ∥ R11 Discovery/Routing **cùng một architectural slice** (R11 giúp worker tìm/chọn, R4 là nơi đăng ký); R6 Creative Domain → R8 Vendor ∥ R12 Reference-Asset; R8 độc lập Security Baseline, không phụ thuộc R11; R5 rớt xuống Ecosystem Extension; R7 trì hoãn P4)
 
 ### R2 — INV-035: Verification Fail-Closed (CORE INVARIANT)
 - **Evidence**: Kết quả visual test báo "17/17 PASS" thực chất skip vì thiếu ảnh ref.
@@ -123,6 +123,13 @@ implement lại từ đầu:
   Bắt: missing screenshot reference, test skipped, browser failed to launch, renderer unavailable,
   reference unreadable, artifact missing, dependency unavailable, assertion not executed.
   Trạng thái hợp lệ: `PASS | FAIL | ERROR | BLOCKED` — **KHÔNG** `SKIP → vô tình PASS`.
+- **Verification State Model** (contract chính thức của R2 — biến R2 thành *Verification Kernel*):
+  - Terminal success state duy nhất: `PASS`.
+  - Terminal failure states: `FAIL | ERROR | BLOCKED`.
+  - **Non-terminal — KHÔNG được coi là success**: `UNKNOWN | NOT_EXECUTED | MISSING_EVIDENCE | SKIPPED`.
+  - Chuyển đổi bị cấm: `SKIPPED → PASS`, `UNKNOWN → PASS`, `MISSING_EVIDENCE → PASS`.
+  - Áp dụng đồng nhất cho: visual test, E2E, artifact validation, security-check, contract-check,
+    deployment verification, future simulation/evaluation.
 - **Maps-to**: M10-P3 (security-check) + M10-P5 (conformance) + Constitution 1.0.
 - **Priority**: 🔴 CAO NHẤT.
 
@@ -225,8 +232,9 @@ implement lại từ đầu:
 - **Maps-to**: M1 (Capability Registry) + Orchestrator Decision Pipeline.
 
 ### R12 — Reference-Asset Understanding (từ tín hiệu §1b)
-- **Evidence**: Worker dùng file mô tả ảnh do vision model sinh ra (6 reference image: 5 kiểu hù dọa hành
-  lang, cảnh sinh nhật, phòng khách+máu, màn hình title START) làm cầu nối brief ảnh → code. AIOS không có
+- **Evidence**: Worker dùng file mô tả ảnh do vision model sinh ra (8 reference images: 5 kiểu hù dọa hành
+  lang, 1 cảnh sinh nhật, 1 cảnh phòng khách+máu, 1 màn hình title START — 5+1+1+1=8) làm cầu nối brief
+  ảnh → code. AIOS không có
   capability first-class để ingest/structure reference visual asset.
 - **Gap**: Không có capability ingest reference image → structured description → generation input.
 - **Proposal**: Capability "Reference-Asset Understanding" — ingest reference image qua vision model →
@@ -263,20 +271,21 @@ AssetPipeline Contract
 M11 — Deterministic Artifact & Interaction Runtime
 
 P0 — Verification Integrity
- └── R2  INV-035 Fail-closed Verification
+ └── R2  INV-035 Fail-closed Verification (+ Verification State Model)
 
 P1 — Deterministic Visual Runtime
  └── R3  RenderReplay / DeterministicHarness
 
 P2 — Visual Observability
- └── R1  VisualEvidence / VisualRegressionProbe
+ ├── R1  VisualEvidence / VisualRegressionProbe
+ └── R10 UI State Contract (P2b, nền cho R1)
 
-P3 — Asset & Creative Architecture
+P3 — Asset Capability Architecture
  ├── R9  AssetPipeline Contract
- ├── R4  Asset Capability
  ├── R11 Capability Discovery & Routing
+ ├── R4  Asset Capability (Registry)
+ ├── R8  Vendor Integrity (độc lập — Security Baseline)
  ├── R6  Creative Domain
- ├── R8  Vendor Integrity
  └── R12 Reference-Asset Understanding
 
 P4 — Ecosystem & DX
@@ -286,43 +295,65 @@ P4 — Ecosystem & DX
 
 **Dependency graph**:
 ```
-Verification (R2)
-     ↓
-Determinism (R3)
-     ↓
-Observation (R1)
-     ↓
-Contract (R9)
-     ↓
-Capability (R4)
-     ↓
-Capability Discovery (R11)
-     ↓
-Vendor Integrity (R8)
-     ↓
-Decision / Creative Domain (R6)
-     ↓
-UI State (R10)
-     ↓
-Reference-Asset (R12)
-     ↓
-Ecosystem (R5) + DX (R7)
+                    ┌──────────────┐
+                    │ R2           │
+                    │ Verification │  INV-035
+                    └──────┬───────┘
+                           ↓
+                    ┌──────────────┐
+                    │ R3           │
+                    │ Determinism  │
+                    └──────┬───────┘
+                           ↓
+                  ┌────────┴────────┐
+                  ↓                 ↓
+            ┌──────────┐      ┌──────────┐
+            │ R10      │      │ R1       │
+            │ UIState  │─────→│ Evidence │
+            └──────────┘      └─────┬────┘
+                                    ↓
+                              Observability
+
+                    Asset Architecture
+                           │
+                           ↓
+                       R9 Contract
+                           │
+                    ┌──────┴──────┐
+                    ↓             ↓
+                   R4            R11
+                Registry      Discovery /
+                               Routing
+                    └──────┬──────┘
+                           ↓
+                          R6
+                    Creative Domain
+                           │
+                    ┌──────┴──────┐
+                    ↓             ↓
+                   R8            R12
+             Vendor Integrity  Reference
+                                Asset
+                           ↓
+                 R5 SkillDistiller
+                 R7 Static Deploy
 ```
 
-**Core capability cluster (R2 → R3 → R1)**:
+**Core capability cluster (R2 → R3 → R10 ∥ R1)**:
 ```
 ┌──────────────────────┐
-│ Verification Policy  │  INV-035
+│ Verification Kernel  │  INV-035 + State Model
 └──────────┬───────────┘
            ↓
 ┌──────────────────────┐
 │ DeterministicHarness │  RenderReplay
 └──────────┬───────────┘
-           ↓
-┌──────────────────────┐
-│    VisualEvidence    │  Regression Probe
-└──────────┬───────────┘
-           ↓
+      ┌────┴────┐
+      ↓         ↓
+┌──────────┐ ┌──────────────┐
+│ UIState  │→│ VisualEvidence│  R10 → R1
+└──────────┘ └──────┬───────┘
+                    ↓
 ┌──────────────────────┐
 │ AIOS Evaluation /    │  Observability
 │ Observability        │
@@ -341,9 +372,10 @@ M11 = **Deterministic Artifact & Interaction Runtime** (không phải "Creative 
 ## 7. TASK breakdown (refined — M11-P0 thu nhỏ)
 
 ```
-M11-P0 — Verification Integrity
+M11-P0 — Verification Integrity (R2)
   Scope:
   ├── INV-035 (Verification Fail-Closed)
+  ├── Verification State Model (PASS/FAIL/ERROR/BLOCKED + non-terminal: UNKNOWN/NOT_EXECUTED/MISSING_EVIDENCE/SKIPPED)
   ├── conformance visual policy
   ├── skip/error normalization
   ├── missing reference detection
@@ -351,15 +383,13 @@ M11-P0 — Verification Integrity
   ├── regression tests
   └── retroactive audit các commit webgame/visual đã merge
 
-M11-P1  → RenderReplay (R3)
-M11-P2  → VisualEvidence (R1)
-M11-P2b → UI State Contract (R10)
-M11-P3a → AssetPipeline Contract (R9)
-M11-P3b → Asset Capability (R4)
-M11-P3c → Creative Domain (R6)
-M11-P3d → Vendor Integrity (R8)
-M11-P3e → Capability Discovery & Routing (R11)
-M11-P3f → Reference-Asset Understanding (R12)
+M11-P1  → RenderReplay / DeterministicHarness (R3)
+M11-P2  → VisualEvidence / VisualRegressionProbe (R1)
+M11-P2b → UI State Contract (R10 — nền cho R1)
+M11-P3  → Asset Capability Architecture (R9 Contract + R4 Registry + R11 Discovery/Routing — 1 slice)
+M11-P3b → Creative Domain (R6)
+M11-P3c → Vendor Integrity (R8 — độc lập Security Baseline)
+M11-P3d → Reference-Asset Understanding (R12)
 M11-P4a → SkillDistiller (R5, Ecosystem)
 M11-P4b → Static Deploy (R7, optional)
 ```
@@ -372,12 +402,19 @@ M11-P4b → Static Deploy (R7, optional)
 4. R7 deploy hosts: GitHub Pages only hay S3/Netlify? → phase M11-P4b.
 5. R10 UIState schema: định hình chuẩn JSON trong phase M11-P2b.
 6. **R12 — Reference-Asset Understanding**: từ nâng cấp game Phaser 4, worker dùng file mô tả ảnh do
-   vision model sinh ra (6 reference image) làm cầu nối brief ảnh → code. Đã quyết định: đứng riêng là
+   vision model sinh ra (8 reference images) làm cầu nối brief ảnh → code. Đã quyết định: đứng riêng là
    **R12**, mở rộng **R6** (Creative Domain) — ingest reference image → structured description → generation.
 
 ## 9. Ghi chú tuân thủ
 
-- **Không vi phạm INV-001..034** — toàn bộ additive lên M10; INV-035 là invariant MỚI (M11).
+- **M11 introduces INV-035** (Verification Fail-Closed) — do đó KHÔNG còn đơn thuần additive implementation, mà yêu cầu:
+  - **Constitution update** (M11 amendment trên M10 Constitution)
+  - **Governance update**
+  - **Conformance rule update**
+  - **Contract/Policy registry update**
+  - **Version bump** (AIOS 1.0 → M11)
+  - Flow: `M10 Constitution → M11 amendment → INV-035 → Conformance/Security/Evaluation`.
+- **Không vi phạm INV-001..034** — INV-035 là invariant MỚI của M11, nằm trên nền M10.
 - Trạng thái: proposal đã qua review user (8.8/10), sẵn sàng tạo task M11-P0 theo hard-gate chuẩn.
 - Khi duyệt → tạo task M11-P0 (thu nhỏ, chỉ P0) trước; các phase P1–P4 theo tiến độ.
 - **Nguồn evidence**: (1) đợt xây dựng webgame đầu (vanilla → Phaser 4) + game-dev skills; (2) đợt nâng cấp
