@@ -107,6 +107,14 @@ def main(argv: list[str] | None = None) -> int:
     replay.add_argument("--freeze", choices=["none", "fixed", "paused"], default="none")
     replay.add_argument("--show-hashes", action="store_true", help="In hash từng frame")
 
+    probe = sub.add_parser("visual-probe", help="Visual regression probe (M11-P2, TASK-080)")
+    probe.add_argument("--dump-ref", metavar="FILE", help="Ghi mock evidence ref vào JSON file")
+    probe.add_argument("--dump-current", metavar="FILE", help="Ghi mock evidence current vào JSON file")
+    probe.add_argument("--ref", metavar="FILE", help="Đọc evidence ref từ JSON")
+    probe.add_argument("--current", metavar="FILE", help="Đọc evidence current từ JSON")
+    probe.add_argument("--threshold", type=int, default=30, help="Pixel threshold (default 30)")
+    probe.add_argument("--missing-ref", action="store_true", help="Mô phỏng thiếu ref (MISSING_EVIDENCE)")
+
     serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
     serve.add_argument("--host", default="127.0.0.1", help="Bind host")
     serve.add_argument("--port", type=int, default=8000, help="Bind port")
@@ -212,6 +220,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "render-replay":
         return _render_replay(args.seed, args.frames, args.width, args.height,
                               args.freeze, args.show_hashes)
+    if args.command == "visual-probe":
+        return _visual_probe(args.dump_ref, args.dump_current, args.ref,
+                             args.current, args.threshold, args.missing_ref)
     if args.command == "serve":
         return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
@@ -707,6 +718,87 @@ def _render_replay(
     print(f"outcome: {result.outcome.state.value} "
           f"({result.outcome.evidence})")
     return 0 if result.stable else 1
+
+
+def _mock_visual_evidence(*, changed_state: bool = False) -> dict:
+    """Mock evidence (R10 + R1) — JSON-serializable."""
+    state = {
+        "version": "1.0",
+        "screen": "game",
+        "entities": {"player": {"x": 160, "y": 90, "scale": 3}},
+        "input": {"left": False, "right": True},
+        "t": 0.5,
+        "seed": 42,
+    }
+    if changed_state:
+        state["entities"]["player"]["scale"] = 2  # bug: scale mismatch
+    return {
+        "version": "1.0",
+        "screenshot": "data:image/png;base64,"
+                      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        "dom_snapshot": {"tag": "canvas", "attrs": {"id": "game"}, "children": []},
+        "render_state": state,
+        "input_timeline": [
+            {"type": "keydown", "timestamp": 100.0, "payload": {"key": "start"}},
+        ],
+        "browser_meta": {"browser": "chromium", "os": "windows",
+                         "viewport": [640, 360], "device_scale_factor": 1.0},
+        "seed": 42,
+        "pixel_diff": -1.0,
+    }
+
+
+def _visual_probe(
+    dump_ref: str, dump_current: str, ref_file: str, current_file: str,
+    threshold: int, missing_ref: bool,
+) -> int:
+    """M11-P2 (TASK-080): VisualRegressionProbe — compare evidence fail-closed."""
+    import json
+
+    from ..observability.visual import get_visual_metrics
+    from ..rendering import VisualEvidence, VisualRegressionProbe
+
+    if dump_ref:
+        with open(dump_ref, "w", encoding="utf-8") as f:
+            json.dump(_mock_visual_evidence(), f, ensure_ascii=False, indent=2)
+        print(f"ref evidence → {dump_ref}")
+        return 0
+    if dump_current:
+        with open(dump_current, "w", encoding="utf-8") as f:
+            json.dump(_mock_visual_evidence(changed_state=True), f,
+                      ensure_ascii=False, indent=2)
+        print(f"current evidence → {dump_current}")
+        return 0
+
+    ref: VisualEvidence | None = None
+    current: VisualEvidence | None = None
+    if ref_file:
+        with open(ref_file, encoding="utf-8") as f:
+            ref = VisualEvidence.model_validate(json.load(f))
+    if current_file:
+        with open(current_file, encoding="utf-8") as f:
+            current = VisualEvidence.model_validate(json.load(f))
+    if missing_ref:
+        ref = None  # mô phỏng thiếu ref → MISSING_EVIDENCE
+
+    probe = VisualRegressionProbe(pixel_threshold=threshold)
+    result = probe.compare(ref, current)
+
+    metrics = get_visual_metrics()
+    metrics.record_probe(passed=result.passed, pixel_diff=result.pixel_diff)
+
+    print(f"VisualRegressionProbe — threshold={threshold}")
+    print("=" * 50)
+    print(f"outcome: {result.outcome.state.value} ({result.outcome.verdict.value})")
+    print(f"  evidence: {result.outcome.evidence}")
+    print(f"  pixel_diff: {result.pixel_diff:.2f}%")
+    if result.state_diffs:
+        print(f"  state_diffs ({len(result.state_diffs)}): "
+              f"{result.state_diffs[:5]}")
+    if result.dom_diffs:
+        print(f"  dom_diffs ({len(result.dom_diffs)}): {result.dom_diffs[:5]}")
+    print(f"  metrics: {metrics.snapshot()}")
+    return 0 if result.passed else 1
 
 
 def _catalog_list() -> int:

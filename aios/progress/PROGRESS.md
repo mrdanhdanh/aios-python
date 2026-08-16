@@ -11,7 +11,7 @@
 |-------|----------|----------|------|------------|
 | P0 | Verification Integrity | R2 INV-035 Verification Fail-Closed (+ Verification State Model, conformance visual policy, CI fail-closed gate, retroactive audit) | TASK-078 | `done` ✅ (12/12 AC — 30 unit + conformance 10 areas/6 gates + full suite 1969) |
 | P1 | Deterministic Visual Runtime | R3 RenderReplay / DeterministicHarness (record input timeline + seed → replay → assert pixel-stable) | TASK-079 | `done` ✅ (10/10 AC — rendering/ package + 18 tests + full suite 1987) |
-| P2+P2b | Visual Observability | R1 VisualEvidence / VisualRegressionProbe + R10 UI State Contract (`UI State → Render → Screenshot`) | TASK-080 | `todo` |
+| P2+P2b | Visual Observability | R1 VisualEvidence / VisualRegressionProbe + R10 UI State Contract (`UI State → Render → Screenshot`) | TASK-080 | `done` ✅ (10/10 AC — probe bắt state_diff scale 3→2 + missing-ref fail-closed; full suite 2003) |
 | P3 | Asset Capability Architecture | R9 AssetPipeline Contract + R4 Registry kind=asset + R11 Discovery/Routing (1 slice) | TASK-081 | `todo` |
 | P3b/c/d | Creative + Vendor + Reference | R6 Creative Domain + R8 Vendor Integrity + R12 Reference-Asset Understanding | TASK-082 | `todo` |
 | P4a/b | Ecosystem & DX | R5 SkillDistiller + R7 Static Deploy (optional) | TASK-083 | `todo` |
