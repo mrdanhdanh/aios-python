@@ -205,6 +205,7 @@ def main(argv: list[str] | None = None) -> int:
     compat_check.add_argument("version", help="Component version (semver)")
     compat_check.add_argument("--aios-version", default=None,
                               help="AIOS version to check against (default 1.1.0)")
+    compat_sub.add_parser("verify", help="Backward compatibility suite cũ→mới trên 1.1 (M12-P2 C3, TASK-086)")
 
     args = parser.parse_args(argv)
 
@@ -302,6 +303,8 @@ def main(argv: list[str] | None = None) -> int:
         return _compat_list()
     if args.command == "compat" and args.compat_command == "check":
         return _compat_check(args.kind, args.id, args.version, args.aios_version)
+    if args.command == "compat" and args.compat_command == "verify":
+        return _compat_verify()
     return 1
 
 
@@ -1147,6 +1150,27 @@ def _compat_check(kind: str, component_id: str, version: str,
         "warnings": result.warnings,
     }))
     return 0 if result.compatible else 1
+
+
+def _compat_verify() -> int:
+    """Backward compatibility suite cũ→mới trên AIOS 1.1 — JSON 1 dòng, exit 0/1."""
+    from ..upgrade.backward_compat import BackwardCompatibilitySuite
+
+    report = BackwardCompatibilitySuite().run()
+    summary = {
+        "passed": sum(1 for r in report.results if r.ok),
+        "failed": sum(1 for r in report.results if not r.ok),
+    }
+    print(json.dumps({
+        "ok": report.ok,
+        "fail_closed": report.fail_closed,
+        "results": [
+            {"id": r.id, "kind": r.kind, "ok": r.ok, "detail": r.detail}
+            for r in report.results
+        ],
+        "summary": summary,
+    }))
+    return 0 if report.ok else 1
 
 
 def _read_text(path: str) -> str:
