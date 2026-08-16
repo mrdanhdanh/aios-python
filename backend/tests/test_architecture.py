@@ -1149,6 +1149,7 @@ _UPGRADE_ALLOWED_AIOS = {
     "aios_core.semver",
     "aios_core.kernel.events",
     "aios_core.skills.errors",  # SkillMigrator catch SkillError/SkillStateError (R1-1)
+    "aios_core.plugins.compat",  # CompatibilityMatrix reuse check_compatibility/parse_constraint (M12 C1, TASK-084)
 }
 _UPGRADE_ALLOWED_EXTERNAL = {
     "sqlite3",

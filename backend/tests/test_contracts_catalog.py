@@ -201,7 +201,7 @@ def test_cli_contract_list(tmp_path, capsys):
 
     assert main(["contract", "list"]) == 0
     out = capsys.readouterr().out
-    assert "plugin" in out and "1.0.0" in out and "deprecated" in out
+    assert "plugin" in out and "1.1.0" in out and "deprecated" in out
     assert "runtime" in out
 
 

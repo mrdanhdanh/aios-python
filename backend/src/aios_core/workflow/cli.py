@@ -194,6 +194,17 @@ def main(argv: list[str] | None = None) -> int:
     mp_publish.add_argument("--publisher", required=True, help="Publisher id")
     mp_publish.add_argument("--key", required=True, help="Signing key (>=64 chars)")
 
+    compat = sub.add_parser("compat", help="Compatibility Matrix (M12-P0 C1, TASK-084)")
+    compat_sub = compat.add_subparsers(dest="compat_command", required=True)
+    compat_sub.add_parser("list", help="List compatibility matrix entries")
+    compat_check = compat_sub.add_parser("check", help="Check a component against the matrix")
+    compat_check.add_argument("kind", choices=["plugin", "contract", "workflow",
+                                               "skill", "sdk"])
+    compat_check.add_argument("id", help="Component id (không prefix loại)")
+    compat_check.add_argument("version", help="Component version (semver)")
+    compat_check.add_argument("--aios-version", default=None,
+                              help="AIOS version to check against (default 1.1.0)")
+
     args = parser.parse_args(argv)
 
     if args.command == "run":
@@ -286,6 +297,10 @@ def main(argv: list[str] | None = None) -> int:
         return _plugin_create(args.kind, args.name, args.dir)
     if args.command == "marketplace" and args.marketplace_command == "publish":
         return _marketplace_publish(args.manifest_file, args.publisher, args.key)
+    if args.command == "compat" and args.compat_command == "list":
+        return _compat_list()
+    if args.command == "compat" and args.compat_command == "check":
+        return _compat_check(args.kind, args.id, args.version, args.aios_version)
     return 1
 
 
@@ -1034,6 +1049,38 @@ def _contract_check(scan: bool = False) -> int:
     report = checker.check_all(used=used)
     print(format_matrix(report, catalog))
     return 0 if not report.blocking else 1
+
+
+def _compat_list() -> int:
+    """Compatibility Matrix registry (M12-P0 C1, TASK-084)."""
+    from ..upgrade.compatibility import CompatibilityMatrix
+
+    rows = CompatibilityMatrix().list()
+    w_kind = max(len(r["kind"]) for r in rows) if rows else 4
+    w_id = max(len(r["id"]) for r in rows) if rows else 2
+    print(f"{'kind'.ljust(w_kind)}| {'id'.ljust(w_id)}| version | aios_min | aios_max")
+    print("-" * 46)
+    for r in rows:
+        print(f"{r['kind'].ljust(w_kind)}| {r['id'].ljust(w_id)}| "
+              f"{r['version'].ljust(7)} | {r['aios_min'].ljust(7)} | {r['aios_max'] or '*'}")
+    print(f"({len(rows)} entries)")
+    return 0
+
+
+def _compat_check(kind: str, component_id: str, version: str,
+                  aios_version: str | None = None) -> int:
+    """Check component so với Compatibility Matrix — JSON 1 dòng, exit 0/1 (fail-closed)."""
+    from ..upgrade.compatibility import AIOS_VERSION, CompatibilityMatrix
+
+    result = CompatibilityMatrix().check(
+        kind, component_id, version, aios_version=aios_version or AIOS_VERSION
+    )
+    print(json.dumps({
+        "compatible": result.compatible,
+        "errors": result.errors,
+        "warnings": result.warnings,
+    }))
+    return 0 if result.compatible else 1
 
 
 def _read_text(path: str) -> str:
