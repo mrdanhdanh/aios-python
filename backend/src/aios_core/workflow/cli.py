@@ -115,6 +115,22 @@ def main(argv: list[str] | None = None) -> int:
     probe.add_argument("--threshold", type=int, default=30, help="Pixel threshold (default 30)")
     probe.add_argument("--missing-ref", action="store_true", help="Mô phỏng thiếu ref (MISSING_EVIDENCE)")
 
+    asset = sub.add_parser("asset", help="Asset capability commands (M11-P3, TASK-081)")
+    asset_sub = asset.add_subparsers(dest="asset_command", required=True)
+    asset_sub.add_parser("list", help="List asset capabilities")
+    discover = asset_sub.add_parser("discover", help="Discover capabilities theo kind")
+    discover.add_argument("kind", choices=["sprite", "tileset", "map", "audio",
+                                            "animation", "ui_asset"])
+    match = asset_sub.add_parser("match", help="Match request → capabilities (R11)")
+    match.add_argument("request", help="Vd: \"generate sprite\"")
+    produce = asset_sub.add_parser("produce", help="Produce asset qua pipeline (R9)")
+    produce.add_argument("capability_id")
+    produce.add_argument("--kind", required=True, choices=["sprite", "tileset", "map",
+                                                           "audio", "animation", "ui_asset"])
+    produce.add_argument("--name", default="asset")
+    produce.add_argument("--seed", type=int, default=0)
+    produce.add_argument("--params-json", default="{}", help="JSON params")
+
     serve = sub.add_parser("serve", help="Start the AIOS API server (M3-P5)")
     serve.add_argument("--host", default="127.0.0.1", help="Bind host")
     serve.add_argument("--port", type=int, default=8000, help="Bind port")
@@ -223,6 +239,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "visual-probe":
         return _visual_probe(args.dump_ref, args.dump_current, args.ref,
                              args.current, args.threshold, args.missing_ref)
+    if args.command == "asset" and args.asset_command == "list":
+        return _asset_list()
+    if args.command == "asset" and args.asset_command == "discover":
+        return _asset_discover(args.kind)
+    if args.command == "asset" and args.asset_command == "match":
+        return _asset_match(args.request)
+    if args.command == "asset" and args.asset_command == "produce":
+        return _asset_produce(args.capability_id, args.kind, args.name,
+                              args.seed, args.params_json)
     if args.command == "serve":
         return _serve(args.host, args.port)
     if args.command == "catalog" and args.catalog_command == "list":
@@ -799,6 +824,74 @@ def _visual_probe(
         print(f"  dom_diffs ({len(result.dom_diffs)}): {result.dom_diffs[:5]}")
     print(f"  metrics: {metrics.snapshot()}")
     return 0 if result.passed else 1
+
+
+def _asset_registry():
+    """Registry mặc định — singleton + default capabilities từ skills/."""
+    from ..rendering import AssetCapabilityRegistry, default_asset_capabilities
+
+    registry = AssetCapabilityRegistry()
+    for cap in default_asset_capabilities():
+        registry.register(cap)
+    return registry
+
+
+def _asset_list() -> int:
+    registry = _asset_registry()
+    caps = registry.list()
+    if not caps:
+        print("<empty> — chưa có capability asset (register thủ công hoặc merge skills/)")
+        return 0
+    print(f"Asset capabilities ({len(caps)}):")
+    for c in caps:
+        print(f"  {c.id:<24} kinds={c.kinds} source={c.source or '-'}")
+    print(f"counters: {registry.snapshot_counters()}")
+    return 0
+
+
+def _asset_discover(kind: str) -> int:
+    registry = _asset_registry()
+    caps = registry.discover(kind)
+    print(f"Discover kind={kind}: {len(caps)} capability")
+    for c in caps:
+        print(f"  {c.id}: {c.name} — {c.description}")
+    return 0
+
+
+def _asset_match(request: str) -> int:
+    from ..rendering import CreativeMatcher
+
+    matcher = CreativeMatcher(_asset_registry())
+    results = matcher.match(request)
+    print(f"Match request={request!r}: {len(results)} result")
+    for r in results:
+        print(f"  {r.score:>3}  {r.capability_id:<24} {r.reason}")
+    if not results:
+        print("  (no match — không có capability phù hợp)")
+    return 0
+
+
+def _asset_produce(capability_id: str, kind: str, name: str, seed: int,
+                   params_json: str) -> int:
+    import json
+
+    from ..rendering import AssetSpec
+
+    registry = _asset_registry()
+    try:
+        params = json.loads(params_json)
+    except json.JSONDecodeError:
+        params = {}
+    spec = AssetSpec(kind=kind, name=name, seed=seed, params=params)
+    try:
+        out = registry.produce(capability_id, spec)
+    except Exception as exc:  # noqa: BLE001 — fail-closed (ERROR)
+        print(f"produce FAILED: {exc}")
+        return 1
+    print(f"produced: {out.artifact_ref}")
+    print(f"  sha256={out.sha256[:16]}… size={out.size} "
+          f"idempotency={out.idempotency.value}")
+    return 0
 
 
 def _catalog_list() -> int:
