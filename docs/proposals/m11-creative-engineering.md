@@ -61,6 +61,38 @@ mở đường cho CAD, diagram, document rendering, image/video/3D generation �
 
 ---
 
+## 1b. Tín hiệu bổ sung — nâng cấp game Phaser 4 (sprite/fx/parallax/transition)
+
+Một đợt nâng cấp tiếp theo của cùng webgame (hướng E = sprite sheet PNG + fx + parallax + transition,
+88/88 test / 23/23 AC, thực hiện autonomous) cung cấp bằng chứng bổ sung rất mạnh cho M11 — và cho thấy
+các primitive M11 đề xuất **chưa tồn tại ở tầng hệ thống**, buộc worker phải tự implement lại:
+
+- **Asset-generation viết tay từ đầu** — worker tạo script encoder PNG riêng (CRC32 + zlib, palette vendor)
+  thay vì dùng skill `agent-sprite-forge` đã có. → Củng cố **R4/R9**: AssetPipeline contract + Capability
+  Registry chưa discoverable/routable; worker không route được "generate sprite" tới skill sẵn có.
+  *(Sub-gap mới **R4a** — capability discovery gap: skill tồn tại nhưng worker không tìm/thấy dùng được.)*
+- **Determinism bolt-on từng layer** — mọi layer mới phải tự respect freeze (`rtime` đóng băng, particle
+  dùng PRNG seeded mulberry32, `anims.pauseAll()` khi frozen). → Củng cố **R3** cực mạnh: cần
+  `RenderReplay`/`DeterministicHarness` ở tầng runtime, không phải tự implement mỗi lần.
+  *(Sub-gap mới **R3a** — determinism là per-layer duct-tape, không phải guarantee của runtime.)*
+- **Vendor-hash re-implement trong test** — `vendor-hashes.json` (SHA256 baseline) tự viết trong test
+  (C2-11/C3-06) thay vì capability hệ thống. → Củng cố **R8** (Vendor Integrity) — nên là `aiagent
+  security-check`, không phải test tự làm.
+- **Fail-closed tự vá ở test** — worker phải thêm cơ chế "non-empty + byte-compare frozen" vào visual
+  regression (C2-09) trực tiếp vì bài học false-positive. → Bằng chứng thực tế **R2** cần là invariant
+  hệ thống, không phải duct-tape mỗi task.
+- **Render là pure function của (state, time, seed)** — worker định nghĩa rõ "frozen state" và render
+  thuần hàm. → Củng cố **R10** (UI State Contract): UI State → Render → Screenshot.
+- **Reference-asset hiểu bằng vision model** — worker dùng `imagedata.md` (mô tả ảnh từ vision model) làm
+  cầu nối giữa brief ảnh và code. AIOS không có capability first-class để ingest/structure reference
+  visual asset. → **Candidate R11**: "Reference-Asset Understanding" (xem §8 — có thể gộp R6 hoặc R10,
+  hoặc đứng riêng).
+- **Autonomous worker tái implement primitive** — task chạy autonomous nhưng worker KHÔNG có AIOS
+  capability cho asset-gen/determinism/vendor-integrity → tự viết lại. Đây chính là gap M11 đóng: worker
+  nên gọi capability có sẵn, không reimplement.
+
+---
+
 ## 2. Gap Analysis — AIOS 1.0 thiếu gì cho creative/asset/UI
 
 | Thành phần AIOS 1.0 | Trạng thái hiện tại | Thiếu cho domain creative |
@@ -303,10 +335,16 @@ M11-P4b → Static Deploy (R7, optional)
 3. R5 SkillDistiller form: CLI `aiagent skill distill <url>` hay `agent` tool? → phase M11-P4a.
 4. R7 deploy hosts: GitHub Pages only hay S3/Netlify? → phase M11-P4b.
 5. R10 UIState schema: định hình chuẩn JSON trong phase M11-P2b.
+6. **R11 candidate — Reference-Asset Understanding**: từ nâng cấp game Phaser 4, worker dùng `imagedata.md`
+   (vision-model description) làm cầu nối brief ảnh → code. Có nên thành capability riêng (R11) hay gộp
+   vào R6 (Creative Domain) / R10 (UI State)? → chờ quyết định trước M11-P3.
 
 ## 9. Ghi chú tuân thủ
 
 - **Không vi phạm INV-001..034** — toàn bộ additive lên M10; INV-035 là invariant MỚI (M11).
 - Trạng thái: proposal đã qua review user (8.8/10), sẵn sàng tạo task M11-P0 theo hard-gate chuẩn.
 - Khi duyệt → tạo task M11-P0 (thu nhỏ, chỉ P0) trước; các phase P1–P4 theo tiến độ.
+- **Nguồn evidence**: (1) đợt xây dựng webgame đầu (vanilla → Phaser 4) + game-dev skills; (2) đợt nâng cấp
+  game Phaser 4 tiếp theo (sprite/fx/parallax/transition, autonomous, 88/88 test) — cả hai cùng chỉ ra
+  các primitive M11 chưa tồn tại ở tầng hệ thống.
 - Tài liệu này **branch-independent**: không gắn với PR/nhánh cụ thể, dùng làm tham khảo kiến trúc M11 trên bất kỳ nhánh nào.
