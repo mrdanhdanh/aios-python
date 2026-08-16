@@ -63,7 +63,7 @@ class ConformanceReport:
 
     @property
     def ready(self) -> bool:
-        """AIOS 1.0 READY chỉ khi areas + golden + gates đều PASS (C2-03)."""
+        """AIOS 1.1 READY chỉ khi areas + golden + gates đều PASS (C2-03)."""
         return self.areas_ready and self.golden_ready and self.gates_ready
 
     def failures(self) -> list[str]:

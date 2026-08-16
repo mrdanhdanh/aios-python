@@ -108,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     migrate.add_argument("--journal", default="aios/data/migrations.db",
                          help="Migration journal DB path (test isolation)")
 
-    sub.add_parser("conformance", help="AIOS conformance — 10 areas + 6 gates (M10-F5 + M11 INV-035)")
+    sub.add_parser("conformance", help="AIOS conformance — 11 areas + 7 gates (M10-F5 + M11 INV-035 + M12 compatibility)")
 
     sub.add_parser("verify-state", help="INV-035 verification state model + fail-closed gate (M11-P0)")
 

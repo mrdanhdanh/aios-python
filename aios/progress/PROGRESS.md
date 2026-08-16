@@ -13,6 +13,7 @@
 | P0 | Version & Compatibility Baseline | C1 version bump 1.0→1.1 toàn hệ thống (contract/config/CLI/metadata) + Compatibility Matrix registry | TASK-084 | `done` ✅ (12/12 AC — __version__ 1.1.0 + catalog 1.1.0 + compat matrix 14 entry + CLI compat + full suite 2071) |
 | P1 | Migration 1.0→1.1 thật | C2 upgrade pipeline end-to-end trên dữ liệu thật (plan → backup → dry-run → validate → rollback) | TASK-085 | `done` ✅ (12/12 AC — migration_110.py 4 transforms + Aios110Migrator matrix-gated + CLI migrate nhánh 1.0→1.1 + fix bug engine.apply + full suite 2098) |
 | P2 | Backward Compatibility | C3 plugin v0→v1 · contract v0→v1 · workflow v0→v1 chạy trên 1.1 + test chéo | TASK-086 | `done` ✅ (10/10 AC — backward_compat.py 9 check 5 kind + CLI compat verify + fix AiosRange.compatible parse-only + full suite 2109) |
+| P3 | Compatibility Conformance | C4 mở rộng `aiagent conformance` area `compatibility` + gate (giữ 10 areas/6 gates) | TASK-087 | `done` ✅ (8/8 AC — area compatibility + gate_g + 11 areas/7 gates → AIOS 1.1 READY + full suite 2118) |
 | P1 | Migration 1.0→1.1 thật | C2 upgrade pipeline end-to-end trên dữ liệu thật (plan → backup → dry-run → validate → rollback) | TASK-085 | `todo` |
 | P2 | Backward Compatibility | C3 plugin v0→v1 · contract v0→v1 · workflow v0→v1 chạy trên 1.1 + test chéo | TASK-086 | `todo` |
 | P3 | Compatibility Conformance | C4 mở rộng `aiagent conformance` area `compatibility` + gate (giữ 10 areas/6 gates) | TASK-087 | `todo` |

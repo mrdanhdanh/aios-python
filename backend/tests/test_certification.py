@@ -68,9 +68,11 @@ def test_gate_definitions():
     runner = ConformanceRunner()
     gates = runner.release_gates()
     # M11-P0 (TASK-078): thêm gate_f_verification (INV-035 fail-closed)
+    # M12-P3 (TASK-087): thêm gate_g_compatibility
     assert set(gates.keys()) == {
         "gate_a_architecture", "gate_b_security", "gate_c_contract",
         "gate_d_reliability", "gate_e_autonomous", "gate_f_verification",
+        "gate_g_compatibility",
     }
     assert all(gates.values()), f"gates fail: {gates}"
 
@@ -117,7 +119,7 @@ def test_cli_conformance(capsys):
 
     assert main(["conformance"]) == 0
     out = capsys.readouterr().out
-    assert "AIOS 1.0 READY" in out
+    assert "AIOS 1.1 READY" in out
     assert "gate_a_architecture" in out
 
 
@@ -125,4 +127,5 @@ def test_format_conformance():
     runner = ConformanceRunner()
     text = format_conformance(runner.run())
     assert "Golden Scenarios: 20/20 PASS" in text
-    assert "Result: AIOS 1.0 READY" in text
+    assert "AIOS Conformance 1.1" in text
+    assert "Result: AIOS 1.1 READY" in text
