@@ -18,14 +18,15 @@
 | P4 | Docs & ADR | C5 ADR-0007 (compatibility policy) + migration guide 1.0→1.1 + PLAN §M12 | TASK-088 | `done` ✅ (10/10 AC — ADR-0007 + docs/guides/migration-1.0-to-1.1.md + PLAN §M12 DONE + README links — **M12 HOÀN TẤT 5/5 TASK**) |
 
 Dependency order: C1 → C2 → C3 → (C4 ∥ C5)
-## 📋 M13 — Harness Trust & Behavioral Conformance (PLANNED — sau M12) · TRUST
+## 📋 M13 — Harness Trust & Behavioral Conformance (2026-08-17 — IN-PROGRESS, Issue #8) · TRUST
 
 > PLAN.md §M13 (P18): bước tiếp theo SAU M12 (AIOS 1.1 Compatibility). KHÔNG sửa Runtime/Orchestrator (giữ INV-017..021). Mở rộng Harness từ "test/certify framework" → **trust layer tự xác minh (self-validating) + production-grade**. Nguồn: tự đánh giá độ harness 2026-08-16 (4/5 — Certified & Gated, chưa Autonomous) + đề xuất người dùng (5 ưu tiên + roadmap). **Harness Track (M13→M15) FROZEN** sau 6 điểm chỉnh sửa.
-> **Trạng thái**: `todo` — chưa bắt đầu (M12 đang IN-PROGRESS, TASK-084..088).
+> **Trạng thái**: `in-progress` — TASK-089 đang hard gate. Nhánh: `feature/ISSUE-8-m13-harness-trust` (từ `verify`).
+> **4 invariant xuyên suốt track**: FAIL-CLOSED (INV-035) + INDEPENDENT VERIFICATION + PERMISSION BOUNDARY + CERTIFIED BASELINE/ROLLBACK.
 
 | Phase | Nội dung | Ưu tiên | Task | Trạng thái |
 |-------|----------|---------|------|------------|
-| P0 | Behavioral Conformance — execute N lần (configurable: quick=100/std=1k/stress=10k/soak=duration) + replay + fault-inject + evidence compare + regression gate | Behavioral | TASK-089 | `todo` |
+| P0 | Behavioral Conformance — execute N lần (configurable: quick=100/std=1k/stress=10k/soak=duration) + replay + fault-inject + evidence compare + regression gate | Behavioral | TASK-089 | `in-progress` (hard gate) |
 | P1 | Harness Coverage model (9 chiều + negative-path) + Doctor Readiness scoring | Coverage | TASK-090 | `todo` |
 | P2 | Meta-Harness — verify the verifier với verification path ĐỘC LẬP (chống circular) + adversarial fail-closed | Meta | TASK-091 | `todo` |
 | P3 | System Readiness ≠ Harness Trust; release gate cả 2 PASS | Trust | TASK-092 | `todo` |
