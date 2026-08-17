@@ -3,10 +3,11 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
-## ✅ M12 — AIOS 1.1 Compatibility (2026-08-16 — IMPLEMENTATION DONE, chờ merge PR #8, Issue #7)
+## ✅ M12 — AIOS 1.1 Compatibility (2026-08-16 — DONE ✅, Issue #7)
 
 > PLAN.md §M12 (P17): **Issue #7** — user duyệt "nâng cấp hệ thống" → roadmap §43: AIOS 1.1 Compatibility (bước đầu sau M11). KHÔNG thêm Core feature, KHÔNG thêm invariant — INV-001..035 giữ nguyên frozen. 5 nâng cấp C1–C5, 5 task (TASK-084..088).
-> **Nhánh**: `feature/ISSUE-7-aios-1-1-compatibility` (từ `verify` @ `d4185a6`) — **đã push `09ed6f4`, PR #8 READY (validate PASS, mergeable)** — chờ user merge thủ công → verify → promotion master.
+> **Trạng thái**: 5/5 task done — full suite **2118 PASS / 0 FAIL** + conformance **11 areas + 20 GS + 7 gates → AIOS 1.1 READY** + arch-health 0 violations + doctor healthy.
+> **Nhánh**: `feature/ISSUE-7-aios-1-1-compatibility` (từ `verify` @ `d4185a6`) — **PR #8 draft chưa push/merge** (theo yêu cầu user "khoan PR"). Chờ: push → PR #8 → merge vào `verify` → kiểm tra → promotion `release: verify → master` → Issue #7 close.
 
 | Phase | Nội dung | Nâng cấp | Task | Trạng thái |
 |-------|----------|----------|------|------------|
@@ -14,7 +15,7 @@
 | P1 | Migration 1.0→1.1 thật | C2 upgrade pipeline end-to-end trên dữ liệu thật (plan → backup → dry-run → validate → rollback) | TASK-085 | `done` ✅ (12/12 AC — migration_110.py 4 transforms + Aios110Migrator matrix-gated + CLI migrate nhánh 1.0→1.1 + fix bug engine.apply + full suite 2098) |
 | P2 | Backward Compatibility | C3 plugin v0→v1 · contract v0→v1 · workflow v0→v1 chạy trên 1.1 + test chéo | TASK-086 | `done` ✅ (10/10 AC — backward_compat.py 9 check 5 kind + CLI compat verify + fix AiosRange.compatible parse-only + full suite 2109) |
 | P3 | Compatibility Conformance | C4 mở rộng `aiagent conformance` area `compatibility` + gate (giữ 10 areas/6 gates) | TASK-087 | `done` ✅ (8/8 AC — area compatibility + gate_g + 11 areas/7 gates → AIOS 1.1 READY + full suite 2118) |
-| P4 | Docs & ADR | C5 ADR-0007 (compatibility policy) + migration guide 1.0→1.1 + PLAN §M12 | TASK-088 | `done` ✅ (10/10 AC — ADR-0007 + docs/guides/migration-1.0-to-1.1.md + PLAN §M12 DONE + full suite 2118) |
+| P4 | Docs & ADR | C5 ADR-0007 (compatibility policy) + migration guide 1.0→1.1 + PLAN §M12 | TASK-088 | `done` ✅ (10/10 AC — ADR-0007 + docs/guides/migration-1.0-to-1.1.md + PLAN §M12 DONE + README links — **M12 HOÀN TẤT 5/5 TASK**) |
 
 Dependency order: C1 → C2 → C3 → (C4 ∥ C5)
 ## 📋 M13 — Harness Trust & Behavioral Conformance (PLANNED — sau M12) · TRUST
