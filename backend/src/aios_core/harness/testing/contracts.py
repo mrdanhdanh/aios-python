@@ -31,13 +31,19 @@ class FaultType(str, Enum):
 
 
 class Fault(BaseModel):
-    """Chaos nhẹ: attempts = retries + 1 (C2-04)."""
+    """Chaos nhẹ: attempts = retries + 1 (C2-04).
+
+    recoverable=False (M13-P0, TASK-089): fault không bao giờ recover —
+    injector trả fault mọi lần → runner retry fail → SimulationStatus.ERROR.
+    Default True giữ hành vi cũ (inject 1 lần/target, retry thành công).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     target: str  # "model" | "tool.<name>" | "resource"
     type: FaultType
     params: dict = {}
+    recoverable: bool = True
 
 
 class ExpectedResult(BaseModel):

@@ -250,6 +250,61 @@ class RuntimeKernel:
         harness_registry.register(benchmark_harness)  # id="benchmark"
         container.register_instance(BenchmarkHarness, benchmark_harness)
 
+        # Behavioral Conformance (M13-P0, TASK-089): N lần + repeat + fault +
+        # evidence compare + gate (chỉ expose). Engine tạo SimulationRunner
+        # riêng (default FakeRuntime) — độc lập TestHarness (P3-8 v1).
+        from ..harness.behavioral import (
+            BehavioralConformanceEngine, BehavioralConformanceHarness,
+        )
+
+        behavioral_harness = BehavioralConformanceHarness(
+            BehavioralConformanceEngine(),
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(behavioral_harness)  # id="behavioral"
+        container.register_instance(BehavioralConformanceHarness, behavioral_harness)
+
+        # Harness Coverage + Readiness (M13-P1, TASK-090): coverage model 9
+        # chiều + negative-path + readiness scorer. Registry shared — builder
+        # exclude self id="coverage" (P1-3 v1). Fail-closed: v1 NOT_READY
+        # (replay gate) cho tới khi TASK-091 cover đủ.
+        from ..harness.coverage import (
+            CoverageHarness, HarnessReadinessScorer,
+        )
+
+        coverage_harness = CoverageHarness(
+            harness_registry,  # shared registry
+            HarnessReadinessScorer(),
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(coverage_harness)  # id="coverage"
+        container.register_instance(CoverageHarness, coverage_harness)
+
+        # Meta-Harness (M13-P2, TASK-091): verify the verifier — independent
+        # oracle + adversarial fail-closed. Tái dùng public verification API.
+        # Engine route state_service (case 8) + registry ids vào reproducible.
+        from ..harness.meta import MetaHarness
+
+        meta_harness = MetaHarness(
+            state_service=container.resolve(StateService),  # shared
+            registry_ids=sorted(harness_registry.list()),
+        )
+        harness_registry.register(meta_harness)  # id="meta"
+        container.register_instance(MetaHarness, meta_harness)
+
+        # Release Gate (M13-P3, TASK-092): System Readiness ≠ Harness Trust.
+        # Tổ hợp 2 score độc lập (coverage readiness + meta trust) → verdict.
+        # Dependency injection 2 sub-harness (KHÔNG import concrete class).
+        from ..harness.release import ReleaseGateHarness
+
+        release_harness = ReleaseGateHarness(
+            coverage_harness,  # đã tạo ở trên
+            meta_harness,
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(release_harness)  # id="release"
+        container.register_instance(ReleaseGateHarness, release_harness)
+
         # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
         # injectable qua register (placeholder deterministic v1, INV-022).
         from ..harness.doctor import (
