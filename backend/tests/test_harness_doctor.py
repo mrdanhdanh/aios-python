@@ -499,7 +499,7 @@ class TestConfigWiring:
                                    "behavioral", "coverage", "meta",
                                    "release", "diagnose", "heal",
                                    "simulate", "certify",
-                                   "autonomous"}  # M13+M14+M15
+                                   "autonomous", "dsh"}  # M13+M14+M15+M16
 
     def test_registry_register_shared_checks(self, tmp_path):
         from aios_core.config import ArtifactsSettings, AuditSettings, Settings

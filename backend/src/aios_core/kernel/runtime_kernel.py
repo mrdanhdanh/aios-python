@@ -355,6 +355,15 @@ class RuntimeKernel:
         harness_registry.register(autonomous_harness)  # id="autonomous"
         container.register_instance(AutonomousHarness, autonomous_harness)
 
+        # DSH Bridge (M16, TASK-104): independent verification oracle via dsh.
+        from ..harness.dsh_bridge import DSHBridgeHarness
+
+        dsh_harness = DSHBridgeHarness(
+            state_service=container.resolve(StateService),
+        )
+        harness_registry.register(dsh_harness)  # id="dsh"
+        container.register_instance(DSHBridgeHarness, dsh_harness)
+
         # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
         # injectable qua register (placeholder deterministic v1, INV-022).
         from ..harness.doctor import (

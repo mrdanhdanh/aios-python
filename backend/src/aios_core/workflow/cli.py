@@ -290,6 +290,12 @@ def main(argv: list[str] | None = None) -> int:
     h_autonomous.add_argument("--level", choices=["supervised", "assisted", "autonomous"],
                               default="supervised",
                               help="Autonomy level (default supervised)")
+    h_dsh = harness_sub.add_parser(
+        "dsh",
+        help="DSH Bridge — independent verification oracle (M16)",
+    )
+    h_dsh.add_argument("--no-strict", action="store_true",
+                       help="Không raise khi dsh invariants fail")
 
     args = parser.parse_args(argv)
 
@@ -407,6 +413,8 @@ def main(argv: list[str] | None = None) -> int:
         return _harness_certify(args)
     if args.command == "harness" and args.harness_command == "autonomous":
         return _harness_autonomous(args)
+    if args.command == "harness" and args.harness_command == "dsh":
+        return _harness_dsh(args)
     return 1
 
 
@@ -1558,6 +1566,28 @@ def _harness_autonomous(args) -> int:
     auto_report = auto_h.get_report(ctx.run_id) or {}
     print(json.dumps({"autonomous": auto_report,
                       "action": auto_report.get("action", "unknown")},
+                     indent=2))
+    return 0
+
+
+def _harness_dsh(args) -> int:
+    """DSH Bridge (M16, TASK-104): independent verification oracle."""
+    from ..harness import HarnessRegistry, HarnessRunner
+    from ..harness.dsh_bridge import DSHBridgeHarness
+    from ..kernel import RuntimeKernel
+    from ..kernel.services import StateService
+
+    kernel = RuntimeKernel.create()
+    reg = kernel.container.resolve(HarnessRegistry)
+    state = StateService()
+    runner = HarnessRunner(state_service=state)
+    dsh_h = DSHBridgeHarness(state_service=state)
+    ctx = runner.create_context(
+        dsh_h, "dsh", config={"strict": not args.no_strict})
+    report = runner.execute(dsh_h, ctx)
+    dsh_report = dsh_h.get_report(ctx.run_id) or {}
+    print(json.dumps({"dsh": dsh_report,
+                      "status": dsh_report.get("status", "unconfigured")},
                      indent=2))
     return 0
 

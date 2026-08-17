@@ -148,7 +148,7 @@ class TestWiring:
         kernel = RuntimeKernel.create(Settings())
         reg = kernel.container.resolve(HarnessRegistry)
         assert reg.get("autonomous") is not None
-        assert len(reg.list()) == 15
+        assert len(reg.list()) == 16
 
 
 class TestCLI:

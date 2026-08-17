@@ -348,7 +348,7 @@ class TestWiring:
         assert reg.get("coverage") is not None
         assert reg.get("coverage").id == "coverage"
         # registry có 12 harness (11 + heal) — builder exclude self → 11
-        assert len(reg.list()) == 15
+        assert len(reg.list()) == 16
         assert "coverage" in reg.list()
         assert "release" in reg.list()
         assert "diagnose" in reg.list()

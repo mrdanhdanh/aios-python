@@ -620,4 +620,4 @@ class TestConfigWiring:
                                    "behavioral", "coverage", "meta",
                                    "release", "diagnose", "heal",
                                    "simulate", "certify",
-                                   "autonomous"}  # M13+M14+M15
+                                   "autonomous", "dsh"}  # M13+M14+M15+M16
