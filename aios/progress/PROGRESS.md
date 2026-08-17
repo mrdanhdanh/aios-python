@@ -3,7 +3,64 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
-## 🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
+## ✅ M12 — AIOS 1.1 Compatibility (2026-08-16 — IMPLEMENTATION DONE, chờ merge PR #8, Issue #7)
+
+> PLAN.md §M12 (P17): **Issue #7** — user duyệt "nâng cấp hệ thống" → roadmap §43: AIOS 1.1 Compatibility (bước đầu sau M11). KHÔNG thêm Core feature, KHÔNG thêm invariant — INV-001..035 giữ nguyên frozen. 5 nâng cấp C1–C5, 5 task (TASK-084..088).
+> **Nhánh**: `feature/ISSUE-7-aios-1-1-compatibility` (từ `verify` @ `d4185a6`) — **đã push `09ed6f4`, PR #8 READY (validate PASS, mergeable)** — chờ user merge thủ công → verify → promotion master.
+
+| Phase | Nội dung | Nâng cấp | Task | Trạng thái |
+|-------|----------|----------|------|------------|
+| P0 | Version & Compatibility Baseline | C1 version bump 1.0→1.1 toàn hệ thống (contract/config/CLI/metadata) + Compatibility Matrix registry | TASK-084 | `done` ✅ (12/12 AC — __version__ 1.1.0 + catalog 1.1.0 + compat matrix 14 entry + CLI compat + full suite 2071) |
+| P1 | Migration 1.0→1.1 thật | C2 upgrade pipeline end-to-end trên dữ liệu thật (plan → backup → dry-run → validate → rollback) | TASK-085 | `done` ✅ (12/12 AC — migration_110.py 4 transforms + Aios110Migrator matrix-gated + CLI migrate nhánh 1.0→1.1 + fix bug engine.apply + full suite 2098) |
+| P2 | Backward Compatibility | C3 plugin v0→v1 · contract v0→v1 · workflow v0→v1 chạy trên 1.1 + test chéo | TASK-086 | `done` ✅ (10/10 AC — backward_compat.py 9 check 5 kind + CLI compat verify + fix AiosRange.compatible parse-only + full suite 2109) |
+| P3 | Compatibility Conformance | C4 mở rộng `aiagent conformance` area `compatibility` + gate (giữ 10 areas/6 gates) | TASK-087 | `done` ✅ (8/8 AC — area compatibility + gate_g + 11 areas/7 gates → AIOS 1.1 READY + full suite 2118) |
+| P4 | Docs & ADR | C5 ADR-0007 (compatibility policy) + migration guide 1.0→1.1 + PLAN §M12 | TASK-088 | `done` ✅ (10/10 AC — ADR-0007 + docs/guides/migration-1.0-to-1.1.md + PLAN §M12 DONE + full suite 2118) |
+
+Dependency order: C1 → C2 → C3 → (C4 ∥ C5)
+## 📋 M13 — Harness Trust & Behavioral Conformance (PLANNED — sau M12) · TRUST
+
+> PLAN.md §M13 (P18): bước tiếp theo SAU M12 (AIOS 1.1 Compatibility). KHÔNG sửa Runtime/Orchestrator (giữ INV-017..021). Mở rộng Harness từ "test/certify framework" → **trust layer tự xác minh (self-validating) + production-grade**. Nguồn: tự đánh giá độ harness 2026-08-16 (4/5 — Certified & Gated, chưa Autonomous) + đề xuất người dùng (5 ưu tiên + roadmap). **Harness Track (M13→M15) FROZEN** sau 6 điểm chỉnh sửa.
+> **Trạng thái**: `todo` — chưa bắt đầu (M12 đang IN-PROGRESS, TASK-084..088).
+
+| Phase | Nội dung | Ưu tiên | Task | Trạng thái |
+|-------|----------|---------|------|------------|
+| P0 | Behavioral Conformance — execute N lần (configurable: quick=100/std=1k/stress=10k/soak=duration) + replay + fault-inject + evidence compare + regression gate | Behavioral | TASK-089 | `todo` |
+| P1 | Harness Coverage model (9 chiều + negative-path) + Doctor Readiness scoring | Coverage | TASK-090 | `todo` |
+| P2 | Meta-Harness — verify the verifier với verification path ĐỘC LẬP (chống circular) + adversarial fail-closed | Meta | TASK-091 | `todo` |
+| P3 | System Readiness ≠ Harness Trust; release gate cả 2 PASS | Trust | TASK-092 | `todo` |
+| P4 | Docs & ADR — ADR Harness Trust + behavioral spec + PLAN §M13 | Docs | TASK-093 | `todo` |
+
+Dependency order: P0 → P1 → P2 → (P3 ∥ P4)
+## 📋 M14 — Controlled Self-Healing (PLANNED — sau M13) · HEAL
+
+> PLAN.md §M14 (P19): đóng vòng lặp tự phục hồi có kiểm soát (Detect→Diagnose→Generate Fix→Risk→Simulate→Meta-Verify→Permission→Human Approval→Apply→Re-test→Rollback if needed→Certify). **NGUYÊN TẮC**: Harness KHÔNG tự sửa tiêu chuẩn để tự PASS; mọi apply thực cần Permission Broker + Human Approval + Certified Baseline/Rollback. Cần M13 (Meta-Harness + Trust Separation) làm nền.
+> **Trạng thái**: `todo` — chưa bắt đầu.
+
+| Phase | Nội dung | Task | Trạng thái |
+|-------|----------|------|------------|
+| P0 | Detect & Diagnose — failure corpus + localization | TASK-094 | `todo` |
+| P1 | Candidate Generate + Risk Scoring | TASK-095 | `todo` |
+| P2 | Simulation + Meta-Verify Gate (KHÔNG relax criteria) | TASK-096 | `todo` |
+| P3 | Permission Broker + Human Approval + Apply + Re-test + Rollback (restore certified state) + Certify + Certified Baseline | TASK-097 | `todo` |
+| P4 | Docs & ADR — INV-037 Remediation Integrity + kill-switch | TASK-098 | `todo` |
+
+Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
+
+## 📋 M15 — Autonomous Harness (PLANNED — sau M14) · AUTONOMY
+
+> PLAN.md §M15 (P20): đích cuối harness track — vòng lặp tự chủ (autonomous) detect→diagnose→fix→verify→apply→certify, Improvement Engine, Continuous Certification, Autonomy Policy + Trust Budget/Autonomy Levels + kill-switch. **Autonomy ≠ Permission**: Autonomy Engine quyết định "có nên tự làm?", Permission Broker quyết định "có được phép?". Giữ fail-closed + permission boundary + human oversight high-risk. Cần M14 làm nền.
+> **Trạng thái**: `todo` — chưa bắt đầu.
+
+| Phase | Nội dung | Task | Trạng thái |
+|-------|----------|------|------------|
+| P0 | Autonomous Loop Orchestrator | TASK-099 | `todo` |
+| P1 | Improvement Engine (failure-corpus learning) | TASK-100 | `todo` |
+| P2 | Continuous Certification (low-risk auto) | TASK-101 | `todo` |
+| P3 | Trust Budget (7 giới hạn) + Autonomy Levels + Autonomy Policy + SAFE-STOP | TASK-102 | `todo` |
+| P4 | Docs & ADR — INV-038 Autonomy Boundary + Autonomy Constitution | TASK-103 | `todo` |
+
+Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
+## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).
 > **Vòng đời KHÉP KÍN**: PR #5 (feature → verify) MERGED `57345ca` → verify PASS (2052/2052 + conformance READY) → **PR #6** (promotion `release: verify → master (2026-08-16)`) MERGED `3b513c3` → **Issue #4 CLOSED** → nhánh feature đã xóa. master = verify = `3b513c3` (ADR-0005).

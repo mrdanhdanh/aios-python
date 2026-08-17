@@ -46,7 +46,9 @@ def create_app(
 
     regs = build_registries(settings, kernel, regs)
 
-    app = FastAPI(title="AIOS API", version="0.1.0")
+    from .. import __version__
+
+    app = FastAPI(title="AIOS API", version=__version__)
     app.state.settings = settings
     app.state.kernel = kernel
     app.state.registries = regs

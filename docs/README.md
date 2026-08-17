@@ -48,10 +48,12 @@ Coverage gate ≥ 80% trên `aios_core` (tự động qua `addopts`).
 ```bash
 # Sau khi kích hoạt venv backend
 aiagent doctor          # Health 100/100 (18 hạng mục)
-aiagent conformance     # 9 areas + 20 Golden Scenarios → AIOS 1.0 READY
+aiagent conformance     # 11 areas + 20 Golden Scenarios + 7 gates → AIOS 1.1 READY
 aiagent arch-health     # Architecture Health — 0 violations (INV-001..034)
+aiagent compat verify   # Backward compatibility cũ→mới trên AIOS 1.1 (9/9)
 ```
 
 > Ghi chú:
 > - `logging.file_path` mặc định là CWD-relative (`aios/logs/aios.jsonl`) — chạy tay từ `backend/` sẽ tạo `backend/aios/logs/` (đã thêm vào .gitignore).
-> - Kiến trúc đã **freeze** tại M10: INV-001..034, vi phạm = release blocker — xem [`docs/architecture/constitution-1.0.md`](architecture/constitution-1.0.md).
+> - Kiến trúc đã **freeze** tại M10: INV-001..034 (M11: INV-035), vi phạm = release blocker — xem [`docs/architecture/constitution-1.0.md`](architecture/constitution-1.0.md).
+> - Nâng cấp AIOS 1.0 → 1.1: [`docs/guides/migration-1.0-to-1.1.md`](guides/migration-1.0-to-1.1.md) · Chính sách: [`docs/adr/0007-compatibility-migration-policy.md`](adr/0007-compatibility-migration-policy.md).

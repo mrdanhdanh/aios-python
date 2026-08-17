@@ -1,6 +1,7 @@
 """AIOS core package: config, logging, metadata, healthcheck, kernel foundations."""
 
-__version__ = "0.1.0"
+# M12 (Issue #7): AIOS 1.1 Compatibility — dev 0.1.0 → release 1.1.0 (minor bump, backward-compatible).
+__version__ = "1.1.0"
 
 from . import agents, capabilities, catalog, context, contracts, knowledge, knowledge_graph, memory, models, orchestrator, prompts, sandbox, skills, tools, workflow
 from .config import Settings, load_settings

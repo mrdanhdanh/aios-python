@@ -1,13 +1,13 @@
-# AIOS — Kiến trúc hệ thống (v3 — AIOS 1.0 Final)
+# AIOS — Kiến trúc hệ thống (v3 — AIOS 1.0 CERTIFIED · M11 DONE · M12 IN-PROGRESS)
 
 > **📌 TÀI LIỆU HIỆN HÀNH** — thay thế `docs/architecture-v2.md` (giữ làm lịch sử).
 > Nguồn sự thật: `docs/PLAN.md` (master plan v6) + `aios/progress/PROGRESS.md` (trạng thái build thực tế).
-> Cập nhật lần cuối: 2026-08-15 — phản ánh **M0–M10 DONE — AIOS 1.0 CERTIFIED** (full suite 1939 tests, `aiagent conformance` → AIOS 1.0 READY, doctor 100/100, review ACCEPTED).
+> Cập nhật lần cuối: **2026-08-16** — phản ánh **M0–M10 DONE (AIOS 1.0 CERTIFIED)** + **M11 DONE** (Deterministic Artifact & Interaction Runtime — INV-035, full suite **2052 tests**, `aiagent conformance` 10 areas/6 gates) + **M12 IN-PROGRESS** (AIOS 1.1 Compatibility — TASK-084..088, version 1.0→1.1, nhánh `feature/ISSUE-7-aios-1-1-compatibility`).
 > Định dạng: **Markdown + Mermaid diagrams** (flowchart / sequenceDiagram / stateDiagram-v2) — render được trên GitHub và VS Code preview. Quyết định đảo quy ước "markdown thuần" (TASK-063) theo yêu cầu người dùng 2026-08-15.
 
 ## 0. Cách đọc tài liệu này
 
-- **Nguồn dữ liệu**: mọi trạng thái/số liệu lấy từ `aios/progress/PROGRESS.md` (2026-08-15) và `docs/PLAN.md`; mọi module code đối chiếu `backend/src/aios_core/`.
+- **Nguồn dữ liệu**: mọi trạng thái/số liệu lấy từ `aios/progress/PROGRESS.md` (2026-08-16) và `docs/PLAN.md`; mọi module code đối chiếu `backend/src/aios_core/` (bao gồm package M11 mới: `rendering/`, `verification/`).
 - **Quy ước ký hiệu**: `✅` = đã build + test thật (kèm số tests); `🔲` = chưa làm (todo — không còn task nào ở M10).
 - **Mô hình tầng**: 7 tầng L1..L7 theo `docs/architecture/layer-model.md` (**FROZEN tại M10**) — KHÁC thứ tự mô tả "chức năng" của v2; v3 lấy layer-model làm chuẩn.
 - **Bất biến kiến trúc (INV)**: xem §12 + `docs/architecture/constitution-1.0.md`; enforcement tự động qua `backend/tests/test_architecture.py` (AST) + runtime scanner `observability/arch_health.py` + release gates TASK-073.
@@ -68,6 +68,8 @@ flowchart TD
         HARN["AIOS Harness (M6)"]
         ENT["Enterprise (M7)"]
         ECO["Ecosystem: plugins / extension / ecosystem (M8)"]
+        VERIF["Verification pkg (M11: INV-035 state model + fail-closed)"]
+        REND["Rendering pkg (M11: RenderReplay / VisualEvidence)"]
     end
 ```
 
@@ -75,6 +77,7 @@ flowchart TD
 > - **Autonomous = L2** (định hướng Orchestrator, không phải "lớp mở rộng") — v2 xếp sai điểm này.
 > - Harness (M6) / Enterprise (M7) / Ecosystem (M8) là **lớp mở rộng thuộc L7** — không phải tầng riêng.
 > - **M10 là nhóm đảm bảo** (Freeze → Harden → Secure → Productize → Certify), KHÔNG phải tầng L8.
+> - **M11 bổ sung (DONE 2026-08-16)**: package `rendering/` (RenderReplay / VisualEvidence / VisualRegressionProbe) + `verification/` (INV-035 Verification State Model) + Asset Pipeline (registry `kind=asset`, Discovery/Routing) — đặt trong L6/L7 theo layer-model frozen, **không đổi cấu trúc 7 tầng**.
 
 ### 1.1 Bảng 7 tầng (theo `layer-model.md` frozen)
 
@@ -408,7 +411,54 @@ flowchart TD
 
 ---
 
-## 10. Tiến độ milestone — M0..M10 (AIOS 1.0 CERTIFIED)
+## 9b. M11 — Deterministic Artifact & Interaction Runtime (DONE ✅ 2026-08-16)
+
+> **Milestone M11** (Issue #4, PLAN.md §M11) — giới thiệu **INV-035** (Core Invariant MỚI, không vi phạm INV-001..034). Full suite **2052 tests**, `aiagent conformance` → **10 areas / 6 gates**. 6 task TASK-078..083, vòng đời khép kín qua PR #5/#6 → master `3b513c3`.
+
+```mermaid
+flowchart LR
+    subgraph R2["R2 - Verification Integrity (TASK-078)"]
+        V1["INV-035 Verification Fail-Closed"]
+        V2["Verification State Model"]
+        V3["CI fail-closed gate + retroactive audit"]
+    end
+    subgraph R3["R3 - Deterministic Visual Runtime (TASK-079)"]
+        D1["RenderReplay / DeterministicHarness"]
+        D2["Record input timeline + seed to replay to assert pixel-stable"]
+    end
+    subgraph R1R10["R1+R10 - Visual Observability (TASK-080)"]
+        O1["VisualEvidence / VisualRegressionProbe"]
+        O2["UI State Contract: UI State to Render to Screenshot"]
+    end
+    subgraph R9["R9 - Asset Capability (TASK-081)"]
+        A1["AssetPipeline Contract"]
+        A2["Registry kind=asset + Discovery/Routing"]
+    end
+    subgraph R6R8R12["R6+R8+R12 - Creative/Vendor/Reference (TASK-082)"]
+        C1["Creative Domain"]
+        C2["Vendor Integrity"]
+        C3["Reference-Asset Understanding"]
+    end
+    subgraph R5R7["R5+R7 - Ecosystem and DX (TASK-083)"]
+        E1["SkillDistiller"]
+        E2["Static Deploy (verify/manifest/dry/apply)"]
+    end
+```
+
+### 9b.1 Bảng tasks M11 (theo PROGRESS.md — 6/6 done)
+
+| Task | Nội dung (R-tag) | Milestone | Trạng thái | Kết quả |
+|------|----------|-----------|------------|---------|
+| TASK-078 | R2 INV-035 Verification Fail-Closed + State Model + CI gate | M11-P0 | `done` ✅ | 12/12 AC · 1969 tests |
+| TASK-079 | R3 RenderReplay / DeterministicHarness | M11-P1 | `done` ✅ | 10/10 AC · 1987 tests |
+| TASK-080 | R1 VisualEvidence / VisualRegressionProbe + R10 UI State Contract | M11-P2 | `done` ✅ | 10/10 AC · 2003 tests |
+| TASK-081 | R9 AssetPipeline Contract + R4 Registry kind=asset + R11 Routing | M11-P3 | `done` ✅ | 10/10 AC · 2018 tests |
+| TASK-082 | R6 Creative Domain + R8 Vendor Integrity + R12 Reference-Asset | M11-P3b/c/d | `done` ✅ | 11/11 AC · 2034 tests |
+| TASK-083 | R5 SkillDistiller + R7 Static Deploy | M11-P4a/b | `done` ✅ | 11/11 AC · 2052 tests · **M11 HOÀN TẤT** |
+
+---
+
+## 10. Tiến độ milestone — M0..M11 DONE + M12 IN-PROGRESS
 
 ```mermaid
 flowchart LR
@@ -423,6 +473,9 @@ flowchart LR
     M8 --> M9["M9 - Autonomous (1780 @M9)"]
     M9 --> M10["M10 - AIOS 1.0 (1939 + conformance READY)"]
     M10 --> DONE["AIOS 1.0 CERTIFIED"]
+    M10 --> M11["M11 - Deterministic Artifact and Interaction Runtime (2052)"]
+    M11 --> M12["M12 - AIOS 1.1 Compatibility (IN-PROGRESS)"]
+    M12 --> CUR["AIOS 1.1 (IN-PROGRESS)"]
 ```
 
 | Milestone | Mô tả | Trạng thái | Số liệu (theo PROGRESS.md 2026-08-15) |
@@ -438,6 +491,8 @@ flowchart LR
 | M8 | Ecosystem — SDK, plugins, extension contracts, registry, marketplace, certification | ✅ done | 1639 tests |
 | M9 | Autonomous — 13 task, INV-030..034 | ✅ done | 1780 tests @M9 · 94.46% (full suite 1793) |
 | M10 | AIOS 1.0 — freeze INV-001..034, conformance, certification | ✅ done | **1939 tests + vitest 13/13 · conformance READY · doctor 100/100 · review ACCEPTED** |
+| M11 | Deterministic Artifact & Interaction Runtime — INV-035, rendering/visual, asset pipeline | ✅ done | **2052 tests · conformance 10 areas/6 gates** (TASK-078..083) |
+| M12 | AIOS 1.1 Compatibility (Issue #7) — version 1.0→1.1, migration, backward-compat, conformance area, ADR-0007 | 🔄 in-progress | TASK-084 (spec v3, paused) · TASK-085..088 todo |
 
 ---
 
@@ -483,10 +538,21 @@ flowchart LR
 | TASK-044 | Plugin Runtime | 1584 | M8 |
 | TASK-045..049 | Extension Contracts / Registry / DevKit / Marketplace / Certification | 1639 | M8 |
 | TASK-050..062 | Autonomous (INV-030..034) | 1780 @M9 | M9 |
+| TASK-078 | Verification Fail-Closed (INV-035) + State Model + CI gate | 1969 | M11 |
+| TASK-079 | Deterministic Visual Runtime (RenderReplay/DeterministicHarness) | 1987 | M11 |
+| TASK-080 | VisualEvidence/VisualRegressionProbe + UI State Contract | 2003 | M11 |
+| TASK-081 | AssetPipeline Contract + Registry kind=asset + Routing | 2018 | M11 |
+| TASK-082 | Creative Domain + Vendor Integrity + Reference-Asset | 2034 | M11 |
+| TASK-083 | SkillDistiller + Static Deploy | 2052 | M11 |
+| TASK-084 | M12-P0 Version & Compatibility Baseline (C1) — spec v3, paused | — | M12 |
+| TASK-085 | M12-P1 Migration 1.0→1.1 (C2) | todo | M12 |
+| TASK-086 | M12-P2 Backward Compatibility (C3) | todo | M12 |
+| TASK-087 | M12-P3 Conformance area compatibility (C4) | todo | M12 |
+| TASK-088 | M12-P4 ADR-0007 + migration guide (C5) | todo | M12 |
 
 ---
 
-## 12. Architecture Invariants — INV-001..034 (FROZEN — vi phạm = release blocker)
+## 12. Architecture Invariants — INV-001..035 (FROZEN — vi phạm = release blocker; INV-035 thêm tại M11)
 
 > Freeze tại M10 (TASK-063): vi phạm INV = **release blocker**, không còn warning. Enforcement: `backend/tests/test_architecture.py` (AST import-graph scan, nhãn canonical `test_inv0xx_*`) + runtime scanner `observability/arch_health.py` (layer/contract/policy) + Release Gates A–E (TASK-073). Quyết định: `docs/adr/0004-architecture-invariants.md` + `docs/architecture/constitution-1.0.md`.
 
@@ -526,6 +592,7 @@ flowchart LR
 | INV-032 | Long-running Resumable | Checkpoint/resume cho session dài | M9 |
 | INV-033 | Self-Improvement via Harness | Experimentation qua Harness, evidence-first | M9 |
 | INV-034 | Autonomous Memory No Unverified Promote | Memory promote phải qua kiểm chứng (double gate) | M9 |
+| INV-035 | Verification Fail-Closed | Verification phải fail-closed (verdict=FAIL khi thiếu evidence/error); không auto-pass | M11 |
 
 **4 invariant chốt cốt lõi (ADR-0004):**
 1. **Orchestrator không phải God Object** — điều phối qua Runtime API, không sở hữu service (INV-005).
@@ -585,7 +652,7 @@ sequenceDiagram
 
 ## 14. Nguồn & lịch sử
 
-- Tài liệu này: `docs/architecture-v3.md` (2026-08-15, TASK-076) — **bản hiện hành** (AIOS 1.0 Final, Mermaid).
+- Tài liệu này: `docs/architecture-v3.md` (cập nhật 2026-08-16 — gốc TASK-076, 2026-08-15) — **bản hiện hành** (AIOS 1.0 CERTIFIED + M11 DONE + M12 IN-PROGRESS, Mermaid). Cập nhật 2026-08-16: thêm §9b (M11 DONE) + M12 IN-PROGRESS + INV-035; version 1.1 planned (TASK-084..088).
 - Quy ước Mermaid thay "markdown thuần" của v2 — quyết định người dùng 2026-08-15 (render được trên GitHub + VS Code preview).
 - Bản cũ: `docs/architecture-v2.md` (2026-08-15, TASK-063) — markdown thuần, phản ánh đến M10 todo — **giữ làm lịch sử**.
 - Bản gốc: `docs/architecture.md` — mô tả đến M5 in-progress — **giữ làm lịch sử**.

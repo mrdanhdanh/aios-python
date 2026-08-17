@@ -87,15 +87,16 @@ class ContractDefinition(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Catalog 1.0 — khớp code thật (backend/src/aios_core/).
-# version = baseline freeze 1.0.0; notes ghi nguồn thật của contract.
+# Catalog 1.1 — khớp code thật (backend/src/aios_core/).
+# version = baseline freeze 1.1.0 (M12 Issue #7 — minor bump từ 1.0.0, backward-compatible).
+# deprecated_in của plugin GIỮ 1.0.0 (R3 review — test_cli_contract_check_full_has_warnings phụ thuộc plugin còn deprecated).
 # ---------------------------------------------------------------------------
 
 CONTRACTS: tuple[ContractDefinition, ...] = (
     ContractDefinition(
         id="agent",
         name="Agent Contract",
-        version="1.0.0",
+        version="1.1.0",
         schema_ref=("aios_core.agents.base", "Assistant"),
         lifecycle=ContractLifecycle.STABLE,
         notes="Agent interface (Worker Plane) — INV-001/002; Agent Contract mở rộng M8 "
@@ -104,7 +105,7 @@ CONTRACTS: tuple[ContractDefinition, ...] = (
     ContractDefinition(
         id="capability",
         name="Capability Contract",
-        version="1.0.0",
+        version="1.1.0",
         schema_ref=("aios_core.capabilities.registry", "Capability"),
         lifecycle=ContractLifecycle.STABLE,
         notes="Capability registry — agent chỉ chọn capability, không chọn tool (INV-002).",
@@ -112,7 +113,7 @@ CONTRACTS: tuple[ContractDefinition, ...] = (
     ContractDefinition(
         id="tool",
         name="Tool Contract",
-        version="1.0.0",
+        version="1.1.0",
         schema_ref=("aios_core.tools.base", "Tool"),
         lifecycle=ContractLifecycle.STABLE,
         notes="Tool ABC template run 1-6, gate fail-closed, 6 loại tool (M2).",
@@ -120,7 +121,7 @@ CONTRACTS: tuple[ContractDefinition, ...] = (
     ContractDefinition(
         id="workflow",
         name="Workflow Contract",
-        version="1.0.0",
+        version="1.1.0",
         schema_ref=("aios_core.workflow.definition", "WorkflowDefinition"),
         lifecycle=ContractLifecycle.STABLE,
         notes="Workflow Definition declarative, engine-agnostic (INV-003).",
@@ -128,7 +129,7 @@ CONTRACTS: tuple[ContractDefinition, ...] = (
     ContractDefinition(
         id="runtime",
         name="Runtime Contract",
-        version="1.0.0",
+        version="1.1.0",
         schema_ref=("aios_core.kernel.runtime_kernel", "RuntimeKernel"),
         lifecycle=ContractLifecycle.FROZEN,
         notes="Runtime = 9 services + DI container + start/stop; FROZEN tại 1.0 "
@@ -137,7 +138,7 @@ CONTRACTS: tuple[ContractDefinition, ...] = (
     ContractDefinition(
         id="event",
         name="Event Contract",
-        version="1.0.0",
+        version="1.1.0",
         schema_ref=("aios_core.kernel.events", "EventType"),
         lifecycle=ContractLifecycle.STABLE,
         notes="EventType bus — thêm event mới được phép (minor), đổi tên/giá trị = breaking.",
@@ -145,7 +146,7 @@ CONTRACTS: tuple[ContractDefinition, ...] = (
     ContractDefinition(
         id="artifact",
         name="Artifact Contract",
-        version="1.0.0",
+        version="1.1.0",
         schema_ref=("aios_core.contracts.artifact", "ArtifactContract"),
         lifecycle=ContractLifecycle.FROZEN,
         notes="Artifact = ContractMetadata + checksum + sidecar (INV-008).",
@@ -153,7 +154,7 @@ CONTRACTS: tuple[ContractDefinition, ...] = (
     ContractDefinition(
         id="plugin",
         name="Plugin Contract",
-        version="1.0.0",
+        version="1.1.0",
         schema_ref=("aios_core.plugins.contracts", "PluginManifest"),
         lifecycle=ContractLifecycle.DEPRECATED,
         deprecated_in="1.0.0",
@@ -168,7 +169,7 @@ CONTRACTS: tuple[ContractDefinition, ...] = (
     ContractDefinition(
         id="model",
         name="Model Contract",
-        version="1.0.0",
+        version="1.1.0",
         schema_ref=("aios_core.models.base", "ModelContract"),
         lifecycle=ContractLifecycle.STABLE,
         notes="ModelContract ABC + providers (Mock/OpenAI/Ollama) — model "
@@ -177,7 +178,7 @@ CONTRACTS: tuple[ContractDefinition, ...] = (
     ContractDefinition(
         id="memory",
         name="Memory Contract",
-        version="1.0.0",
+        version="1.1.0",
         schema_ref=("aios_core.memory.contracts", "MemoryContext"),
         lifecycle=ContractLifecycle.STABLE,
         notes="MemoryQuery/Candidate/Score/Selection/Context + MemoryBudget — "

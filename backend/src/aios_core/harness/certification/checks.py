@@ -1,4 +1,4 @@
-"""Certification Suite 1.0 — 9 area checks (structural, M10-F5).
+"""Certification Suite 1.0 — 11 area checks (structural, M10-F5 + M11 + M12).
 
 Area = "hệ thống có đúng cơ chế" (structural). Mỗi check dùng component
 thật — không hard-code PASS (R1).
@@ -12,7 +12,7 @@ from .contracts import AreaResult, CertificationArea, PassFail
 
 
 class AreaChecks:
-    """9 area checks — deterministic, component thật."""
+    """11 area checks — deterministic, component thật."""
 
     def __init__(self, kernel: Any | None = None) -> None:
         self.kernel = kernel
@@ -178,10 +178,35 @@ class AreaChecks:
         except Exception as exc:  # noqa: BLE001
             return self._result("verification", False, str(exc))
 
+    def compatibility(self) -> AreaResult:
+        """AIOS 1.1 Compatibility (M12-P3 C4, TASK-087): matrix + backward suite.
+
+        Structural — KHÔNG gọi ``_get_kernel()`` (C2-05); CHỈ relative import
+        upgrade/* (layer rule cấm import root ``aios_core`` — arch-health
+        bắt `from ... import __version__`). Component thật:
+        CompatibilityMatrix.list() + BackwardCompatibilitySuite.run() + version.
+        """
+        try:
+            from ...upgrade.backward_compat import BackwardCompatibilitySuite
+            from ...upgrade.compatibility import AIOS_VERSION, CompatibilityMatrix
+
+            rows = CompatibilityMatrix().list()
+            report = BackwardCompatibilitySuite().run()
+            ok = (len(rows) >= 14 and report.ok
+                  and AIOS_VERSION == "1.1.0")
+            passed = sum(1 for r in report.results if r.ok)
+            return self._result(
+                "compatibility", ok,
+                f"matrix={len(rows)} entries, "
+                f"verify={passed}/{len(report.results)}, version={AIOS_VERSION}",
+            )
+        except Exception as exc:  # noqa: BLE001
+            return self._result("compatibility", False, str(exc))
+
     def run_all(self) -> list[AreaResult]:
         return [
             self.architecture(), self.contracts(), self.runtime(),
             self.policy(), self.security(), self.autonomy(),
             self.harness(), self.enterprise(), self.ecosystem(),
-            self.verification(),
+            self.verification(), self.compatibility(),
         ]

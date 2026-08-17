@@ -101,7 +101,7 @@ def test_mock_available_and_metadata():
     meta = model.metadata()
     assert meta.id == "models.mock"
     assert meta.version == __version__
-    assert "0.1.0" in meta.version
+    assert "1.1.0" in meta.version
 
 
 # -- registry -----------------------------------------------------------------

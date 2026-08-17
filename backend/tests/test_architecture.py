@@ -1149,6 +1149,14 @@ _UPGRADE_ALLOWED_AIOS = {
     "aios_core.semver",
     "aios_core.kernel.events",
     "aios_core.skills.errors",  # SkillMigrator catch SkillError/SkillStateError (R1-1)
+    "aios_core.plugins.compat",  # CompatibilityMatrix reuse check_compatibility/parse_constraint (M12 C1, TASK-084)
+    "aios_core.plugins.contracts",  # BackwardCompatibilitySuite parse PluginManifest/AiosRange (M12 C3, TASK-086)
+    "aios_core.workflow.definition",  # BackwardCompatibilitySuite parse WorkflowDefinition v0 (M12 C3, TASK-086)
+    "aios_core.workflow.compiler",  # BackwardCompatibilitySuite MockCompiler.compile (M12 C3, TASK-086)
+    "aios_core.workflow.cli",  # BackwardCompatibilitySuite scenario simulate (_run_simulate) (M12 C3, TASK-086)
+    "aios_core.contracts.catalog",  # BackwardCompatibilitySuite ContractDefinition (M12 C3, TASK-086)
+    "aios_core.contracts.compatibility",  # BackwardCompatibilitySuite CompatibilityChecker (M12 C3, TASK-086)
+    "aios_core.extension.matrix",  # BackwardCompatibilitySuite namespace gate 2 chiều (M12 C3, TASK-086)
 }
 _UPGRADE_ALLOWED_EXTERNAL = {
     "sqlite3",

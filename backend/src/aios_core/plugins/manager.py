@@ -65,7 +65,7 @@ class PluginManager:
         db_path: Path | str,
         manifest_loader: ManifestLoader | None = None,
         event_sink: Callable[[str, dict], None] | None = None,
-        aios_version: str = "1.0.0",
+        aios_version: str = "1.1.0",
         strict: bool = True,
     ) -> None:
         self._db_path = Path(db_path)
