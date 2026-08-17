@@ -21,7 +21,7 @@ Dependency order: C1 → C2 → C3 → (C4 ∥ C5)
 ## 📋 M13 — Harness Trust & Behavioral Conformance (2026-08-17 — IN-PROGRESS, Issue #8) · TRUST
 
 > PLAN.md §M13 (P18): bước tiếp theo SAU M12 (AIOS 1.1 Compatibility). KHÔNG sửa Runtime/Orchestrator (giữ INV-017..021). Mở rộng Harness từ "test/certify framework" → **trust layer tự xác minh (self-validating) + production-grade**. Nguồn: tự đánh giá độ harness 2026-08-16 (4/5 — Certified & Gated, chưa Autonomous) + đề xuất người dùng (5 ưu tiên + roadmap). **Harness Track (M13→M15) FROZEN** sau 6 điểm chỉnh sửa.
-> **Trạng thái**: `in-progress` — TASK-089 đang hard gate. Nhánh: `feature/ISSUE-8-m13-harness-trust` (từ `verify`).
+> **Trạng thái**: 5/5 task done — full suite **2254 PASS / 0 FAIL** + release gate PASS (system_ready + harness_trust) + 4 invariant track (FAIL-CLOSED ✅ + INDEPENDENT VERIFICATION ✅ + PERMISSION BOUNDARY 📋 M14 + CERTIFIED BASELINE/ROLLBACK 📋 M14). Nhánh: `feature/ISSUE-8-m13-harness-trust`.
 > **4 invariant xuyên suốt track**: FAIL-CLOSED (INV-035) + INDEPENDENT VERIFICATION + PERMISSION BOUNDARY + CERTIFIED BASELINE/ROLLBACK.
 
 | Phase | Nội dung | Ưu tiên | Task | Trạng thái |
@@ -30,7 +30,7 @@ Dependency order: C1 → C2 → C3 → (C4 ∥ C5)
 | P1 | Harness Coverage model (9 chiều + negative-path) + Doctor Readiness scoring | Coverage | TASK-090 | `done` ✅ (19/19 AC — coverage 9 chiều + negative 6/8 + readiness 7 dims + CLI `aiagent harness coverage` + full suite 2207) |
 | P2 | Meta-Harness — verify the verifier với verification path ĐỘC LẬP (chống circular) + adversarial fail-closed | Meta | TASK-091 | `done` ✅ (17/17 AC — 8 adversarial cases + chống circular monkeypatch + CLI `aiagent harness meta` exit 0 + coverage READY 8/8 + full suite 2234) |
 | P3 | System Readiness ≠ Harness Trust; release gate cả 2 PASS | Trust | TASK-092 | `done` ✅ (12/12 AC — release gate pure combiner + 2 path BLOCKED + CLI `aiagent harness release` exit 0 + full suite 2254) |
-| P4 | Docs & ADR — ADR Harness Trust + behavioral spec + PLAN §M13 | Docs | TASK-093 | `todo` |
+| P4 | Docs & ADR — ADR Harness Trust + behavioral spec + PLAN §M13 | Docs | TASK-093 | `done` ✅ (ADR-0008 + behavioral spec + PLAN §M13 DONE — M13 HOÀN TẤT 5/5) |
 
 Dependency order: P0 → P1 → P2 → (P3 ∥ P4)
 > **Deviation P0 (TASK-089)**: gate v1 chỉ expose (finding) — gate-as-blocker thuộc M14; soak v1 = loop-stability test. Chi tiết: PLAN §M13 P0 + TASK-089/evaluation.md.
