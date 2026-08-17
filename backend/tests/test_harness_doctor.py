@@ -498,7 +498,8 @@ class TestConfigWiring:
                                    "benchmark", "doctor", "readiness",
                                    "behavioral", "coverage", "meta",
                                    "release", "diagnose", "heal",
-                                   "simulate", "certify"}  # M13+M14
+                                   "simulate", "certify",
+                                   "autonomous"}  # M13+M14+M15
 
     def test_registry_register_shared_checks(self, tmp_path):
         from aios_core.config import ArtifactsSettings, AuditSettings, Settings

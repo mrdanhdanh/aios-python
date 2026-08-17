@@ -345,6 +345,16 @@ class RuntimeKernel:
         harness_registry.register(certify_harness)  # id="certify"
         container.register_instance(CertifyHarness, certify_harness)
 
+        # Autonomous (M15, TASK-099): loop orchestrator + trust budget.
+        from ..harness.autonomous import AutonomousHarness
+
+        autonomous_harness = AutonomousHarness(
+            diagnose_harness, heal_harness, certify_harness,
+            state_service=container.resolve(StateService),
+        )
+        harness_registry.register(autonomous_harness)  # id="autonomous"
+        container.register_instance(AutonomousHarness, autonomous_harness)
+
         # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
         # injectable qua register (placeholder deterministic v1, INV-022).
         from ..harness.doctor import (

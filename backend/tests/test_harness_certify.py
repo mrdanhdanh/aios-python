@@ -126,7 +126,7 @@ class TestWiring:
         kernel = RuntimeKernel.create(Settings())
         reg = kernel.container.resolve(HarnessRegistry)
         assert reg.get("certify") is not None
-        assert len(reg.list()) == 14
+        assert len(reg.list()) == 15
 
 
 class TestCLI:

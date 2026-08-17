@@ -281,6 +281,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     h_certify.add_argument("--no-strict", action="store_true",
                            help="Không raise khi certify fail")
+    h_autonomous = harness_sub.add_parser(
+        "autonomous",
+        help="Autonomous loop + trust budget (M15)",
+    )
+    h_autonomous.add_argument("--no-strict", action="store_true",
+                              help="Không raise khi autonomous fail")
+    h_autonomous.add_argument("--level", choices=["supervised", "assisted", "autonomous"],
+                              default="supervised",
+                              help="Autonomy level (default supervised)")
 
     args = parser.parse_args(argv)
 
@@ -396,6 +405,8 @@ def main(argv: list[str] | None = None) -> int:
         return _harness_simulate(args)
     if args.command == "harness" and args.harness_command == "certify":
         return _harness_certify(args)
+    if args.command == "harness" and args.harness_command == "autonomous":
+        return _harness_autonomous(args)
     return 1
 
 
@@ -1520,6 +1531,33 @@ def _harness_certify(args) -> int:
     certify_report = certify_h.get_report(ctx.run_id) or {}
     print(json.dumps({"certify": certify_report,
                       "total": certify_report.get("total", 0)},
+                     indent=2))
+    return 0
+
+
+def _harness_autonomous(args) -> int:
+    """Autonomous (M15, TASK-099): loop + trust budget + improvement."""
+    from ..harness import HarnessRegistry, HarnessRunner
+    from ..harness.autonomous import AutonomyLevel, AutonomousHarness
+    from ..kernel import RuntimeKernel
+    from ..kernel.services import StateService
+
+    kernel = RuntimeKernel.create()
+    reg = kernel.container.resolve(HarnessRegistry)
+    state = StateService()
+    runner = HarnessRunner(state_service=state)
+    level = AutonomyLevel(args.level)
+    from ..harness.autonomous.engine import AutonomousEngine
+    engine = AutonomousEngine(autonomy_level=level)
+    auto_h = AutonomousHarness(
+        reg.get("diagnose"), reg.get("heal"), reg.get("certify"),
+        state_service=state, engine=engine)
+    ctx = runner.create_context(
+        auto_h, "autonomous", config={"strict": not args.no_strict})
+    report = runner.execute(auto_h, ctx)
+    auto_report = auto_h.get_report(ctx.run_id) or {}
+    print(json.dumps({"autonomous": auto_report,
+                      "action": auto_report.get("action", "unknown")},
                      indent=2))
     return 0
 

@@ -423,7 +423,7 @@ class TestWiring:
         assert reg.get("release") is not None
         assert reg.get("release").id == "release"
         # runtime có 12 harness (11 + heal)
-        assert len(reg.list()) == 14
+        assert len(reg.list()) == 15
         assert "release" in reg.list()
 
 
