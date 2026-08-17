@@ -233,6 +233,18 @@ def main(argv: list[str] | None = None) -> int:
                               help="Ghi Baseline JSON từ lần chạy này")
     h_behavioral.add_argument("--no-strict", action="store_true",
                               help="Không raise khi FAIL/ERROR (exit vẫn 1)")
+    h_coverage = harness_sub.add_parser(
+        "coverage",
+        help="Harness Coverage model 9 chiều + negative-path + readiness (M13-P1)",
+    )
+    h_coverage.add_argument("--min-overall", type=float, default=0.8,
+                            help="Overall ngưỡng readiness (0,1])")
+    h_coverage.add_argument("--min-replay", type=float, default=0.75,
+                            help="Replay ngưỡng — v1 mặc định NOT_READY (cần TASK-091)")
+    h_coverage.add_argument("--production-tests", action="store_true",
+                            help="V1 luôn NOT_READY khi bật (chưa có nguồn evidence — M13.1/M16)")
+    h_coverage.add_argument("--no-strict", action="store_true",
+                            help="Không raise khi NOT_READY (exit vẫn 1)")
 
     args = parser.parse_args(argv)
 
@@ -334,6 +346,8 @@ def main(argv: list[str] | None = None) -> int:
         return _compat_verify()
     if args.command == "harness" and args.harness_command == "behavioral":
         return _harness_behavioral(args)
+    if args.command == "harness" and args.harness_command == "coverage":
+        return _harness_coverage(args)
     return 1
 
 
@@ -1276,6 +1290,35 @@ def _harness_behavioral(args) -> int:
 
     print(json.dumps(report.model_dump(mode="json"), indent=2))
     return 0 if report.status == ConformanceStatus.PASS else 1
+
+
+def _harness_coverage(args) -> int:
+    """Harness Coverage + Readiness (M13-P1, TASK-090).
+
+    1 JSON document (coverage + readiness), exit 0 (READY) / 1 (NOT_READY).
+    V1 mặc định NOT_READY (replay gate — cần TASK-091) — fail-closed thật.
+    """
+    from ..harness import HarnessRegistry
+    from ..harness.coverage import HarnessCoverage, HarnessReadinessScorer
+    from ..kernel import RuntimeKernel
+
+    kernel = RuntimeKernel.create()
+    reg = kernel.container.resolve(HarnessRegistry)
+    try:
+        coverage = HarnessCoverage(reg).build()
+        readiness = HarnessReadinessScorer(
+            min_overall=args.min_overall, min_replay=args.min_replay,
+            production_tests_available=args.production_tests,
+        ).score(coverage)
+    except Exception as exc:  # noqa: BLE001
+        print(f"FAILED: {exc}")
+        return 1
+    payload = {
+        "coverage": coverage.model_dump(mode="json"),
+        "readiness": readiness.model_dump(mode="json"),
+    }
+    print(json.dumps(payload, indent=2))
+    return 0 if readiness.status.value == "ready" else 1
 
 
 def _read_text(path: str) -> str:

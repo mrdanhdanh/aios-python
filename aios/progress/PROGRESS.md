@@ -27,13 +27,14 @@ Dependency order: C1 → C2 → C3 → (C4 ∥ C5)
 | Phase | Nội dung | Ưu tiên | Task | Trạng thái |
 |-------|----------|---------|------|------------|
 | P0 | Behavioral Conformance — execute N lần (configurable: quick=100/std=1k/stress=10k/soak=duration) + repeat + fault-inject + evidence compare + regression gate | Behavioral | TASK-089 | `done` ✅ (17/17 AC — engine N lần + repeat + Fault.recoverable + evidence digest + gate expose + CLI `aiagent harness behavioral` + full suite 2172) |
-| P1 | Harness Coverage model (9 chiều + negative-path) + Doctor Readiness scoring | Coverage | TASK-090 | `todo` |
+| P1 | Harness Coverage model (9 chiều + negative-path) + Doctor Readiness scoring | Coverage | TASK-090 | `done` ✅ (19/19 AC — coverage 9 chiều + negative 6/8 + readiness 7 dims + CLI `aiagent harness coverage` + full suite 2207) |
 | P2 | Meta-Harness — verify the verifier với verification path ĐỘC LẬP (chống circular) + adversarial fail-closed | Meta | TASK-091 | `todo` |
 | P3 | System Readiness ≠ Harness Trust; release gate cả 2 PASS | Trust | TASK-092 | `todo` |
 | P4 | Docs & ADR — ADR Harness Trust + behavioral spec + PLAN §M13 | Docs | TASK-093 | `todo` |
 
 Dependency order: P0 → P1 → P2 → (P3 ∥ P4)
 > **Deviation P0 (TASK-089)**: gate v1 chỉ expose (finding) — gate-as-blocker thuộc M14; soak v1 = loop-stability test. Chi tiết: PLAN §M13 P0 + TASK-089/evaluation.md.
+> **Deviation P1 (TASK-090)**: coverage v1 = declared + auto-collect (KHÔNG quét test files); **fail-closed thật** — `aiagent harness coverage` trả NOT_READY (replay gate 0.5 < 0.75) cho tới khi TASK-091 cover đủ; production 0.0 + excluded overall v1. Chi tiết: PLAN §M13 P1 + TASK-090/evaluation.md.
 ## 📋 M14 — Controlled Self-Healing (PLANNED — sau M13) · HEAL
 
 > PLAN.md §M14 (P19): đóng vòng lặp tự phục hồi có kiểm soát (Detect→Diagnose→Generate Fix→Risk→Simulate→Meta-Verify→Permission→Human Approval→Apply→Re-test→Rollback if needed→Certify). **NGUYÊN TẮC**: Harness KHÔNG tự sửa tiêu chuẩn để tự PASS; mọi apply thực cần Permission Broker + Human Approval + Certified Baseline/Rollback. Cần M13 (Meta-Harness + Trust Separation) làm nền.

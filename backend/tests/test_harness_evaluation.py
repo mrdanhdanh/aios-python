@@ -617,4 +617,4 @@ class TestConfigWiring:
         reg = kernel.container.resolve(HarnessRegistry)
         assert set(reg.list()) == {"verification", "test", "evaluation",
                                    "benchmark", "doctor", "readiness",
-                                   "behavioral"}  # M13-P0 TASK-089
+                                   "behavioral", "coverage"}  # M13 TASK-089/090

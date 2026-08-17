@@ -264,6 +264,22 @@ class RuntimeKernel:
         harness_registry.register(behavioral_harness)  # id="behavioral"
         container.register_instance(BehavioralConformanceHarness, behavioral_harness)
 
+        # Harness Coverage + Readiness (M13-P1, TASK-090): coverage model 9
+        # chiều + negative-path + readiness scorer. Registry shared — builder
+        # exclude self id="coverage" (P1-3 v1). Fail-closed: v1 NOT_READY
+        # (replay gate) cho tới khi TASK-091 cover đủ.
+        from ..harness.coverage import (
+            CoverageHarness, HarnessReadinessScorer,
+        )
+
+        coverage_harness = CoverageHarness(
+            harness_registry,  # shared registry
+            HarnessReadinessScorer(),
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(coverage_harness)  # id="coverage"
+        container.register_instance(CoverageHarness, coverage_harness)
+
         # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
         # injectable qua register (placeholder deterministic v1, INV-022).
         from ..harness.doctor import (

@@ -1814,12 +1814,13 @@ P0 → P1 → P2 → (P3 ∥ P4)
 | Phase | Nội dung | Ưu tiên | Task | Trạng thái |
 |-------|----------|---------|------|------------|
 | P0 | Behavioral Conformance — scenario S001 chạy N lần (configurable: quick=100/standard=1k/stress=10k/soak=duration) + repeat + fault-inject + so sánh evidence + regression gate | Behavioral | TASK-089 | `done` ✅ (17/17 AC — engine N lần + repeat + Fault.recoverable + evidence digest + gate expose + CLI `aiagent harness behavioral` + full suite 2172) |
-| P1 | Harness Coverage model (Component/Contract/State/Transition/Event/Failure-mode/Scenario/Verification-path/Artifact + Negative-path) + Doctor Readiness scoring | Coverage | TASK-090 | `todo` |
+| P1 | Harness Coverage model (Component/Contract/State/Transition/Event/Failure-mode/Scenario/Verification-path/Artifact + Negative-path) + Doctor Readiness scoring | Coverage | TASK-090 | `done` ✅ (19/19 AC — coverage 9 chiều + negative 6/8 + readiness 7 dims + CLI `aiagent harness coverage` + full suite 2207) |
 | P2 | Meta-Harness — cố tình sinh false positive/negative, malformed evidence, broken verifier, corrupted artifact, replay mismatch → chứng minh fail-closed | Meta | TASK-091 | `todo` |
 | P3 | Tách System Readiness vs Harness Trust (2 score độc lập) + release gate yêu cầu cả 2 PASS | Trust | TASK-092 | `todo` |
 | P4 | Docs & ADR — ADR Harness Trust + behavioral conformance spec + PLAN §M13 | Docs | TASK-093 | `todo` |
 
 > **Deviation P0 (TASK-089, 2026-08-17)**: regression gate v1 **chỉ expose** (tính + finding trong report) — KHÔNG quyết định status. Lý do: runner deterministic → gate không thêm thông tin độc lập (chỉ block khi MISMATCH — lúc đó status đã FAIL). **Gate-as-blocker thuộc M14 (Certified Baseline)** khi có nhiều scenario + real metrics. Soak v1 = loop-stability test (runner thuần không resource/timing — leak/latency thật thuộc M13.1).
+> **Deviation P1 (TASK-090, 2026-08-17)**: coverage v1 = declared + auto-collect từ registry/code contracts (KHÔNG quét test files — test count ≠ coverage). **Fail-closed thật**: `aiagent harness coverage` trả **NOT_READY** (replay gate 0.5 < 0.75 — REPLAY_MISMATCH/CORRUPTED_EVIDENCE chưa cover) cho tới khi TASK-091 (Meta-Harness) cover đủ → kế hoạch tăng min_negative_ratio lên 1.0. Production dimension = 0.0 + excluded overall v1 (chưa có nguồn evidence — M13.1/M16).
 
 #### 5. Behavioral Conformance ladder (P0)
 ```
