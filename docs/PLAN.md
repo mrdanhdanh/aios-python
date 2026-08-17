@@ -1721,7 +1721,7 @@ R2 → R3 → (R10 ∥ R1) → R9 → (R4 ∥ R11) → R6 → (R8 ∥ R12) → R
 - Version bump: AIOS 1.0 → M11 (minor — backward-compatible, additive)
 
 ### M12 – AIOS 1.1 Compatibility (P17 — Compatibility & Upgrade)
-> 🔄 **IN-PROGRESS 2026-08-16 (Issue #7)** — roadmap §43: `AIOS 1.1 Compatibility · 1.2 Performance · 1.3 Ecosystem · 1.x Enterprise · 2.0 Architecture Evolution`.
+> ✅ **DONE 2026-08-16 (Issue #7)** — 5/5 task (TASK-084..088), 5 phase hoàn tất; full suite **2118 pass**; conformance **11 areas + 20 GS + 7 gates → AIOS 1.1 READY**; compat verify 9/9; ADR-0007 + migration guide. Roadmap §43: `AIOS 1.1 Compatibility · 1.2 Performance · 1.3 Ecosystem · 1.x Enterprise · 2.0 Architecture Evolution`.
 > ```
 > M10: AIOS can reliably execute logic.
 > M11: AIOS can reliably execute AND verify logic + state + render + asset + interaction.
@@ -1751,11 +1751,11 @@ C1 → C2 → C3 → (C4 ∥ C5)
 #### 3. Roadmap & tasks
 | Phase | Nội dung | Nâng cấp | Task | Trạng thái |
 |-------|----------|----------|------|------------|
-| P0 | Version & Compatibility Baseline | C1 version bump 1.0→1.1 + compatibility matrix | TASK-084 | `todo` |
-| P1 | Migration 1.0→1.1 thật | C2 upgrade pipeline end-to-end (plan/backup/dry-run/validate/rollback) | TASK-085 | `todo` |
-| P2 | Backward Compatibility | C3 plugin/contract/workflow v0→v1 trên 1.1 + test chéo | TASK-086 | `todo` |
-| P3 | Compatibility Conformance | C4 area `compatibility` + gate (giữ 10 areas/6 gates) | TASK-087 | `todo` |
-| P4 | Docs & ADR | C5 ADR-0007 + migration guide 1.0→1.1 + PLAN §M12 | TASK-088 | `todo` |
+| P0 | Version & Compatibility Baseline | C1 version bump 1.0→1.1 + compatibility matrix | TASK-084 | `done` ✅ (12/12 AC — __version__ 1.1.0 + matrix 14 entry + CLI compat) |
+| P1 | Migration 1.0→1.1 thật | C2 upgrade pipeline end-to-end (plan/backup/dry-run/validate/rollback) | TASK-085 | `done` ✅ (12/12 AC — migration_110 + Aios110Migrator matrix-gated + fix bug engine) |
+| P2 | Backward Compatibility | C3 plugin/contract/workflow v0→v1 trên 1.1 + test chéo | TASK-086 | `done` ✅ (10/10 AC — 9 check 5 kind + compat verify + fix AiosRange parse-only) |
+| P3 | Compatibility Conformance | C4 area `compatibility` + gate (giữ 10 areas/6 gates) | TASK-087 | `done` ✅ (8/8 AC — 11 areas/7 gates → AIOS 1.1 READY) |
+| P4 | Docs & ADR | C5 ADR-0007 + migration guide 1.0→1.1 + PLAN §M12 | TASK-088 | `done` ✅ (10/10 AC — ADR-0007 + docs/guides/migration-1.0-to-1.1.md) |
 
 #### 4. Compliance & version
 - INV-001..035 giữ nguyên frozen (KHÔNG thêm invariant mới)
