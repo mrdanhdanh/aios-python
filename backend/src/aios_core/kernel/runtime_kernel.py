@@ -325,6 +325,26 @@ class RuntimeKernel:
         harness_registry.register(heal_harness)  # id="heal"
         container.register_instance(HealHarness, heal_harness)
 
+        # Simulate (M14-P2, TASK-096): simulation + meta-verify gate.
+        from ..harness.simulate import SimulateHarness
+
+        simulate_harness = SimulateHarness(
+            heal_harness, meta_harness,
+            state_service=container.resolve(StateService),
+        )
+        harness_registry.register(simulate_harness)  # id="simulate"
+        container.register_instance(SimulateHarness, simulate_harness)
+
+        # Certify (M14-P3, TASK-097): apply + rollback + certified baseline.
+        from ..harness.certify import CertifyHarness
+
+        certify_harness = CertifyHarness(
+            heal_harness,
+            state_service=container.resolve(StateService),
+        )
+        harness_registry.register(certify_harness)  # id="certify"
+        container.register_instance(CertifyHarness, certify_harness)
+
         # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
         # injectable qua register (placeholder deterministic v1, INV-022).
         from ..harness.doctor import (

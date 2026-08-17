@@ -269,6 +269,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     h_heal.add_argument("--no-strict", action="store_true",
                         help="Không raise khi có high-risk candidates")
+    h_simulate = harness_sub.add_parser(
+        "simulate",
+        help="Simulation + Meta-Verify Gate (M14-P2)",
+    )
+    h_simulate.add_argument("--no-strict", action="store_true",
+                            help="Không raise khi simulation fail")
+    h_certify = harness_sub.add_parser(
+        "certify",
+        help="Apply + rollback + certified baseline (M14-P3)",
+    )
+    h_certify.add_argument("--no-strict", action="store_true",
+                           help="Không raise khi certify fail")
 
     args = parser.parse_args(argv)
 
@@ -380,6 +392,10 @@ def main(argv: list[str] | None = None) -> int:
         return _harness_diagnose(args)
     if args.command == "harness" and args.harness_command == "heal":
         return _harness_heal(args)
+    if args.command == "harness" and args.harness_command == "simulate":
+        return _harness_simulate(args)
+    if args.command == "harness" and args.harness_command == "certify":
+        return _harness_certify(args)
     return 1
 
 
@@ -1457,6 +1473,53 @@ def _harness_heal(args) -> int:
     heal_report = heal_h.get_report(ctx.run_id) or {}
     print(json.dumps({"heal": heal_report,
                       "total": heal_report.get("total", 0)},
+                     indent=2))
+    return 0
+
+
+def _harness_simulate(args) -> int:
+    """Simulate (M14-P2, TASK-096): simulation + meta-verify gate."""
+    from ..harness import HarnessRegistry, HarnessRunner
+    from ..harness.heal import HealHarness
+    from ..harness.meta import MetaHarness
+    from ..harness.simulate import SimulateHarness
+    from ..kernel import RuntimeKernel
+    from ..kernel.services import StateService
+
+    kernel = RuntimeKernel.create()
+    reg = kernel.container.resolve(HarnessRegistry)
+    state = StateService()
+    runner = HarnessRunner(state_service=state)
+    sim_h = SimulateHarness(
+        reg.get("heal"), reg.get("meta"), state_service=state)
+    ctx = runner.create_context(
+        sim_h, "simulate", config={"strict": not args.no_strict})
+    report = runner.execute(sim_h, ctx)
+    sim_report = sim_h.get_report(ctx.run_id) or {}
+    print(json.dumps({"simulate": sim_report,
+                      "all_pass": sim_report.get("all_pass", True)},
+                     indent=2))
+    return 0 if sim_report.get("all_pass", True) else 1
+
+
+def _harness_certify(args) -> int:
+    """Certify (M14-P3, TASK-097): apply + rollback + certified baseline."""
+    from ..harness import HarnessRegistry, HarnessRunner
+    from ..harness.certify import CertifyHarness
+    from ..kernel import RuntimeKernel
+    from ..kernel.services import StateService
+
+    kernel = RuntimeKernel.create()
+    reg = kernel.container.resolve(HarnessRegistry)
+    state = StateService()
+    runner = HarnessRunner(state_service=state)
+    certify_h = CertifyHarness(state_service=state)
+    ctx = runner.create_context(
+        certify_h, "certify", config={"strict": not args.no_strict})
+    report = runner.execute(certify_h, ctx)
+    certify_report = certify_h.get_report(ctx.run_id) or {}
+    print(json.dumps({"certify": certify_report,
+                      "total": certify_report.get("total", 0)},
                      indent=2))
     return 0
 

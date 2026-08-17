@@ -393,7 +393,7 @@ class TestWiring:
         reg = kernel.container.resolve(HarnessRegistry)
         assert reg.get("diagnose") is not None
         assert reg.get("diagnose").id == "diagnose"
-        assert len(reg.list()) == 12
+        assert len(reg.list()) == 14
 
 
 # ---------------------------------------------------------------------------

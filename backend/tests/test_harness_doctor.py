@@ -497,7 +497,8 @@ class TestConfigWiring:
         assert set(reg.list()) == {"verification", "test", "evaluation",
                                    "benchmark", "doctor", "readiness",
                                    "behavioral", "coverage", "meta",
-                                   "release", "diagnose", "heal"}  # M13+M14
+                                   "release", "diagnose", "heal",
+                                   "simulate", "certify"}  # M13+M14
 
     def test_registry_register_shared_checks(self, tmp_path):
         from aios_core.config import ArtifactsSettings, AuditSettings, Settings

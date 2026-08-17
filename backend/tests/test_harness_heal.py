@@ -130,7 +130,7 @@ class TestWiring:
         kernel = RuntimeKernel.create(Settings())
         reg = kernel.container.resolve(HarnessRegistry)
         assert reg.get("heal") is not None
-        assert len(reg.list()) == 12
+        assert len(reg.list()) == 14
 
 
 # CLI
