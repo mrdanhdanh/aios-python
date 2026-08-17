@@ -122,6 +122,7 @@ _COMPONENT_MODULES: dict[str, str] = {
     "readiness": "aios_core.harness.doctor",  # ReadinessHarness trong doctor pkg
     "behavioral": "aios_core.harness.behavioral",
     "meta": "aios_core.harness.meta",  # P2-5: TASK-091 meta harness
+    "release": "aios_core.harness.release",  # P3: TASK-092 release gate
 }
 
 

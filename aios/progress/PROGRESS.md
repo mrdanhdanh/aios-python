@@ -29,7 +29,7 @@ Dependency order: C1 → C2 → C3 → (C4 ∥ C5)
 | P0 | Behavioral Conformance — execute N lần (configurable: quick=100/std=1k/stress=10k/soak=duration) + repeat + fault-inject + evidence compare + regression gate | Behavioral | TASK-089 | `done` ✅ (17/17 AC — engine N lần + repeat + Fault.recoverable + evidence digest + gate expose + CLI `aiagent harness behavioral` + full suite 2172) |
 | P1 | Harness Coverage model (9 chiều + negative-path) + Doctor Readiness scoring | Coverage | TASK-090 | `done` ✅ (19/19 AC — coverage 9 chiều + negative 6/8 + readiness 7 dims + CLI `aiagent harness coverage` + full suite 2207) |
 | P2 | Meta-Harness — verify the verifier với verification path ĐỘC LẬP (chống circular) + adversarial fail-closed | Meta | TASK-091 | `done` ✅ (17/17 AC — 8 adversarial cases + chống circular monkeypatch + CLI `aiagent harness meta` exit 0 + coverage READY 8/8 + full suite 2234) |
-| P3 | System Readiness ≠ Harness Trust; release gate cả 2 PASS | Trust | TASK-092 | `todo` |
+| P3 | System Readiness ≠ Harness Trust; release gate cả 2 PASS | Trust | TASK-092 | `done` ✅ (12/12 AC — release gate pure combiner + 2 path BLOCKED + CLI `aiagent harness release` exit 0 + full suite 2254) |
 | P4 | Docs & ADR — ADR Harness Trust + behavioral spec + PLAN §M13 | Docs | TASK-093 | `todo` |
 
 Dependency order: P0 → P1 → P2 → (P3 ∥ P4)

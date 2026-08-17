@@ -292,6 +292,19 @@ class RuntimeKernel:
         harness_registry.register(meta_harness)  # id="meta"
         container.register_instance(MetaHarness, meta_harness)
 
+        # Release Gate (M13-P3, TASK-092): System Readiness ≠ Harness Trust.
+        # Tổ hợp 2 score độc lập (coverage readiness + meta trust) → verdict.
+        # Dependency injection 2 sub-harness (KHÔNG import concrete class).
+        from ..harness.release import ReleaseGateHarness
+
+        release_harness = ReleaseGateHarness(
+            coverage_harness,  # đã tạo ở trên
+            meta_harness,
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(release_harness)  # id="release"
+        container.register_instance(ReleaseGateHarness, release_harness)
+
         # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
         # injectable qua register (placeholder deterministic v1, INV-022).
         from ..harness.doctor import (

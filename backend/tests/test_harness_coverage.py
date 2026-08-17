@@ -115,12 +115,14 @@ class TestContracts:
 # ---------------------------------------------------------------------------
 
 class TestCoverage:
-    def test_components_8_exclude_self(self):  # AC3 (P1-3 v1 + P2-G v2) + P2-1 TASK-091
+    def test_components_exclude_self(self):  # AC3 (P1-3 v1 + P2-G v2) + P2-1 TASK-091 + P3 TASK-092
         reg = make_registry()
         reg.register(CoverageHarness(reg))  # register coverage trước
         report = HarnessCoverage(reg).build()
         comp = report.dimensions["component"]
-        assert comp.total == 8  # exclude self → 8 (không 9)
+        # make_registry() có 8 harness + coverage = 9 total, exclude self → 8
+        # runtime_kernel có 10 harness + coverage = 11 total, exclude self → 9
+        assert comp.total == len(reg.list()) - 1  # exclude self
 
     def test_dimensions_total_positive(self):  # AC4
         report = HarnessCoverage(make_registry()).build()
@@ -345,9 +347,10 @@ class TestWiring:
         reg = kernel.container.resolve(HarnessRegistry)
         assert reg.get("coverage") is not None
         assert reg.get("coverage").id == "coverage"
-        # registry có 9 harness (8 + coverage) — builder exclude self → 8
-        assert len(reg.list()) == 9
+        # registry có 10 harness (9 + release) — builder exclude self → 9
+        assert len(reg.list()) == 10
         assert "coverage" in reg.list()
+        assert "release" in reg.list()
 
 
 # ---------------------------------------------------------------------------

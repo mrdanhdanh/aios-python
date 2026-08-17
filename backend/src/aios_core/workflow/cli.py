@@ -251,6 +251,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     h_meta.add_argument("--no-strict", action="store_true",
                         help="Không raise khi Meta FAIL (exit vẫn 1)")
+    h_release = harness_sub.add_parser(
+        "release",
+        help="Release gate — System Readiness + Harness Trust (M13-P3)",
+    )
+    h_release.add_argument("--no-strict", action="store_true",
+                           help="Không raise khi BLOCKED (exit vẫn 1)")
 
     args = parser.parse_args(argv)
 
@@ -356,6 +362,8 @@ def main(argv: list[str] | None = None) -> int:
         return _harness_coverage(args)
     if args.command == "harness" and args.harness_command == "meta":
         return _harness_meta(args)
+    if args.command == "harness" and args.harness_command == "release":
+        return _harness_release(args)
     return 1
 
 
@@ -1353,6 +1361,33 @@ def _harness_meta(args) -> int:
     print(json.dumps({"meta": meta_report,
                       "status": meta_report.get("status", "fail")}, indent=2))
     return 0 if meta_report.get("status") == "pass" else 1
+
+
+def _harness_release(args) -> int:
+    """Release Gate (M13-P3, TASK-092): System Readiness + Harness Trust.
+
+    1 JSON document (release report), exit 0 (PASS) / 1 (BLOCKED).
+    """
+    from ..harness import HarnessRegistry, HarnessRunner
+    from ..harness.release import ReleaseGateHarness
+    from ..kernel import RuntimeKernel
+    from ..kernel.services import StateService
+
+    kernel = RuntimeKernel.create()
+    reg = kernel.container.resolve(HarnessRegistry)
+    # Tạo trực tiếp (HarnessRunner chưa register trong container — giống meta)
+    state = StateService()
+    runner = HarnessRunner(state_service=state)
+    release_h = ReleaseGateHarness(
+        reg.get("coverage"), reg.get("meta"), state_service=state)
+    ctx = runner.create_context(
+        release_h, "release", config={"strict": not args.no_strict})
+    report = runner.execute(release_h, ctx)
+    release_report = release_h.get_report(ctx.run_id) or {}
+    print(json.dumps({"release": release_report,
+                      "status": release_report.get("status", "blocked")},
+                     indent=2))
+    return 0 if release_report.get("status") == "pass" else 1
 
 
 def _read_text(path: str) -> str:
