@@ -207,6 +207,33 @@ def main(argv: list[str] | None = None) -> int:
                               help="AIOS version to check against (default 1.1.0)")
     compat_sub.add_parser("verify", help="Backward compatibility suite cũ→mới trên 1.1 (M12-P2 C3, TASK-086)")
 
+    harness = sub.add_parser("harness", help="Harness commands (M13-P0, TASK-089)")
+    harness_sub = harness.add_subparsers(dest="harness_command", required=True)
+    h_behavioral = harness_sub.add_parser(
+        "behavioral",
+        help="Behavioral conformance — N lần + repeat + fault + evidence + gate (M13-P0)",
+    )
+    h_behavioral.add_argument("--profile", choices=["quick", "standard", "stress", "soak"],
+                              default="quick", help="Iterations profile (default quick)")
+    h_behavioral.add_argument("--scenario-file", required=True,
+                              help="Path to scenario YAML/JSON")
+    h_behavioral.add_argument("--iterations", type=int, default=None,
+                              help="Override profile iterations (thắng soak)")
+    h_behavioral.add_argument("--duration", type=float, default=0.0,
+                              help="Soak duration (seconds)")
+    h_behavioral.add_argument("--faults", default=None,
+                              help="JSON list[Fault] — áp mọi iteration")
+    h_behavioral.add_argument("--fault-iterations", default=None,
+                              help="JSON list[int] — chỉ iteration có fault (1-based)")
+    h_behavioral.add_argument("--repeat-samples", type=int, default=3,
+                              help="Số iteration đầu chạy double-run (default 3)")
+    h_behavioral.add_argument("--baseline", default=None,
+                              help="JSON Baseline file (chỉ expose — gate-as-blocker thuộc M14)")
+    h_behavioral.add_argument("--save-baseline", default=None,
+                              help="Ghi Baseline JSON từ lần chạy này")
+    h_behavioral.add_argument("--no-strict", action="store_true",
+                              help="Không raise khi FAIL/ERROR (exit vẫn 1)")
+
     args = parser.parse_args(argv)
 
     if args.command == "run":
@@ -305,6 +332,8 @@ def main(argv: list[str] | None = None) -> int:
         return _compat_check(args.kind, args.id, args.version, args.aios_version)
     if args.command == "compat" and args.compat_command == "verify":
         return _compat_verify()
+    if args.command == "harness" and args.harness_command == "behavioral":
+        return _harness_behavioral(args)
     return 1
 
 
@@ -1171,6 +1200,82 @@ def _compat_verify() -> int:
         "summary": summary,
     }))
     return 0 if report.ok else 1
+
+
+def _harness_behavioral(args) -> int:
+    """Behavioral conformance (M13-P0, TASK-089) — N lần + repeat + fault +
+    evidence + gate. JSON 1 dòng, exit 0 (PASS) / 1 (FAIL/ERROR)."""
+    from ..harness.behavioral import (
+        BehavioralConformanceEngine, ConformanceConfig, ConformanceStatus,
+    )
+    from ..harness.benchmark.contracts import Baseline
+    from ..harness.testing import load as load_scenario
+
+    try:
+        scenario = load_scenario(args.scenario_file)
+    except Exception as exc:  # noqa: BLE001
+        print(f"FAILED: load scenario: {exc}")
+        return 1
+
+    faults: list = []
+    if args.faults:
+        try:
+            faults = json.loads(args.faults)
+            if not isinstance(faults, list):
+                print("FAILED: --faults must be a JSON list")
+                return 1
+        except json.JSONDecodeError as exc:
+            print(f"FAILED: --faults invalid JSON: {exc}")
+            return 1
+    fault_iterations: list = []
+    if args.fault_iterations:
+        try:
+            fault_iterations = json.loads(args.fault_iterations)
+            if not isinstance(fault_iterations, list):
+                print("FAILED: --fault-iterations must be a JSON list")
+                return 1
+        except json.JSONDecodeError as exc:
+            print(f"FAILED: --fault-iterations invalid JSON: {exc}")
+            return 1
+
+    baseline: Baseline | None = None
+    if args.baseline:
+        try:
+            with open(args.baseline, "r", encoding="utf-8") as fh:
+                baseline = Baseline.model_validate(json.load(fh))
+        except Exception as exc:  # noqa: BLE001
+            print(f"FAILED: load baseline: {exc}")
+            return 1
+
+    config = ConformanceConfig(
+        profile=args.profile,
+        scenario=scenario,
+        iterations=args.iterations,
+        duration_s=args.duration,
+        faults=faults,
+        fault_iterations=fault_iterations,
+        repeat_samples=args.repeat_samples,
+        baseline=baseline,
+        strict=not args.no_strict,
+    )
+    engine = BehavioralConformanceEngine()
+    try:
+        report = engine.run(config)
+    except Exception as exc:  # noqa: BLE001 — fail-fast (P2-3 v2)
+        print(f"FAILED: {exc}")
+        return 1
+
+    if args.save_baseline:
+        try:
+            saved = engine.build_baseline(report)
+            with open(args.save_baseline, "w", encoding="utf-8") as fh:
+                json.dump(saved.model_dump(mode="json"), fh, indent=2)
+        except Exception as exc:  # noqa: BLE001
+            print(f"FAILED: save baseline: {exc}")
+            return 1
+
+    print(json.dumps(report.model_dump(mode="json"), indent=2))
+    return 0 if report.status == ConformanceStatus.PASS else 1
 
 
 def _read_text(path: str) -> str:

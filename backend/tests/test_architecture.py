@@ -661,6 +661,7 @@ _HARNESS_ALLOWED_EXTERNAL = {
     # CONTAINS checks (R2-1 review) — B7: top-level (collections.abc -> collections)
     "yaml",  # TASK-031: scenarios loader (safe_load — C2-07)
     "dataclasses", "tempfile",  # TASK-073 certification (contracts + GS ctx)
+    "hashlib",  # TASK-089 behavioral: evidence digest sha256 (M13-P0)
 }
 
 

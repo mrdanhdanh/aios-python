@@ -32,11 +32,16 @@ class FaultInjector:
     # -- queries -------------------------------------------------------------
 
     def next_for(self, target: str) -> Fault | None:
-        """Fault chưa inject cho target (count == 0 — C2-04)."""
-        if self._counts[target] > 0:
-            return None
+        """Fault chưa inject cho target (count == 0 — C2-04).
+
+        M13-P0 (TASK-089): fault `recoverable=False` trả MỌI lần (không
+        check count) → apply raise mọi lần → runner retry fail → ERROR.
+        Default recoverable=True giữ hành vi cũ (inject 1 lần/target).
+        """
         for fault in self._faults:
             if fault.target == target:
+                if fault.recoverable and self._counts[target] > 0:
+                    return None
                 return fault
         return None
 

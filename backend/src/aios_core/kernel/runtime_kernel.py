@@ -250,6 +250,20 @@ class RuntimeKernel:
         harness_registry.register(benchmark_harness)  # id="benchmark"
         container.register_instance(BenchmarkHarness, benchmark_harness)
 
+        # Behavioral Conformance (M13-P0, TASK-089): N lần + repeat + fault +
+        # evidence compare + gate (chỉ expose). Engine tạo SimulationRunner
+        # riêng (default FakeRuntime) — độc lập TestHarness (P3-8 v1).
+        from ..harness.behavioral import (
+            BehavioralConformanceEngine, BehavioralConformanceHarness,
+        )
+
+        behavioral_harness = BehavioralConformanceHarness(
+            BehavioralConformanceEngine(),
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(behavioral_harness)  # id="behavioral"
+        container.register_instance(BehavioralConformanceHarness, behavioral_harness)
+
         # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
         # injectable qua register (placeholder deterministic v1, INV-022).
         from ..harness.doctor import (
