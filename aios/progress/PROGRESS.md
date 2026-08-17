@@ -39,11 +39,11 @@ Dependency order: P0 → P1 → P2 → (P3 ∥ P4)
 ## 📋 M14 — Controlled Self-Healing (PLANNED — sau M13) · HEAL
 
 > PLAN.md §M14 (P19): đóng vòng lặp tự phục hồi có kiểm soát (Detect→Diagnose→Generate Fix→Risk→Simulate→Meta-Verify→Permission→Human Approval→Apply→Re-test→Rollback if needed→Certify). **NGUYÊN TẮC**: Harness KHÔNG tự sửa tiêu chuẩn để tự PASS; mọi apply thực cần Permission Broker + Human Approval + Certified Baseline/Rollback. Cần M13 (Meta-Harness + Trust Separation) làm nền.
-> **Trạng thái**: `todo` — chưa bắt đầu.
+> **Trạng thái**: `in-progress` — TASK-094 done.
 
 | Phase | Nội dung | Task | Trạng thái |
 |-------|----------|------|------------|
-| P0 | Detect & Diagnose — failure corpus + localization | TASK-094 | `todo` |
+| P0 | Detect & Diagnose — failure corpus + localization | TASK-094 | `done` ✅ (12/12 AC — FailureRecord + signature + severity + corpus + CLI + full suite 2286) |
 | P1 | Candidate Generate + Risk Scoring | TASK-095 | `todo` |
 | P2 | Simulation + Meta-Verify Gate (KHÔNG relax criteria) | TASK-096 | `todo` |
 | P3 | Permission Broker + Human Approval + Apply + Re-test + Rollback (restore certified state) + Certify + Certified Baseline | TASK-097 | `todo` |

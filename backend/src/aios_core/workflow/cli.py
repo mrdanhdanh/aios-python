@@ -257,6 +257,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     h_release.add_argument("--no-strict", action="store_true",
                            help="Không raise khi BLOCKED (exit vẫn 1)")
+    h_diagnose = harness_sub.add_parser(
+        "diagnose",
+        help="Failure corpus — detect, diagnose, localize (M14-P0)",
+    )
+    h_diagnose.add_argument("--no-strict", action="store_true",
+                            help="Không raise khi corpus rỗng (exit vẫn 0)")
 
     args = parser.parse_args(argv)
 
@@ -364,6 +370,8 @@ def main(argv: list[str] | None = None) -> int:
         return _harness_meta(args)
     if args.command == "harness" and args.harness_command == "release":
         return _harness_release(args)
+    if args.command == "harness" and args.harness_command == "diagnose":
+        return _harness_diagnose(args)
     return 1
 
 
@@ -1388,6 +1396,34 @@ def _harness_release(args) -> int:
                       "status": release_report.get("status", "blocked")},
                      indent=2))
     return 0 if release_report.get("status") == "pass" else 1
+
+
+def _harness_diagnose(args) -> int:
+    """Diagnose (M14-P0, TASK-094): failure corpus summary.
+
+    1 JSON document (corpus report), exit 0.
+    """
+    from ..harness import HarnessRegistry
+    from ..harness.diagnose import DiagnoseHarness
+    from ..kernel import RuntimeKernel
+
+    kernel = RuntimeKernel.create()
+    reg = kernel.container.resolve(HarnessRegistry)
+    diagnose_h = reg.get("diagnose")
+    # Run corpus summary
+    from ..harness import HarnessRunner
+    from ..kernel.services import StateService
+
+    state = StateService()
+    runner = HarnessRunner(state_service=state)
+    ctx = runner.create_context(
+        diagnose_h, "diagnose", config={"strict": not args.no_strict})
+    report = runner.execute(diagnose_h, ctx)
+    corpus_report = diagnose_h.get_report(ctx.run_id) or {}
+    print(json.dumps({"diagnose": corpus_report,
+                      "total": corpus_report.get("total", 0)},
+                     indent=2))
+    return 0
 
 
 def _read_text(path: str) -> str:

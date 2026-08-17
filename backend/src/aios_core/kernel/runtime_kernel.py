@@ -305,6 +305,16 @@ class RuntimeKernel:
         harness_registry.register(release_harness)  # id="release"
         container.register_instance(ReleaseGateHarness, release_harness)
 
+        # Diagnose (M14-P0, TASK-094): failure corpus + signature + localization.
+        # Thu thập evidence từ failed harness runs → failure signature → component.
+        from ..harness.diagnose import DiagnoseHarness
+
+        diagnose_harness = DiagnoseHarness(
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(diagnose_harness)  # id="diagnose"
+        container.register_instance(DiagnoseHarness, diagnose_harness)
+
         # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
         # injectable qua register (placeholder deterministic v1, INV-022).
         from ..harness.doctor import (
