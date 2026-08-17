@@ -43,26 +43,26 @@ Dependency order: P0 → P1 → P2 → (P3 ∥ P4)
 
 | Phase | Nội dung | Task | Trạng thái |
 |-------|----------|------|------------|
-| P0 | Detect & Diagnose — failure corpus + localization | TASK-094 | `done` ✅ (12/12 AC — FailureRecord + signature + severity + corpus + CLI + full suite 2286) |
-| P1 | Candidate Generate + Risk Scoring | TASK-095 | `todo` |
-| P2 | Simulation + Meta-Verify Gate (KHÔNG relax criteria) | TASK-096 | `todo` |
-| P3 | Permission Broker + Human Approval + Apply + Re-test + Rollback (restore certified state) + Certify + Certified Baseline | TASK-097 | `todo` |
-| P4 | Docs & ADR — INV-037 Remediation Integrity + kill-switch | TASK-098 | `todo` |
+| P0 | Detect & Diagnose — failure corpus + localization | TASK-094 | `done` ✅ |
+| P1 | Candidate Generate + Risk Scoring | TASK-095 | `done` ✅ |
+| P2 | Simulation + Meta-Verify Gate (KHÔNG relax criteria) | TASK-096 | `done` ✅ |
+| P3 | Permission Broker + Human Approval + Apply + Re-test + Rollback (restore certified state) + Certify + Certified Baseline | TASK-097 | `done` ✅ |
+| P4 | Docs & ADR — INV-037 Remediation Integrity + kill-switch | TASK-098 | `done` ✅ |
 
 Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
 
 ## 📋 M15 — Autonomous Harness (PLANNED — sau M14) · AUTONOMY
 
 > PLAN.md §M15 (P20): đích cuối harness track — vòng lặp tự chủ (autonomous) detect→diagnose→fix→verify→apply→certify, Improvement Engine, Continuous Certification, Autonomy Policy + Trust Budget/Autonomy Levels + kill-switch. **Autonomy ≠ Permission**: Autonomy Engine quyết định "có nên tự làm?", Permission Broker quyết định "có được phép?". Giữ fail-closed + permission boundary + human oversight high-risk. Cần M14 làm nền.
-> **Trạng thái**: `todo` — chưa bắt đầu.
+> **Trạng thái**: 5/5 task done — full suite **2360 PASS / 0 FAIL** + 16 harness total + closed-loop pipeline (Detect→Diagnose→Generate→Risk→Simulate→Meta-Verify→Apply→Certify→Autonomous→DSH Oracle). Nhánh: `feature/ISSUE-8-m14-controlled-self-healing`.
 
 | Phase | Nội dung | Task | Trạng thái |
 |-------|----------|------|------------|
-| P0 | Autonomous Loop Orchestrator | TASK-099 | `todo` |
-| P1 | Improvement Engine (failure-corpus learning) | TASK-100 | `todo` |
-| P2 | Continuous Certification (low-risk auto) | TASK-101 | `todo` |
-| P3 | Trust Budget (7 giới hạn) + Autonomy Levels + Autonomy Policy + SAFE-STOP | TASK-102 | `todo` |
-| P4 | Docs & ADR — INV-038 Autonomy Boundary + Autonomy Constitution | TASK-103 | `todo` |
+| P0 | Autonomous Loop Orchestrator | TASK-099 | `done` ✅ |
+| P1 | Improvement Engine (failure-corpus learning) | TASK-100 | `done` ✅ |
+| P2 | Continuous Certification (low-risk auto) | TASK-101 | `done` ✅ |
+| P3 | Trust Budget (7 giới hạn) + Autonomy Levels + Autonomy Policy + SAFE-STOP | TASK-102 | `done` ✅ |
+| P4 | Docs & ADR — INV-038 Autonomy Boundary + Autonomy Constitution | TASK-103 | `done` ✅ |
 
 Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
