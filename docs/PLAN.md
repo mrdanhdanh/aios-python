@@ -2188,6 +2188,93 @@ HUMAN REVIEW
 - **M15 pipeline**: `Detect → Diagnose → Improve → Risk → Autonomy Policy → Permission → Auto-Apply → Verify → Certify → Learn → Repeat`
 - **Exit condition (M15 = AUTONOMY)**: chứng minh Harness có thể vận hành vòng lặp remediation **liên tục và tự chủ trong boundary** — gated bởi Autonomy Policy + Permission Broker + Trust Budget, luôn có SAFE-STOP + human oversight cho high-risk.
 
+### M16 – Harness Ecosystem Integration (P21 — INTEGRATE: DeepSeek Harness + Management Console)
+> 📋 **PLANNED (chưa bắt đầu)** — bước tiếp theo SAU M15 (Autonomous Harness). Tích hợp **DeepSeek Harness (`dsh`)** — harness độc lập bên thứ 3 (MIT, TypeScript/Node, Cordis plugin runtime) — làm **oracle xác minh độc lập** + **thực thi remediation trong sandbox** + cung cấp **giao diện quản lý (management console)**. KHÔNG đưa code dsh vào AIOS Core (giữ INV-001..038 + tách biệt tiến trình).
+> ```
+> M13: Establish Harness Trust — meta-harness chứng minh verifier đúng (verification path độc lập).
+> M14: Controlled Self-Healing — remediation có permission boundary + certified baseline.
+> M15: Autonomous Harness — autonomy policy + trust budget + SAFE-STOP.
+> M16: INTEGRATE — tích hợp dsh làm external oracle (độc lập thực sự) + management console; chứng minh AIOS vận hành an toàn một harness bên thứ 3 mà không phá 4 invariant.
+> ```
+> M16 = **INTEGRATE** — *"Can AIOS trust + operate an external harness safely?"* — biến dsh (codebase/process tách biệt) thành **independent verification path thực thụ** (giải quyết hoàn toàn vòng tròn Meta-Harness của M13-P2) + tận dụng `dsh-web-app` làm management console, đồng thời giữ nguyên fail-closed / permission boundary / certified baseline.
+> **Exit condition**: chứng minh AIOS tích hợp được một harness độc lập (dsh) làm oracle xác minh độc lập + có giao diện quản lý vận hành được, mà 4 invariant Harness Track không bị vi phạm.
+>
+> **Nguồn**: nghiên cứu repo https://github.com/deepseek-ai/deepseek-harness (MIT, 132k★, RC `0.1.0-rc.x`, Cordis, `dsh web` UI port 3080, ACP + JSON-RPC SDK + Python SDK `jsonrpc-agent`, `InvariantRegistry`, `ApprovalService`/approval policy, `ctx.sandbox` Landlock). Quyết định ADR: tích hợp dạng **sidecar/bridge** (không fork code).
+
+#### 1. Bối cảnh — AIOS Harness ↔ dsh sidecar
+```
+AIOS Core (Python · aios_core)
+    │  dsh_bridge (ACP / JSON-RPC / Python SDK)
+    ▼
+┌──────────────────────────────────────┐
+│  dsh sidecar (Node · Cordis)         │
+│  ├─ InvariantRegistry  → oracle      │
+│  ├─ ApprovalService    → permission  │
+│  ├─ ctx.sandbox(Landlock) → sandbox  │
+│  └─ dsh-web-app        → UI :3080    │
+└──────────────────────────────────────┘
+    │  evidence / verify / apply
+    ▼
+ AIOS Release / Remediation / Console
+```
+dsh là harness bên thứ 3, chạy **tiến trình riêng** (Node) → đây là **independent verification path thực sự** (khác codebase, khác ngôn ngữ với AIOS Python), thỏa mãn M13-P2 (phá vòng tròn Meta-Harness). Giao tiếp qua **ACP (Agent Client Protocol)** + **JSON-RPC SDK** (`HarnessSdkJsonRpcServer`) hoặc **Python SDK `jsonrpc-agent`** (dsh cung cấp). Giao diện quản lý = `dsh-web-app` (MVP embed/proxy) hoặc mở rộng `dashboard/` (React/Vite) làm AIOS Harness Console (target).
+
+#### 2. Mục tiêu (5 phase)
+```
+M16
+├── P0  Integration Foundation — submodule/sidecar pin + dsh_bridge (launch/health/ACP) + config + ADR license
+├── P1  Independent Verification Oracle — map INV-001..038 → dsh invariants; chạy dsh làm oracle độc lập (Giải M13-P2)
+├── P2  Behavioral Conformance Bridge — kịch bản AIOS (M13-P0) thành dsh ACP snapshot / property tests; negative-path qua approval frames
+├── P3  Permission & Sandbox Bridge — AIOS Permission Broker là authority; dsh thực thi remediation trong ctx.sandbox(Landlock) theo scope được cấp (M14/M15)
+└── P4  Management Console — MVP: embed/proxy dsh-web-app; Target: AIOS dashboard/ mở rộng (invariant/trust/heal/autonomy + SAFE-STOP) + Docs/ADR
+```
+
+#### 3. Dependency order
+```
+P0 → P1 → P2 → P3 → (P4 song song từ sau P1)
+```
+- P0 nền: pin dsh (git submodule @ SHA cố định / tag RC), `dsh_bridge` launch sidecar + health + ACP discover, `config.yaml` (`harness.dsh.*`), ADR tích hợp + MIT compliance.
+- P1 dựa P0: map + chạy invariants dsh làm oracle độc lập → feed evidence vào AIOS `verification/`.
+- P2 dựa P1: ACP snapshot suites + property tests (`fast-check`) cho behavioral conformance + negative-path (BLOCKED/VIOLATION/CORRUPTED).
+- P3 dựa P2: permission broker + Landlock sandbox cho remediation apply.
+- P4 có thể bắt đầu sau P1 (UI read-only trước, rồi điều khiển).
+
+#### 4. Roadmap & tasks
+| Phase | Nội dung | Task | Trạng thái |
+|-------|----------|------|------------|
+| P0 | Integration Foundation — pin dsh (submodule/tag), `dsh_bridge` (launch/health/ACP discover), `config.yaml` `harness.dsh.*` (`enabled`, `bin`, `version`, `home`, `telemetry.disabled=true`), ADR tích hợp + MIT license compliance | TASK-104 | `todo` |
+| P1 | Independent Verification Oracle — map INV-001..038 (subset dsh-checkable: session/agent/permission) → dsh invariant defs; chạy dsh làm oracle độc lập; bridge đẩy evidence vào AIOS `verification/` | TASK-105 | `todo` |
+| P2 | Behavioral Conformance Bridge — kịch bản AIOS (M13-P0) → dsh ACP snapshot suite + `fast-check` property tests; negative-path (BLOCKED/VIOLATION/CORRUPTED) qua approval frames | TASK-106 | `todo` |
+| P3 | Permission & Sandbox Bridge — AIOS Permission Broker giữ authority; dsh `ApprovalService` chỉ làm execution sandbox (`ctx.sandbox` Landlock) cho remediation apply theo scope (M14/M15) | TASK-107 | `todo` |
+| P4 | Management Console — MVP embed/proxy `dsh-web-app` (port 3080, behind AIOS auth); Target: mở rộng `dashboard/` (React/Vite) = AIOS Harness Console (invariant/trust/heal/autonomy + SAFE-STOP) + Docs/ADR | TASK-108 | `todo` |
+
+#### 5. Tại sao dsh — ánh xạ khớp 1:1 với Harness Track
+```
+AIOS Harness Track (M13/M14/M15)        |  DeepSeek Harness (dsh)
+----------------------------------------+----------------------------------------------
+INV-001..038 (independent verification) |  InvariantRegistry (ctx key riêng, codebase/process tách biệt)
+Meta-Harness chống vòng tròn (M13-P2)   |  -> dsh chạy ngoài AIOS = oracle độc lập thực sự
+Permission Broker (M14/M15)             |  ApprovalService + approval policy (dsh-base)
+Sandbox cho remediation apply           |  ctx.sandbox backend (Landlock native)
+Behavioral Conformance (M13-P0)         |  ACP snapshot suites + fast-check property tests
+Giao diện quản lý (user request)        |  dsh-web-app (Web UI :3080) / mở rộng dashboard/
+```
+Ưu điểm: (1) dsh là **tiến trình/Node riêng** → independent verification path thực sự, giải triệt để vòng tròn Meta-Harness; (2) có sẵn **Web UI** đáp ứng ngay yêu cầu "giao diện quản lý"; (3) **MIT** → tương thích; (4) có **Python SDK `jsonrpc-agent`** → bridge Python dễ; (5) `ctx.sandbox` Landlock + approval policy → remediation an toàn.
+
+#### 6. Compliance & version
+- INV-001..038 giữ nguyên (KHÔNG thêm invariant Core mới mà không qua ADR + Constitution amend).
+- **4 invariant xuyên suốt Harness Track vẫn áp dụng + ĐƯỢC CỦNG CỐ** bởi dsh:
+  - FAIL-CLOSED: dsh verifier fail → AIOS BLOCK (bridge fail-closed).
+  - INDEPENDENT VERIFICATION: dsh là oracle độc lập thực sự (khác codebase/ngôn ngữ) — đáp ứng M13-P2.
+  - PERMISSION BOUNDARY: AIOS Permission Broker giữ authority; dsh sandbox chỉ thực thi trong scope.
+  - CERTIFIED BASELINE/ROLLBACK: remediation apply qua dsh vẫn tuân thủ certified baseline (M14).
+- **License**: dsh = MIT (permissive). Phải: (a) pin version + record SHA; (b) ship THIRD_PARTY_NOTICES / dsh LICENSE trong AIOS; (c) xác nhận AIOS LICENSE tương thích (MIT↔MIT OK).
+- **Rủi ro chính**: dsh đang **RC (`0.1.0-rc.x`) — breaking changes expected** + **TypeScript/Node** (AIOS Python). Mitigation: (a) pin chặt SHA/tag; (b) bump cần re-run toàn bộ AIOS suite + conformance; (c) bridge tách biệt, KHÔNG fork code dsh vào Core; (d) telemetry **tắt mặc định** (`DSH_TELEMETRY_DISABLED=1`) — chính sách riêng tư AIOS.
+- **Privacy**: `harness.dsh.telemetry.disabled=true` mặc định; không gửi session AIOS ra ngoài.
+- Version: AIOS 1.2 → **1.3** nếu M16 thay đổi contract công khai (dsh bridge API); giữ 1.2 nếu chỉ internal tooling.
+- **M16 pipeline**: `Pin → Bridge(sidecar/ACP) → Oracle(invariants) → Conformance(ACP snapshot) → Permission/Sandbox(apply) → Console(operate) → Certify`.
+- **Exit condition (M16 = INTEGRATE)**: chứng minh AIOS tích hợp được một harness độc lập (dsh) làm oracle xác minh độc lập + có giao diện quản lý vận hành được, mà 4 invariant Harness Track không bị vi phạm.
+
 ### Tỷ trọng toàn dự án (theo thành phần)
 | Thành phần | Tỷ trọng |
 |-----------|----------|
@@ -2219,6 +2306,7 @@ HUMAN REVIEW
 - **M13 (TRUST)**: Harness Trust & Behavioral Conformance — Behavioral Conformance (TASK-089) P0 execute N lần (configurable: quick=100/std=1k/stress=10k/soak=duration) + replay + fault-inject + evidence compare + regression gate; Harness Coverage (TASK-090) coverage model 9 chiều + negative-path + Doctor readiness scoring; Meta-Harness (TASK-091) verify-the-verifier với verification path ĐỘC LẬP (chống circular) adversarial fail-closed; Trust Separation (TASK-092) System Readiness ≠ Harness Trust, release gate cả 2 PASS; Docs/ADR (TASK-093) ADR Harness Trust + behavioral spec + INV-036; 4 invariant track giữ nguyên
 - **M14 (HEAL)**: Controlled Self-Healing / Closed-loop Remediation — Detect&Diagnose (TASK-094) failure corpus + localization; Candidate Generate+Risk (TASK-095) low/med/high; Simulation+Meta-Verify Gate (TASK-096) verify fix KHÔNG relax criteria; Permission Broker+Human Approval+Apply+Re-test+Rollback+Certify+CERTIFIED BASELINE (TASK-097); Docs/ADR (TASK-098) INV-037 Remediation Integrity + kill-switch; anti-pattern: harness KHÔNG tự sửa tiêu chuẩn để tự PASS
 - **M15 (AUTONOMY)**: Autonomous Harness — Loop Orchestrator (TASK-099); Improvement Engine (TASK-100); Continuous Certification (TASK-101) low-risk auto; Autonomy Policy+Trust Budget/Autonomy Levels+SAFE-STOP (TASK-102); Docs/ADR (TASK-103) INV-038 Autonomy Boundary + Autonomy Constitution; Autonomy≠Permission; giữ 4 invariant track + human oversight high-risk
+- **M16 (INTEGRATE)**: Harness Ecosystem Integration — DeepSeek Harness (`dsh`) sidecar làm independent verification oracle (TASK-104 map INV-001..038 → dsh invariants, giải M13-P2 vòng tròn Meta-Harness) + Behavioral Conformance Bridge qua ACP snapshot / `fast-check` property tests (TASK-106) + Permission & Sandbox Bridge cho remediation apply theo scope (TASK-107) + Management Console (TASK-108: MVP embed/proxy `dsh-web-app` :3080, target mở rộng `dashboard/`) + pin chặt RC version + MIT compliance + telemetry tắt mặc định; 4 invariant track ĐƯỢC CỦNG CỐ; exit: tích hợp harness độc lập an toàn + có giao diện quản lý vận hành được
 - Xuyên suốt: pytest + contract tests CI; permission enforcement test (ask→deny); rule engine unit test với kết quả xác định trước
 
 ## Scope
