@@ -422,8 +422,8 @@ class TestWiring:
         reg = kernel.container.resolve(HarnessRegistry)
         assert reg.get("release") is not None
         assert reg.get("release").id == "release"
-        # runtime có 11 harness (10 + diagnose)
-        assert len(reg.list()) == 11
+        # runtime có 12 harness (11 + heal)
+        assert len(reg.list()) == 12
         assert "release" in reg.list()
 
 

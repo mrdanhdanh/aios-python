@@ -315,6 +315,16 @@ class RuntimeKernel:
         harness_registry.register(diagnose_harness)  # id="diagnose"
         container.register_instance(DiagnoseHarness, diagnose_harness)
 
+        # Heal (M14-P1, TASK-095): candidate fixes + risk scoring từ corpus.
+        from ..harness.heal import HealHarness
+
+        heal_harness = HealHarness(
+            diagnose_harness,
+            state_service=container.resolve(StateService),
+        )
+        harness_registry.register(heal_harness)  # id="heal"
+        container.register_instance(HealHarness, heal_harness)
+
         # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
         # injectable qua register (placeholder deterministic v1, INV-022).
         from ..harness.doctor import (

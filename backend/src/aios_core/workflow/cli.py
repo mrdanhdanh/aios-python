@@ -263,6 +263,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     h_diagnose.add_argument("--no-strict", action="store_true",
                             help="Không raise khi corpus rỗng (exit vẫn 0)")
+    h_heal = harness_sub.add_parser(
+        "heal",
+        help="Candidate fixes + risk scoring (M14-P1)",
+    )
+    h_heal.add_argument("--no-strict", action="store_true",
+                        help="Không raise khi có high-risk candidates")
 
     args = parser.parse_args(argv)
 
@@ -372,6 +378,8 @@ def main(argv: list[str] | None = None) -> int:
         return _harness_release(args)
     if args.command == "harness" and args.harness_command == "diagnose":
         return _harness_diagnose(args)
+    if args.command == "harness" and args.harness_command == "heal":
+        return _harness_heal(args)
     return 1
 
 
@@ -1422,6 +1430,33 @@ def _harness_diagnose(args) -> int:
     corpus_report = diagnose_h.get_report(ctx.run_id) or {}
     print(json.dumps({"diagnose": corpus_report,
                       "total": corpus_report.get("total", 0)},
+                     indent=2))
+    return 0
+
+
+def _harness_heal(args) -> int:
+    """Heal (M14-P1, TASK-095): candidate fixes + risk scoring.
+
+    1 JSON document (candidate report), exit 0.
+    """
+    from ..harness import HarnessRegistry, HarnessRunner
+    from ..harness.diagnose import DiagnoseHarness
+    from ..harness.heal import HealHarness
+    from ..kernel import RuntimeKernel
+    from ..kernel.services import StateService
+
+    kernel = RuntimeKernel.create()
+    reg = kernel.container.resolve(HarnessRegistry)
+    state = StateService()
+    runner = HarnessRunner(state_service=state)
+    diagnose_h = reg.get("diagnose")
+    heal_h = HealHarness(diagnose_h, state_service=state)
+    ctx = runner.create_context(
+        heal_h, "heal", config={"strict": not args.no_strict})
+    report = runner.execute(heal_h, ctx)
+    heal_report = heal_h.get_report(ctx.run_id) or {}
+    print(json.dumps({"heal": heal_report,
+                      "total": heal_report.get("total", 0)},
                      indent=2))
     return 0
 

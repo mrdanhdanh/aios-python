@@ -480,4 +480,4 @@ class TestConfigWiring:
         assert set(reg.list()) == {"verification", "test", "evaluation",
                                    "benchmark", "doctor", "readiness",
                                    "behavioral", "coverage", "meta",
-                                   "release", "diagnose"}  # M13+M14
+                                   "release", "diagnose", "heal"}  # M13+M14

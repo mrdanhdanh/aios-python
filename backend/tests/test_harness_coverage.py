@@ -347,8 +347,8 @@ class TestWiring:
         reg = kernel.container.resolve(HarnessRegistry)
         assert reg.get("coverage") is not None
         assert reg.get("coverage").id == "coverage"
-        # registry có 11 harness (10 + diagnose) — builder exclude self → 10
-        assert len(reg.list()) == 11
+        # registry có 12 harness (11 + heal) — builder exclude self → 11
+        assert len(reg.list()) == 12
         assert "coverage" in reg.list()
         assert "release" in reg.list()
         assert "diagnose" in reg.list()
