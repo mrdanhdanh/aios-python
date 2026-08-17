@@ -99,7 +99,7 @@ _ARTIFACT_KINDS = ("events", "report")
 _VERIFICATION_STATES = ("pass", "fail", "error", "blocked", "unknown",
                         "not_executed", "missing_evidence", "skipped")
 
-#: negative-path v1 — CORRUPTED_EVIDENCE/REPLAY_MISMATCH cần TASK-091
+#: negative-path — TASK-091 (meta) cover CORRUPTED_EVIDENCE + REPLAY_MISMATCH
 _NEGATIVE_PATHS: tuple[tuple[NegativePath, bool, str], ...] = (
     (NegativePath.PASS, True, "module:aios_core.harness.testing"),
     (NegativePath.FAIL, True, "module:aios_core.harness.execution"),
@@ -107,8 +107,8 @@ _NEGATIVE_PATHS: tuple[tuple[NegativePath, bool, str], ...] = (
     (NegativePath.VIOLATION, True, "path:tests/test_architecture.py"),
     (NegativePath.TIMEOUT, True, "module:aios_core.harness.testing"),
     (NegativePath.EXCEPTION, True, "module:aios_core.harness"),
-    (NegativePath.CORRUPTED_EVIDENCE, False, ""),
-    (NegativePath.REPLAY_MISMATCH, False, ""),
+    (NegativePath.CORRUPTED_EVIDENCE, True, "module:aios_core.harness.meta"),
+    (NegativePath.REPLAY_MISMATCH, True, "module:aios_core.harness.meta"),
 )
 
 
@@ -121,6 +121,7 @@ _COMPONENT_MODULES: dict[str, str] = {
     "doctor": "aios_core.harness.doctor",
     "readiness": "aios_core.harness.doctor",  # ReadinessHarness trong doctor pkg
     "behavioral": "aios_core.harness.behavioral",
+    "meta": "aios_core.harness.meta",  # P2-5: TASK-091 meta harness
 }
 
 

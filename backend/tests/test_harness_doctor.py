@@ -496,7 +496,7 @@ class TestConfigWiring:
         reg = kernel.container.resolve(HarnessRegistry)
         assert set(reg.list()) == {"verification", "test", "evaluation",
                                    "benchmark", "doctor", "readiness",
-                                   "behavioral", "coverage"}  # M13 TASK-089/090
+                                   "behavioral", "coverage", "meta"}  # M13 TASK-089/090/091
 
     def test_registry_register_shared_checks(self, tmp_path):
         from aios_core.config import ArtifactsSettings, AuditSettings, Settings

@@ -44,6 +44,7 @@ def make_registry() -> HarnessRegistry:
     )
     from aios_core.harness.evaluation import EvaluationHarness, Engine
     from aios_core.harness.execution import EvidenceServices, VerificationHarness
+    from aios_core.harness.meta import MetaHarness
     from aios_core.harness.testing import TestHarness
 
     reg.register(VerificationHarness(EvidenceServices(
@@ -55,6 +56,7 @@ def make_registry() -> HarnessRegistry:
     reg.register(DoctorHarness(DoctorChecks()))
     reg.register(ReadinessHarness(DoctorChecks(), ReadinessScorer()))
     reg.register(BehavioralConformanceHarness())
+    reg.register(MetaHarness())
     return reg
 
 
@@ -113,12 +115,12 @@ class TestContracts:
 # ---------------------------------------------------------------------------
 
 class TestCoverage:
-    def test_components_7_exclude_self(self):  # AC3 (P1-3 v1 + P2-G v2)
+    def test_components_8_exclude_self(self):  # AC3 (P1-3 v1 + P2-G v2) + P2-1 TASK-091
         reg = make_registry()
         reg.register(CoverageHarness(reg))  # register coverage trước
         report = HarnessCoverage(reg).build()
         comp = report.dimensions["component"]
-        assert comp.total == 7  # exclude self → 7 (không 8)
+        assert comp.total == 8  # exclude self → 8 (không 9)
 
     def test_dimensions_total_positive(self):  # AC4
         report = HarnessCoverage(make_registry()).build()
@@ -139,12 +141,13 @@ class TestCoverage:
         assert report.overall_ratio == pytest.approx(1.0)
         assert "status" not in report.model_dump()  # KHÔNG có status (P3-2)
 
-    def test_negative_6_of_8(self):  # AC6 + AC18 (P2-F v2)
+    def test_negative_8_of_8(self):  # AC6 + AC18 (P2-F v2) + TASK-091 (P1-2/P3-1)
         report = HarnessCoverage(make_registry()).build()
         covered = [p for p, n in report.negative_paths.items() if n.covered]
-        assert sorted(covered) == ["blocked", "exception", "fail", "pass",
-                                   "timeout", "violation"]
-        assert report.negative_path_ratio == pytest.approx(0.75)
+        assert sorted(covered) == ["blocked", "corrupted_evidence", "exception",
+                                   "fail", "pass", "replay_mismatch", "timeout",
+                                   "violation"]
+        assert report.negative_path_ratio == pytest.approx(1.0)
         # evidence non-empty + tồn tại (P2-5 v1)
         for p, n in report.negative_paths.items():
             if n.covered:
@@ -172,12 +175,12 @@ class TestCoverage:
         assert report.dimensions["component"].ratio == 0.0
         assert report.overall_ratio == pytest.approx(1.0 - (1 / 9))  # 8 dims đủ
 
-    def test_metrics_and_summary(self):  # AC14
+    def test_metrics_and_summary(self):  # AC14 + TASK-091 (P1-2)
         report = HarnessCoverage(make_registry()).build()
         assert report.metrics["dimensions_total"] == 9
         assert report.metrics["negative_paths_total"] == 8
         assert report.summary != ""
-        assert "negative 6/8" in report.summary
+        assert "negative 8/8" in report.summary
 
     def test_keys_9_and_8(self):  # AC16
         report = HarnessCoverage(make_registry()).build()
@@ -220,14 +223,12 @@ class TestReadiness:
                    "replay", "scenario")]
         assert report.overall == pytest.approx(sum(active) / 6)
 
-    def test_fail_closed_not_ready(self):  # AC8 (P1-1 v1)
+    def test_ready_when_meta_covered(self):  # AC8 (P1-1 v1) + TASK-091 (P1-2/P3-1)
         coverage = HarnessCoverage(make_registry()).build()
         report = HarnessReadinessScorer().score(coverage)
-        assert report.dimensions["replay"] == pytest.approx(0.5)
-        assert report.overall == pytest.approx(0.89583333)
-        assert report.status == HarnessReadinessStatus.NOT_READY  # replay gate
-        assert any(g.name == "replay" and not g.passed
-                   for g in report.hard_gates)
+        assert report.dimensions["replay"] == pytest.approx(1.0)
+        assert report.overall == pytest.approx(1.0)
+        assert report.status == HarnessReadinessStatus.READY  # replay covered
 
     def test_ready_when_replay_covered(self):  # AC8
         coverage = HarnessCoverage(make_registry()).build()
@@ -281,19 +282,17 @@ class TestHarness:
         h = CoverageHarness(make_registry())
         ctx = coverage_ctx("r")
         payload = h.run(ctx)
-        assert payload["readiness"]["status"] == "not_ready"
+        assert payload["readiness"]["status"] == "ready"  # TASK-091 8/8
         assert len(payload["coverage"]["dimensions"]) == 9
 
-    def test_verify_not_ready_raises(self):  # AC11 (P1-B v2)
+    def test_verify_ready_no_raise(self):  # AC11 (P1-B v2) + TASK-091 READY
         state = StateService()
         h = CoverageHarness(make_registry(), state_service=state)
         ctx = coverage_ctx("r-fail", strict=True)
         h.run(ctx)
-        with pytest.raises(CoverageError):
-            h.verify(ctx, None)
-        # persist TRƯỚC raise (evidence-first)
+        h.verify(ctx, None)  # ready → strict không raise
         assert state.get_state("r-fail")["coverage_report"]["readiness_status"] \
-            == "not_ready"
+            == "ready"
 
     def test_verify_not_strict_no_raise(self):
         state = StateService()
@@ -303,35 +302,35 @@ class TestHarness:
         h.verify(ctx, None)
         assert state.get_state("r-warn")["coverage_report"]["strict"] is False
 
-    def test_get_report_round_trip(self):  # AC9 (P2-D v2)
+    def test_get_report_round_trip(self):  # AC9 (P2-D v2) + TASK-091 READY
         state = StateService()
         h = CoverageHarness(make_registry(), state_service=state)
         ctx = coverage_ctx("r-g", strict=False)
         h.run(ctx)
         h.verify(ctx, None)
         report = h.get_report("r-g")
-        assert report["readiness_status"] == "not_ready"
+        assert report["readiness_status"] == "ready"
         assert report["coverage_overall"] == pytest.approx(1.0)
 
     def test_get_report_unknown(self):
         h = CoverageHarness(make_registry(), state_service=StateService())
         assert h.get_report("nope") is None
 
-    def test_full_runner_execute_diagnosed(self):  # AC11 (P1-B v2)
+    def test_full_runner_execute_completed(self):  # AC11 (P1-B v2) + TASK-091 READY
         state = StateService()
         h = CoverageHarness(make_registry(), state_service=state)
         runner = HarnessRunner(state_service=state)  # diagnose_on_failure=True
         ctx = runner.create_context(h, "cov", config={"strict": True})
         report = runner.execute(h, ctx)
-        assert report.result.status == HarnessRunStatus.DIAGNOSED
+        assert report.result.status == HarnessRunStatus.COMPLETED
 
-    def test_full_runner_execute_failed_no_diagnose(self):  # AC11
+    def test_full_runner_execute_completed_no_diagnose(self):  # AC11
         state = StateService()
         h = CoverageHarness(make_registry(), state_service=state)
         runner = HarnessRunner(state_service=state, diagnose_on_failure=False)
         ctx = runner.create_context(h, "cov", config={"strict": True})
         report = runner.execute(h, ctx)
-        assert report.result.status == HarnessRunStatus.FAILED
+        assert report.result.status == HarnessRunStatus.COMPLETED
 
 
 # ---------------------------------------------------------------------------
@@ -346,8 +345,8 @@ class TestWiring:
         reg = kernel.container.resolve(HarnessRegistry)
         assert reg.get("coverage") is not None
         assert reg.get("coverage").id == "coverage"
-        # registry có 8 harness (7 + coverage) — builder exclude self → 7
-        assert len(reg.list()) == 8
+        # registry có 9 harness (8 + coverage) — builder exclude self → 8
+        assert len(reg.list()) == 9
         assert "coverage" in reg.list()
 
 
@@ -361,12 +360,12 @@ class TestCLI:
 
         return main(argv)
 
-    def test_cli_not_ready_exit_1(self, capsys):  # AC10
+    def test_cli_ready_exit_0(self, capsys):  # AC10 + TASK-091 8/8 → READY
         rc = self._run_cli(["harness", "coverage"])
         out = capsys.readouterr().out
-        assert rc == 1  # v1 NOT_READY (fail-closed)
+        assert rc == 0  # READY
         data = json.loads(out)
-        assert data["readiness"]["status"] == "not_ready"
+        assert data["readiness"]["status"] == "ready"
         assert len(data["coverage"]["dimensions"]) == 9
 
     def test_cli_min_replay_lower_ready(self, capsys):  # AC10

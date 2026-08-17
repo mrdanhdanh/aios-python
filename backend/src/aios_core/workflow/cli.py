@@ -245,6 +245,12 @@ def main(argv: list[str] | None = None) -> int:
                             help="V1 luôn NOT_READY khi bật (chưa có nguồn evidence — M13.1/M16)")
     h_coverage.add_argument("--no-strict", action="store_true",
                             help="Không raise khi NOT_READY (exit vẫn 1)")
+    h_meta = harness_sub.add_parser(
+        "meta",
+        help="Meta-Harness — verify the verifier (adversarial fail-closed, M13-P2)",
+    )
+    h_meta.add_argument("--no-strict", action="store_true",
+                        help="Không raise khi Meta FAIL (exit vẫn 1)")
 
     args = parser.parse_args(argv)
 
@@ -348,6 +354,8 @@ def main(argv: list[str] | None = None) -> int:
         return _harness_behavioral(args)
     if args.command == "harness" and args.harness_command == "coverage":
         return _harness_coverage(args)
+    if args.command == "harness" and args.harness_command == "meta":
+        return _harness_meta(args)
     return 1
 
 
@@ -1319,6 +1327,32 @@ def _harness_coverage(args) -> int:
     }
     print(json.dumps(payload, indent=2))
     return 0 if readiness.status.value == "ready" else 1
+
+
+def _harness_meta(args) -> int:
+    """Meta-Harness (M13-P2, TASK-091): verify the verifier.
+
+    1 JSON document (meta report), exit 0 (PASS) / 1 (FAIL).
+    """
+    from ..harness import HarnessRegistry, HarnessRunner
+    from ..harness.meta import MetaHarness
+    from ..kernel import RuntimeKernel
+    from ..kernel.services import StateService
+
+    kernel = RuntimeKernel.create()
+    reg = kernel.container.resolve(HarnessRegistry)
+    # Tạo trực tiếp (HarnessRunner chưa register trong container — giống coverage)
+    state = StateService()
+    runner = HarnessRunner(state_service=state)
+    harness = MetaHarness(state_service=state,
+                          registry_ids=sorted(reg.list()))
+    ctx = runner.create_context(
+        harness, "meta", config={"strict": not args.no_strict})
+    report = runner.execute(harness, ctx)
+    meta_report = harness.get_report(ctx.run_id) or {}
+    print(json.dumps({"meta": meta_report,
+                      "status": meta_report.get("status", "fail")}, indent=2))
+    return 0 if meta_report.get("status") == "pass" else 1
 
 
 def _read_text(path: str) -> str:

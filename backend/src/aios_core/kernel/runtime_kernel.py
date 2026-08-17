@@ -280,6 +280,18 @@ class RuntimeKernel:
         harness_registry.register(coverage_harness)  # id="coverage"
         container.register_instance(CoverageHarness, coverage_harness)
 
+        # Meta-Harness (M13-P2, TASK-091): verify the verifier — independent
+        # oracle + adversarial fail-closed. Tái dùng public verification API.
+        # Engine route state_service (case 8) + registry ids vào reproducible.
+        from ..harness.meta import MetaHarness
+
+        meta_harness = MetaHarness(
+            state_service=container.resolve(StateService),  # shared
+            registry_ids=sorted(harness_registry.list()),
+        )
+        harness_registry.register(meta_harness)  # id="meta"
+        container.register_instance(MetaHarness, meta_harness)
+
         # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
         # injectable qua register (placeholder deterministic v1, INV-022).
         from ..harness.doctor import (
