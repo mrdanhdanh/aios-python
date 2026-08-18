@@ -18,7 +18,7 @@
 | P4 | Docs & ADR | C5 ADR-0007 (compatibility policy) + migration guide 1.0→1.1 + PLAN §M12 | TASK-088 | `done` ✅ (10/10 AC — ADR-0007 + docs/guides/migration-1.0-to-1.1.md + PLAN §M12 DONE + README links — **M12 HOÀN TẤT 5/5 TASK**) |
 
 Dependency order: C1 → C2 → C3 → (C4 ∥ C5)
-## 📋 M13 — Harness Trust & Behavioral Conformance (2026-08-17 — IN-PROGRESS, Issue #8) · TRUST
+## ✅ M13 — Harness Trust & Behavioral Conformance (2026-08-17 — DONE ✅, Issue #8) · TRUST
 
 > PLAN.md §M13 (P18): bước tiếp theo SAU M12 (AIOS 1.1 Compatibility). KHÔNG sửa Runtime/Orchestrator (giữ INV-017..021). Mở rộng Harness từ "test/certify framework" → **trust layer tự xác minh (self-validating) + production-grade**. Nguồn: tự đánh giá độ harness 2026-08-16 (4/5 — Certified & Gated, chưa Autonomous) + đề xuất người dùng (5 ưu tiên + roadmap). **Harness Track (M13→M15) FROZEN** sau 6 điểm chỉnh sửa.
 > **Trạng thái**: 5/5 task done — full suite **2254 PASS / 0 FAIL** + release gate PASS (system_ready + harness_trust) + 4 invariant track (FAIL-CLOSED ✅ + INDEPENDENT VERIFICATION ✅ + PERMISSION BOUNDARY 📋 M14 + CERTIFIED BASELINE/ROLLBACK 📋 M14). Nhánh: `feature/ISSUE-8-m13-harness-trust`.
@@ -36,10 +36,10 @@ Dependency order: P0 → P1 → P2 → (P3 ∥ P4)
 > **Deviation P0 (TASK-089)**: gate v1 chỉ expose (finding) — gate-as-blocker thuộc M14; soak v1 = loop-stability test. Chi tiết: PLAN §M13 P0 + TASK-089/evaluation.md.
 > **Deviation P1 (TASK-090)**: coverage v1 = declared + auto-collect (KHÔNG quét test files); **fail-closed thật** — `aiagent harness coverage` trả NOT_READY (replay gate 0.5 < 0.75) cho tới khi TASK-091 cover đủ; production 0.0 + excluded overall v1. Chi tiết: PLAN §M13 P1 + TASK-090/evaluation.md.
 > **Deviation P2 (TASK-091)**: Oracle hardcode (MetaOracle enum) — engine KHÔNG gọi verifier production để tính expected_state (chống circular P2-1); engine reference `pipeline.compute_verdict` module-level để monkeypatch AC16 hoạt động; `fail_closed` = "Meta đạt mục tiêu adversarial" (P1-1 fix: BROKEN_VERIFIER/VERIFY_SKIPPED scenario a detect = success = True → suite PASS reachable). Scenario (b) đẩy vào AC16 negative test. Chi tiết: PLAN §M13 P2 + TASK-091/evaluation.md.
-## 📋 M14 — Controlled Self-Healing (PLANNED — sau M13) · HEAL
+## ✅ M14 — Controlled Self-Healing (DONE ✅) · HEAL
 
 > PLAN.md §M14 (P19): đóng vòng lặp tự phục hồi có kiểm soát (Detect→Diagnose→Generate Fix→Risk→Simulate→Meta-Verify→Permission→Human Approval→Apply→Re-test→Rollback if needed→Certify). **NGUYÊN TẮC**: Harness KHÔNG tự sửa tiêu chuẩn để tự PASS; mọi apply thực cần Permission Broker + Human Approval + Certified Baseline/Rollback. Cần M13 (Meta-Harness + Trust Separation) làm nền.
-> **Trạng thái**: `in-progress` — TASK-094 done.
+> **Trạng thái**: 5/5 task done — full suite **2331 PASS / 0 FAIL** + closed-loop pipeline (Detect→Diagnose→Generate→Risk→Simulate→Meta-Verify→Apply→Certify). Nhánh: `feature/ISSUE-8-m14-controlled-self-healing`.
 
 | Phase | Nội dung | Task | Trạng thái |
 |-------|----------|------|------------|
@@ -51,7 +51,7 @@ Dependency order: P0 → P1 → P2 → (P3 ∥ P4)
 
 Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
 
-## 📋 M15 — Autonomous Harness (PLANNED — sau M14) · AUTONOMY
+## ✅ M15 — Autonomous Harness (DONE ✅) · AUTONOMY
 
 > PLAN.md §M15 (P20): đích cuối harness track — vòng lặp tự chủ (autonomous) detect→diagnose→fix→verify→apply→certify, Improvement Engine, Continuous Certification, Autonomy Policy + Trust Budget/Autonomy Levels + kill-switch. **Autonomy ≠ Permission**: Autonomy Engine quyết định "có nên tự làm?", Permission Broker quyết định "có được phép?". Giữ fail-closed + permission boundary + human oversight high-risk. Cần M14 làm nền.
 > **Trạng thái**: 5/5 task done — full suite **2360 PASS / 0 FAIL** + 16 harness total + closed-loop pipeline (Detect→Diagnose→Generate→Risk→Simulate→Meta-Verify→Apply→Certify→Autonomous→DSH Oracle). Nhánh: `feature/ISSUE-8-m14-controlled-self-healing`.
@@ -65,6 +65,41 @@ Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
 | P4 | Docs & ADR — INV-038 Autonomy Boundary + Autonomy Constitution | TASK-103 | `done` ✅ |
 
 Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
+## ✅ M16 — Harness Ecosystem Integration (DONE ✅) · INTEGRATE
+
+> PLAN.md §M16 (P21): tích hợp dsh làm external oracle (độc lập thực sự) + management console. M16 = INTEGRATE — biến dsh thành independent verification path thực thụ (giải vòng tròn Meta-Harness M13-P2) + tận dụng `dsh-web-app` làm management console, giữ nguyên fail-closed / permission boundary / certified baseline.
+> **Trạng thái**: 5/5 task done — full suite **2360 PASS / 0 FAIL** + 16 harness total + 4 invariant track củng cố (FAIL-CLOSED ✅ + INDEPENDENT VERIFICATION ✅ + PERMISSION BOUNDARY ✅ + CERTIFIED BASELINE/ROLLBACK ✅). Nhánh: `feature/ISSUE-8-m14-controlled-self-healing`.
+
+| Phase | Nội dung | Task | Trạng thái |
+|-------|----------|------|------------|
+| P0 | DSH Bridge — independent verification oracle (map INV-001..038) | TASK-104 | `done` ✅ |
+| P1 | Behavioral Conformance Bridge (ACP snapshot / fast-check) | TASK-106 | `done` ✅ |
+| P2 | Permission & Sandbox Bridge (remediation apply theo scope) | TASK-107 | `done` ✅ |
+| P3 | Management Console (embed/proxy dsh-web-app) | TASK-108 | `done` ✅ |
+| P4 | Docs & ADR | TASK-105 | `done` ✅ |
+
+Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
+
+## 📋 M17–M26 — Coding Plane (PLANNED — sau M16) · CODE
+
+> PLAN.md §M17–M26 (P22–P31): biến AIOS từ "OS có Harness rất mạnh" thành "AIOS thực sự có khả năng coding". **Nguyên tắc**: (1) KHÔNG phá Runtime/Orchestrator/Harness (giữ INV-001..038); (2) Coding Plane là **CONSUMER** của Runtime + Harness, không tự tạo hệ thống agent riêng; (3) **AIOS là chính, Harness là lớp Trust/Verification**; (4) ModelProvider là INFRASTRUCTURE, không chứa coding logic; (5) Coder Agent là worker trong Worker Plane, truy cập qua Capability + Runtime.
+> **Trạng thái**: `planned` — chi tiết task/spec do user gửi sau (xem LOG 2026-08-18). Nhánh: `docs/coding-plane-plan` (từ `verify`).
+> **Milestone chain**: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 → M25 → M26.
+
+| Phase | Nội dung | Milestone | Trạng thái |
+|-------|----------|-----------|------------|
+| P22 | Model Provider & Inference Runtime (OpenAI/Anthropic/Local/Compatible/Mock) | M17 | `todo` |
+| P23 | Coding Context (repo index, retrieval, symbol graph) | M18 | `todo` |
+| P24 | Coder Agent (Goal → inspect → plan → edit → verify → repair) | M19 | `todo` |
+| P25 | Sandbox Execution (build/test/lint safe) | M20 | `todo` |
+| P26 | Coding Loop (Plan → Code → Test → Fix) | M21 | `todo` |
+| P27 | Code Verification (Harness xác minh code) | M22 | `todo` |
+| P28 | Git/Artifact Integration (diff/commit/rollback) | M23 | `todo` |
+| P29 | Autonomous Coding (task nhiều bước) | M24 | `todo` |
+| P30 | Coding Evaluation (benchmark + regression) | M25 | `todo` |
+| P31 | AIOS 2.0 Coding Edition (freeze + certification) | M26 | `todo` |
+
+Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 → M25 → M26
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).

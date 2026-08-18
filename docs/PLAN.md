@@ -2278,6 +2278,146 @@ Giao diện quản lý (user request)        |  dsh-web-app (Web UI :3080) / m�
 - **M16 pipeline**: `Pin → Bridge(sidecar/ACP) → Oracle(invariants) → Conformance(ACP snapshot) → Permission/Sandbox(apply) → Console(operate) → Certify`.
 - **Exit condition (M16 = INTEGRATE)**: chứng minh AIOS tích hợp được một harness độc lập (dsh) làm oracle xác minh độc lập + có giao diện quản lý vận hành được, mà 4 invariant Harness Track không bị vi phạm.
 
+## 🚀 Coding Plane (M17–M26) — biến AIOS từ "OS có Harness" thành "OS có khả năng coding"
+
+> **Roadmap mới (đề xuất 2026-08-18, user duyệt hướng đi)**: Sau M16 (Harness Track hoàn tất — 2360 tests, 16 harness, 4 invariant track củng cố), bước tiếp theo là **Coding Plane** — lớp thực thi công việc code nằm TRÊN Runtime + Harness hiện tại.
+> **Nguyên tắc sống còn (KHÔNG phá hiện tại)**:
+> 1. M17–M26 KHÔNG sửa Runtime/Orchestrator/Harness (giữ INV-001..038).
+> 2. Coding Plane là **CONSUMER** của Runtime + Harness, KHÔNG tự tạo hệ thống agent riêng.
+> 3. **AIOS là chính, Harness là lớp Trust/Verification** — không biến dự án thành Harness framework có thêm AI.
+> 4. ModelProvider là **INFRASTRUCTURE** — KHÔNG chứa coding logic.
+> 5. Coder Agent là worker trong Worker Plane, truy cập qua Capability + Runtime (enforced bởi Permission Service + Policy Engine).
+> **Trạng thái**: PLANNED (chi tiết task/spec do user gửi sau — xem LOG 2026-08-18). Nhánh: `docs/coding-plane-plan` (từ `verify`).
+
+### Kiến trúc Coding Plane (consumer của Runtime + Harness)
+```
+                    ┌──────────────────────┐
+                    │       User / UI      │
+                    └──────────┬───────────┘
+                               │ Goal
+                               ▼
+                    ┌──────────────────────┐
+                    │    AIOS Orchestrator │
+                    │ Normalize → Rule →   │
+                    │ Match → Plan         │
+                    └──────────┬───────────┘
+                               │
+                         coding task
+                               ▼
+              ┌────────────────────────────────┐
+              │          CODING PLANE           │
+              │  ┌────────────┐ ┌────────────┐ │
+              │  │ Coder      │ │ Reviewer   │ │
+              │  │ Agent      │ │ Agent      │ │
+              │  └─────┬──────┘ └─────┬──────┘ │
+              │        │              │        │
+              │        ▼              ▼        │
+              │  ┌──────────────────────────┐  │
+              │  │   Code Generation Loop   │  │
+              │  │ Plan → Edit → Run → Test │  │
+              │  │ → Diagnose → Repair      │  │
+              │  └────────────┬─────────────┘  │
+              └───────────────┼────────────────┘
+                              ▼
+                    ┌──────────────────────┐
+                    │    Sandbox Runtime   │
+                    │ build / test / lint  │
+                    └──────────┬───────────┘
+                               │ Evidence
+                               ▼
+                    ┌──────────────────────┐
+                    │   Harness / Verify   │
+                    │ behavioral + safety  │
+                    └──────────┬───────────┘
+                               │
+                       PASS / FAIL / UNKNOWN
+                               ▼
+                    ┌──────────────────────┐
+                    │ Artifact / Git /      │
+                    │ Result / Audit       │
+                    └──────────────────────┘
+```
+
+### Milestone breakdown (M17–M26)
+| Milestone | Mục tiêu | Kết quả chính |
+|-----------|----------|---------------|
+| **M17** | Model Provider & Inference Runtime | AIOS gọi được LLM thật (OpenAI/Anthropic/Local/OpenAI-compatible/Mock) qua abstraction `ModelProvider` + `ModelRequest`/`ModelResponse` |
+| **M18** | Coding Context | LLM hiểu repository/codebase (index, retrieval, repo map, symbol graph) |
+| **M19** | Coder Agent | AIOS có khả năng tạo/sửa code (Goal → inspect repo → plan → edit → verify → repair) |
+| **M20** | Sandbox Execution | Chạy build/test/lint an toàn trong sandbox pool |
+| **M21** | Coding Loop | Plan → Code → Test → Fix (vòng lặp khép kín có verification) |
+| **M22** | Code Verification | Harness xác minh code (behavioral + safety + contract) |
+| **M23** | Git/Artifact Integration | diff, commit, rollback có kiểm soát |
+| **M24** | Autonomous Coding | tự xử lý task nhiều bước không cần human-in-loop thường xuyên |
+| **M25** | Coding Evaluation | benchmark + regression cho coding tasks |
+| **M26** | AIOS 2.0 Coding Edition | freeze + certification (AIOS 2.0 READY) |
+
+Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 → M25 → M26
+
+### M17 – Model Provider & Inference Runtime (P22 — nền tảng LLM)
+> **Làm trước nhất**. KHÔNG để Coder Agent trực tiếp gọi OpenAI/Anthropic/etc. Cần abstraction:
+```
+ModelProvider
+    │
+    ├── OpenAI
+    ├── Anthropic
+    ├── Local
+    ├── OpenAI-compatible
+    └── Mock
+```
+```
+ModelRequest
+    ├── model
+    ├── messages
+    ├── tools
+    ├── temperature
+    ├── max_tokens
+    ├── timeout
+    └── metadata
+
+ModelResponse
+    ├── content
+    ├── tool_calls
+    ├── usage
+    ├── finish_reason
+    └── evidence
+```
+**Quan trọng**: Provider chỉ là infrastructure. Nó **không được chứa coding logic**. Sau đó M18 mới xây Context Engine để đưa repository vào model có kiểm soát.
+
+### M18 – Coding Context (P23)
+Hiểu repository/codebase: index source files, build retrieval (semantic + keyword + symbol graph), repo map (cấu trúc thư mục + entry points), symbol resolution. Tái dùng Memory Coordinator (M5) + Knowledge Graph (M1) + Knowledge Base (M1).
+
+### M19 – Coder Agent (P24) — "AIOS biết code"
+Không chỉ `prompt → LLM → code` mà:
+```
+Goal → Repository inspection → Understand architecture → Create coding plan →
+Edit artifacts → Run verification → Analyze failure → Repair → Re-run → Evidence → Final result
+```
+Đây là nơi Harness hiện tại (M13–M16) phát huy giá trị.
+
+### M20 – Sandbox Execution (P25)
+Chạy build/test/lint an toàn: tái dùng Sandbox Pool (M2) + Resource Service (M1) + Permission Service (M1). Evidence từ execution → Harness.
+
+### M21 – Coding Loop (P26)
+Plan → Code → Test → Fix: vòng lặp khép kín có verification, tái dùng Autonomous Loop (M9) + Failure Recovery (M2) + Harness (M6/M13).
+
+### M22 – Code Verification (P27)
+Harness xác minh code: behavioral conformance (M13) + safety (M10 INV-067) + contract check (M10). Coding Plane là consumer, không tự implement verification.
+
+### M23 – Git/Artifact Integration (P28)
+Diff, commit, rollback có kiểm soát: tái dùng Artifact Service (M1) + Kill Switch (M10) + Certified Baseline (M14).
+
+### M24 – Autonomous Coding (P29)
+Tự xử lý task nhiều bước: tái dùng Goal Manager (M2/M4) + Autonomous Loop (M9) + Trust Budget (M15) + Permission Boundary (M14).
+
+### M25 – Coding Evaluation (P30)
+Benchmark + regression cho coding tasks: tái dùng Evaluation Framework (M4/M6) + Benchmark (M6) + Coding Evaluation Harness mới.
+
+### M26 – AIOS 2.0 Coding Edition (P31)
+Freeze + certification: Architecture Freeze (M10 pattern) + `aiagent conformance` → **AIOS 2.0 READY**. INV-001..038 giữ nguyên + (có thể) bổ sung invariant Coding Plane (INV-039+, TBD).
+
+> **Lưu ý**: M17–M26 không phá Runtime/Harness. AIOS hiện có lợi thế lớn: M13–M16 đã xây lớp Trust/Harness → Coding Plane trở thành consumer của Runtime + Harness thay vì tự tạo hệ thống agent riêng.
+
 ### Tỷ trọng toàn dự án (theo thành phần)
 | Thành phần | Tỷ trọng |
 |-----------|----------|
@@ -2310,8 +2450,10 @@ Giao diện quản lý (user request)        |  dsh-web-app (Web UI :3080) / m�
 - **M14 (HEAL)**: Controlled Self-Healing / Closed-loop Remediation — Detect&Diagnose (TASK-094) failure corpus + localization; Candidate Generate+Risk (TASK-095) low/med/high; Simulation+Meta-Verify Gate (TASK-096) verify fix KHÔNG relax criteria; Permission Broker+Human Approval+Apply+Re-test+Rollback+Certify+CERTIFIED BASELINE (TASK-097); Docs/ADR (TASK-098) INV-037 Remediation Integrity + kill-switch; anti-pattern: harness KHÔNG tự sửa tiêu chuẩn để tự PASS
 - **M15 (AUTONOMY)**: Autonomous Harness — Loop Orchestrator (TASK-099); Improvement Engine (TASK-100); Continuous Certification (TASK-101) low-risk auto; Autonomy Policy+Trust Budget/Autonomy Levels+SAFE-STOP (TASK-102); Docs/ADR (TASK-103) INV-038 Autonomy Boundary + Autonomy Constitution; Autonomy≠Permission; giữ 4 invariant track + human oversight high-risk
 - **M16 (INTEGRATE)**: Harness Ecosystem Integration — DeepSeek Harness (`dsh`) sidecar làm independent verification oracle (TASK-104 map INV-001..038 → dsh invariants, giải M13-P2 vòng tròn Meta-Harness) + Behavioral Conformance Bridge qua ACP snapshot / `fast-check` property tests (TASK-106) + Permission & Sandbox Bridge cho remediation apply theo scope (TASK-107) + Management Console (TASK-108: MVP embed/proxy `dsh-web-app` :3080, target mở rộng `dashboard/`) + pin chặt RC version + MIT compliance + telemetry tắt mặc định; 4 invariant track ĐƯỢC CỦNG CỐ; exit: tích hợp harness độc lập an toàn + có giao diện quản lý vận hành được
+- **M17–M26 (CODE)**: Model Provider (M17) gọi LLM thật qua abstraction KHÔNG chứa coding logic; Coding Context (M18) đưa repo vào model có kiểm soát; Coder Agent (M19) Goal→inspect→plan→edit→verify→repair; Sandbox Execution (M20) build/test/lint an toàn; Coding Loop (M21) Plan→Code→Test→Fix khép kín; Code Verification (M22) Harness xác minh code (behavioral+safety+contract); Git/Artifact (M23) diff/commit/rollback; Autonomous Coding (M24) task nhiều bước; Coding Evaluation (M25) benchmark+regression; AIOS 2.0 (M26) freeze+certification → AIOS 2.0 READY. Mọi Coding Plane là consumer của Runtime+Harness, KHÔNG phá INV-001..038
 - Xuyên suốt: pytest + contract tests CI; permission enforcement test (ask→deny); rule engine unit test với kết quả xác định trước
 
 ## Scope
 - In: M0 (development foundation: VS Code agent + progress/log system) + 10 milestone (M1–M10), AIOS Orchestrator v1+v2 (Decision Pipeline 4 tầng offline-first, 22 module) + 3 assistant + system doctor, 6 tool types, skill 3 nguồn + lifecycle 10 trạng thái, SDK python + typescript, upgrade pipeline, evaluation framework, sandbox pool, policy engine, goal manager + task queue, system catalog, knowledge graph, **M5 Core Intelligence** (Memory Coordinator, Context Optimizer, Model Router, Planning Engine, Execution Graph, Parallel Scheduler), **M6 AIOS Harness** (5 năng lực H1–H5: Kernel, Execution Verification, Test & Simulation, Evaluation & Benchmark, Doctor & Readiness — subsystem dưới `aios/harness/`, không sửa Runtime/Orchestrator, không phá architecture INV-017..021), M7 Enterprise (Identity/Principal/RBAC-ABAC, Multi-Tenancy + isolation levels, Distributed Runtime + Runtime Node/Router, Distributed Scheduler + Lease/Failover, Quota/Cost/Resource Governance, Credential/Network/Sandbox Isolation, HA/Audit/Recovery, Enterprise Operations + Dashboard — INV-022..029), M8 Ecosystem (Public AIOS SDK + Plugin Runtime + Extension Contracts + Ecosystem Registry + Developer Kit + Ecosystem Hub + Certification — TASK-043..049, không thêm invariant), M9 Autonomous (Goal Engine/Planner/World Model/Loop/Governor/Recovery/Long-Horizon/Memory/Experimentation/Multi-Agent/Evaluation/Stuck/Scheduler — TASK-050..062, 5 invariant INV-030..034), M10 AIOS 1.0 (Architecture Freeze/Contract 1.0/Runtime Hardening/Durable Execution/Autonomy Safety/Kill Switch/Reliability/Security Baseline/Developer Experience/Dashboard/Certification/Migration/Performance — TASK-063..075, freeze INV-001..INV-034, không thêm invariant mới), **M11 Deterministic Artifact & Interaction Runtime** (Issue #4 — Verification Integrity INV-035/RenderReplay DeterministicHarness/VisualEvidence + UI State Contract/Asset Capability Architecture + Creative Domain + Vendor Integrity + Reference-Asset/SkillDistiller + Static Deploy — TASK-078..083, thêm INV-035, additive trên M10, không vi phạm INV-001..034), **M12 AIOS 1.1 Compatibility** (Issue #7 — Version & Compatibility Baseline C1/Migration 1.0→1.1 thật C2/Backward Compatibility C3/Compatibility Conformance C4/Docs & ADR C5 — TASK-084..088, KHÔNG thêm invariant, INV-001..035 giữ nguyên frozen)
+- **M17–M26 (PLANNED — Coding Plane)**: Model Provider (M17) → Coding Context (M18) → Coder Agent (M19) → Sandbox Execution (M20) → Coding Loop (M21) → Code Verification (M22) → Git/Artifact (M23) → Autonomous Coding (M24) → Coding Evaluation (M25) → AIOS 2.0 Coding Edition (M26). KHÔNG phá INV-001..038; consumer của Runtime + Harness; AIOS là chính, Harness là Trust/Verification layer.
 - Excluded (sau M10, không thuộc v1): fine-tune model riêng, non-Local (cloud-only) deployment
