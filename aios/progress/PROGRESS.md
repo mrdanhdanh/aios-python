@@ -233,6 +233,27 @@ Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 
 
 > **INV mới (M24)**: INV-093 Policy-Driven Gate · INV-094 Hard Gate Dominance · INV-095 Explainable Decision · INV-096 Exception Explicitness · INV-097 Exception Expiration · INV-098 Finding Preservation · INV-099 Trust Invalidation · INV-100 Governance Auditability · INV-101 Security Precedence · INV-102 Unknown Fail-Closed. (Attachment đề xuất INV-051..060 nhưng **TOÀN BỘ range đã bị chiếm**: INV-051..058 = M19, INV-059..067 = M20 → điều chỉnh lên INV-093..102.)
 > **M24 = Quality Governance / Trust Gate** — biến Verify(M22)+Attack(M23) thành governance liên tục. KHÔNG tạo Agent mới. Policy decides, score informs. M25 tiếp theo = Git/Artifact Integration (proposed).
+
+**M25 — Git/Artifact Integration (P30)**: placeholder — chờ user gửi detail. (Scope vốn là M23 gốc; dời xuống M25 khi M23→Adversarial, M24→Governance. Milestone "Autonomous Coding" cũ consolidated vào M21.)
+
+**M26 task breakdown (TASK-185..196 — ID tự gán, attachment "M25 Coding Evaluation" dùng TASK-612..623, nối tiếp M24; M25 chưa detail nên chưa cấp task)**:
+| Task | Nội dung | Trạng thái |
+|------|----------|------------|
+| TASK-185 | Coding Evaluation Contract (schema + validator) | `todo` |
+| TASK-186 | Evaluation Engine (core pipeline) | `todo` |
+| TASK-187 | Quality Dimensions (correctness/quality/verification/agent/efficiency) | `todo` |
+| TASK-188 | Benchmark Registry (B001–B016) | `todo` |
+| TASK-189 | Baseline Manager (deterministic comparison) | `todo` |
+| TASK-190 | Regression Detector | `todo` |
+| TASK-191 | Agent Behavior Evaluator | `todo` |
+| TASK-192 | Efficiency Evaluator (tokens/time/tool-calls/cost) | `todo` |
+| TASK-193 | Failure Attribution (F001–F013) | `todo` |
+| TASK-194 | Evaluation Store (immutable) | `todo` |
+| TASK-195 | Model/Agent Benchmark (config comparison) | `todo` |
+| TASK-196 | Continuous Evaluation (tích hợp M21/M24 loop) | `todo` |
+
+> **INV mới (M26)**: INV-103 Evaluation Evidence Binding · INV-104 Immutable Evaluation · INV-105 Baseline Determinism · INV-106 Critical Failure Dominance · INV-107 Evaluation Attribution · INV-108 No Score Without Evidence · INV-109 Reproducible Evaluation · INV-110 Evaluation Versioning · INV-111 Regression Transparency · INV-112 Quality Before Efficiency. (Attachment "M25" đề xuất INV-086..095 nhưng **TOÀN BỘ range đã bị chiếm**: INV-086..092 = M23, INV-093..095 = M24 → điều chỉnh lên INV-103..112. Task TASK-612..623 → TASK-185..196.)
+> **M26 = Coding Evaluation / Quality Intelligence** — đo lường chất lượng coding khách quan, so sánh baseline, phát hiện regression, attribution. KHÔNG generate/repair code, KHÔNG override M22 verification. Tiền đề cho M27 (AIOS 2.0 Coding Edition). Ghi chú: attachment gắn nhãn "M25" nhưng content = Coding Evaluation → trong restructured plan đây là **M26** (M25=Git/Artifact placeholder).
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).

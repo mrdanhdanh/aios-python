@@ -3175,8 +3175,141 @@ Metrics/Health + tests (policy/gate/risk/exception/trust/adversarial-governance)
 *(Scope vốn là M23 trong skeleton gốc; được dời xuống M25 khi M23→Adversarial, M24→Governance. Milestone "Autonomous Coding" cũ (P29) đã được M21 coverage → consolidated vào M21.)*
 Diff, commit, rollback có kiểm soát: tái dùng Artifact Service (M1) + Kill Switch (M10) + Certified Baseline (M14).
 
-### M26 – Coding Evaluation (P31)
-Benchmark + regression cho coding tasks: tái dùng Evaluation Framework (M4/M6) + Benchmark (M6) + Coding Evaluation Harness mới.
+### M26 – Coding Evaluation & Continuous Quality Intelligence (P31 — Quality Intelligence)
+
+> **Vị trí**: M22 = Verification (tin cậy), M23 = Adversarial (resilience), M24 = Governance (gate). M26 = **Evaluation** — đo lường chất lượng coding khách quan, so sánh các lần thực thi, phát hiện suy giảm và tự cải thiện chiến lược. Tận dụng M22/M23/M24 + Evaluation Framework (M4/M6) + Benchmark (M6). M26 KHÔNG thay thế M22; chỉ consume verification artifacts.
+> **Ranh giới**: M22 = Verification, M26 = Evaluation. M26 KHÔNG generate/repair code, KHÔNG override M22 verification, KHÔNG modify evidence/certification, KHÔNG tự đổi coding strategy trong cùng evaluation.
+> **Lưu ý đánh số**: attachment gắn nhãn "M25" nhưng content = Coding Evaluation → trong cấu trúc đã restructure (M23=Adversarial, M24=Governance) đây là **M26** (M25=Git/Artifact Integration đang là placeholder).
+
+#### 1. Vai trò & Chain
+M22 *"code có đáng tin?"* → M23 *"quản lý như artifact/version?"* → M24 *"AIOS tự hoàn thành đến đâu?"* → M26 *"đang coding tốt mức nào, tại sao, tiến bộ hay suy giảm?"*.
+```
+M17 Model Provider → M18 Coding Context → M19 Coder Agent → M20 Sandbox Execution
+→ M21 Coding Loop → M22 Independent Verification → M23 Adversarial Evaluation
+→ M24 Quality Governance → M25 Git/Artifact Integration → M26 Coding Evaluation → M27 AIOS 2.0 Coding Edition
+```
+
+#### 2. Mục tiêu chính
+Đánh giá 15 khía cạnh: Task Success, Code Correctness, Test Quality, Verification Quality, Regression Safety, Architecture Compliance, Security, Performance, Maintainability, Efficiency, Agent behavior, Evidence quality, Cost/token efficiency, Recovery capability, Reproducibility. **Không đánh giá chỉ bằng "tests passed"**.
+
+#### 3. Evaluation Model
+```
+Coding Evaluation
+├── Outcome (task_success / correctness / completeness)
+├── Quality (architecture / maintainability / security / performance)
+├── Verification (test_quality / evidence_quality / replayability / regression)
+├── Agent Behavior (planning / tool_usage / recovery / unnecessary_actions)
+└── Efficiency (tokens / latency / iterations / cost)
+```
+
+#### 4. Evaluation Contract
+`CodingEvaluation{evaluation_id, task_id, run_id, commit, status, score, dimensions, evidence_refs, regressions, metrics, verifier_certification, evaluated_at, evaluator_version}` — immutable, versioned, reproducible, traceable, machine-readable.
+
+#### 5. Quality Score
+Overall Score = tổng hợp Correctness/Completeness/Test Quality/Architecture/Security/Performance/Maintainability/Verification/Efficiency. **Overall không che khuất critical failure**: Overall=96 nhưng Security=CRITICAL FAIL → toàn bộ evaluation FAIL.
+
+#### 6. Baseline & Regression Evaluation
+`Evaluation Baseline` + Delta Analysis (Run N vs N-1: correctness/coverage/latency/tokens/complexity/failures). Phát hiện regression (VD latency +8.7%, tokens +21%).
+
+#### 7. Coding Benchmark (B001–B016)
+- BASIC: B001 bug fix / B002 function / B003 refactor / B004 test gen
+- INTERMEDIATE: B005 multi-file / B006 API / B007 DB / B008 complex refactor
+- ADVANCED: B009 arch change / B010 regression repair / B011 security fix / B012 perf opt
+- AUTONOMOUS: B013 ambiguous req / B014 multi-step / B015 failure recovery / B016 repo-scale
+
+#### 8. Agent Evaluation
+Đánh giá behavior: Planning → Tool Selection → Execution → Failure Detection → Recovery → Verification. Metrics: first_pass_success / repair_success_rate / verification_rate / unnecessary_tool_calls / retry_count / failure_recovery_rate / hallucination_rate / scope_violation_rate.
+
+#### 9. Coding Efficiency
+Đo tokens/time/tool-calls/iterations/cost per successful task. **Không tối ưu token bằng cách hy sinh correctness** → Efficiency chỉ tối ưu nếu Quality ≥ threshold.
+
+#### 10. Failure Taxonomy (F001–F013)
+Requirement/Planning/Implementation/Tool/Test/Verification/Regression/Architecture/Security/Performance/Recovery/Evidence/Environment Failure. Phân biệt "agent fail vì code sai" vs "fail vì môi trường".
+
+#### 11. Evaluation Attribution
+Mỗi failure → ROOT_CAUSE (VD test failed→code incorrect→agent implementation error, vs test failed→dependency unavailable→environment failure). Không tính hai trường hợp giống nhau.
+
+#### 12. Continuous Evaluation
+Tích hợp vào loop: Task→Coding→Verification→Evaluation→Baseline comparison→Quality trend. Phát hiện QUALITY REGRESSION (Agent v1.0→78, v1.3→83 ← regression).
+
+#### 13. Evaluation Store
+`evaluation-store/` (evaluations/ + benchmarks/ + baselines/). Query: best/worst run, latest regression, best agent/model, avg success rate.
+
+#### 14. Model/Agent Comparison
+Benchmark nhiều config (Agent A+B × Model X+Y) → so sánh thực nghiệm success/quality/tokens/time thay vì cảm nhận.
+
+#### 15. TASK-185 — Coding Evaluation Contract
+Schema + validator.
+
+#### 16. TASK-186 — Evaluation Engine
+Core evaluation pipeline.
+
+#### 17. TASK-187 — Quality Dimensions
+Implement evaluation dimensions.
+
+#### 18. TASK-188 — Benchmark Registry
+Quản lý benchmark cases B001–B016.
+
+#### 19. TASK-189 — Baseline Manager
+Lưu + so sánh baseline (deterministic).
+
+#### 20. TASK-190 — Regression Detector
+Phát hiện quality regression.
+
+#### 21. TASK-191 — Agent Behavior Evaluator
+Đánh giá execution behavior.
+
+#### 22. TASK-192 — Efficiency Evaluator
+Tokens/time/tool-call/cost metrics.
+
+#### 23. TASK-193 — Failure Attribution
+Phân loại root cause (F001–F013).
+
+#### 24. TASK-194 — Evaluation Store
+Immutable persistent storage.
+
+#### 25. TASK-195 — Model/Agent Benchmark
+So sánh multiple configuration.
+
+#### 26. TASK-196 — Continuous Evaluation
+Tích hợp evaluation vào autonomous coding loop (M21/M24).
+
+#### 27. Integration với M22/M24
+M24 Autonomous Coding loop: PLAN→CODE→EXECUTE→OBSERVE→DIAGNOSE→REPAIR→VERIFY→**EVALUATE**→IMPROVE. M26 chỉ consume M22 verification artifacts; **KHÔNG gọi lại M22 để "sửa" kết quả M25/M26**. M22 ≠ M26 (Verification ≠ Evaluation).
+
+#### 28. Invariants mới (M26) — **ID điều chỉnh (TOÀN BỘ range)**
+> ⚠️ Attachment đề xuất INV-086..095 NHƯNG **toàn bộ range đã bị chiếm**: INV-086..092 = M23, INV-093..095 = M24. M26 bổ sung **INV-103..112**:
+- **INV-103 — Evaluation Evidence Binding**: Evaluation phải tham chiếu evidence cụ thể.
+- **INV-104 — Immutable Evaluation**: Evaluation finalized không được sửa.
+- **INV-105 — Baseline Determinism**: Baseline comparison phải deterministic.
+- **INV-106 — Critical Failure Dominance**: Critical failure luôn override aggregate score.
+- **INV-107 — Evaluation Attribution**: Failure phải có attribution.
+- **INV-108 — No Score Without Evidence**: không evidence → không PASS.
+- **INV-109 — Reproducible Evaluation**: cùng input+env → evaluation replay được.
+- **INV-110 — Evaluation Versioning**: thay đổi evaluator → evaluator version mới.
+- **INV-111 — Regression Transparency**: không che giấu regression bằng aggregate score.
+- **INV-112 — Quality Before Efficiency**: efficiency optimization không override quality gate.
+
+#### 29. Task breakdown (12 task — **ID tự gán**, attachment dùng TASK-612..623)
+> ⚠️ Attachment M26 dùng TASK-612..623 → gán sequential **TASK-185..196** (nối tiếp M24; M25 Git/Artifact chưa detail nên chưa cấp task).
+| Task | Nội dung |
+|------|----------|
+| TASK-185 | Coding Evaluation Contract (schema + validator) |
+| TASK-186 | Evaluation Engine (core pipeline) |
+| TASK-187 | Quality Dimensions (correctness/quality/verification/agent/efficiency) |
+| TASK-188 | Benchmark Registry (B001–B016) |
+| TASK-189 | Baseline Manager (deterministic comparison) |
+| TASK-190 | Regression Detector |
+| TASK-191 | Agent Behavior Evaluator |
+| TASK-192 | Efficiency Evaluator (tokens/time/tool-calls/cost) |
+| TASK-193 | Failure Attribution (F001–F013) |
+| TASK-194 | Evaluation Store (immutable) |
+| TASK-195 | Model/Agent Benchmark (config comparison) |
+| TASK-196 | Continuous Evaluation (tích hợp M21/M24 loop) |
+
+#### 30. Definition of Done (M26)
+- Coding Evaluation Contract + Engine + Quality dimensions + Benchmark Registry + Baseline comparison deterministic + Regression detection + Failure attribution + Agent behavior metrics + Efficiency metrics + Evaluation immutable + Critical failure override aggregate + No-evidence→UNKNOWN/FAIL + Reproducible + Model/Agent benchmark + Continuous Evaluation tích hợp M21/M24 + Dashboard quality trend + INV-103..112 PASS + Full M0–M24 regression PASS.
+- **Đánh giá M26 bằng**: *"AIOS có đo lường khách quan chất lượng coding, so sánh baseline, phát hiện regression và attribution failure không?"*. M26 = **Quality Intelligence** của Coding Plane; tiền đề để M27 đóng gói thành AIOS 2.0 Coding Edition.
 
 ### M27 – AIOS 2.0 Coding Edition (P32)
 Freeze + certification: Architecture Freeze (M10 pattern) + `aiagent conformance` → **AIOS 2.0 READY**. INV-001..038 giữ nguyên + (có thể) bổ sung invariant Coding Plane (INV-039+, TBD).
