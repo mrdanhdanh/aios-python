@@ -49,13 +49,14 @@ gh issue create --title "[bug]: Dashboard không hiển thị Execution Timeline
 ## Giai đoạn 2 — Nhận issue → tạo nhánh
 
 1. **Phân loại** (AIOS Orchestrator): task > ~30 phút / chạm nhiều file → mở `TASK-xxx` qua hard gate (ghi link issue vào spec.md); fix nhỏ (1 dòng, typo) → bypass hợp lệ (ghi LOG.md `[bypass]` + ghi chú issue nếu có).
-2. **Refresh `verify` TRƯỚC khi tạo nhánh** (tránh drift):
+2. **Xin xác nhận người dùng TRƯỚC khi tạo nhánh** — trình bày tên nhánh đề xuất, lý do, issue tham chiếu; đợi người dùng đồng ý mới thực hiện.
+3. **Refresh `verify` TRƯỚC khi tạo nhánh** (tránh drift):
    ```powershell
    git fetch origin
    git checkout verify
    git pull origin verify
    ```
-3. **Tạo nhánh TỪ `verify`** (KHÔNG từ `master`):
+4. **Tạo nhánh TỪ `verify`** (KHÔNG từ `master`):
    ```powershell
    git checkout -b <type>/ISSUE-<N>-<slug> origin/verify
    ```

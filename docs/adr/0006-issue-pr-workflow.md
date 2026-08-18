@@ -18,6 +18,7 @@ ADR-0005 quy định branching model nhưng chưa định nghĩa: yêu cầu m�
 
 ### 2. Tạo nhánh từ verify, tên có hệ thống
 
+- **BẮT BUỘC xin xác nhận người dùng TRƯỚC khi tạo nhánh** — agent KHÔNG tự ý tạo nhánh mà phải trình bày kế hoạch (tên nhánh, lý do, issue tham chiếu) và đợi người dùng đồng ý.
 - Nhánh chức năng tạo TỪ `verify` (sau khi refresh: `git fetch origin` → `git checkout verify` → `git pull origin verify`), KHÔNG từ `master` (giữ ADR-0005).
 - Quy ước tên: `<type>/ISSUE-<N>-<slug>` với `<type> ∈ {feature, fix, docs, operation, refactor, test}` map theo loại issue (bug → `fix/`, nâng cấp → `feature/`, ý tưởng → `feature/` hoặc `docs/`, còn lại giữ nguyên).
 - Fix nhỏ không có issue: `<type>/bypass-<slug>` (khẩn cấp: `hotfix/bypass-<slug>`) — kèm dòng `[bypass]` trong PR body.
