@@ -130,6 +130,23 @@ Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 
 
 > **INV mới (M18)**: INV-045 Context Isolation · INV-046 Context Freshness · INV-047 Context Evidence · INV-048 Context Determinism · INV-049 Context Fail-Closed · INV-050 Context Budget. (Attachment đề xuất INV-042..047 nhưng INV-042/043/044 đã thuộc M17 → điều chỉnh lên INV-045..050.)
 > **M18 KHÔNG tự code** — chỉ xây "Context Plane": AIOS hiểu repository (scan/index/symbol/dependency/retrieval/verification) để M19 Coder Agent có context chính xác. Output: CodingContext + ContextManifest + Evidence (deterministic, fail-closed).
+
+**M19 task breakdown (TASK-125..134 — ID điều chỉnh từ attachment TASK-301..310)**:
+| Task | Nội dung | Trạng thái |
+|------|----------|------------|
+| TASK-125 | Coder Agent Contract + State Machine (RECEIVED→…→COMPLETED/FAILED) | `todo` |
+| TASK-126 | Coding Planner + PlanVerifier (KHÔNG edit code) | `todo` |
+| TASK-127 | Code Generation Runtime (M17 + structured output + schema validate) | `todo` |
+| TASK-128 | Patch Engine (validate/preview/apply/rollback, base_hash → PATCH_STALE) | `todo` |
+| TASK-129 | Code Review Agent (PASS/WARN/REJECT, không tự sửa) | `todo` |
+| TASK-130 | Coding Artifact + CodingEvidence (hash chain) | `todo` |
+| TASK-131 | Coder Conformance Harness + Security (CODER-001..015 + adversarial) | `todo` |
+| TASK-132 | Autonomy Level (L0/L1/L2) + Permission integration (M14) | `todo` |
+| TASK-133 | Prompt Architecture + PromptBuilder + versioning | `todo` |
+| TASK-134 | File Safety Boundary + Scope enforcement (allowed/forbidden paths) | `todo` |
+
+> **INV mới (M19)**: INV-051 Agent/Provider Separation · INV-052 Patch-First Mutation · INV-053 Patch Freshness · INV-054 Scope-Bounded Coding · INV-055 Structured Generation · INV-056 Review Before Apply · INV-057 Coding Evidence · INV-058 Repository Content Is Untrusted. (Attachment đề xuất INV-048..055 nhưng INV-048/049/050 đã thuộc M18 → điều chỉnh lên INV-051..058.)
+> **M19 KHÔNG autonomous** — Coder Agent tạo patch có scope/provenance/policy/evidence/artifact rõ ràng NHƯNG chưa tự chạy test / tự sửa lỗi / tự commit (M20/M21). Ranh giới: M19 = "biết cần sửa gì + tạo patch", M20 = "chạy patch an toàn", M21 = "Code→Execute→Observe→Diagnose→Repair".
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).
