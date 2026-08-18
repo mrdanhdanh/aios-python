@@ -3171,22 +3171,18 @@ Metrics/Health + tests (policy/gate/risk/exception/trust/adversarial-governance)
 - Quality Gate + Policy Engine + Risk classification + Release profiles + Hard-gate precedence + Exception mgmt (expiration) + Quality Debt tracking + Governance Ledger + Decision Explanation deterministic + Provenance Chain + Trust lifecycle + Trust invalidation + Change impact + Selective reverification + Approval workflow + Release gate + Rollback recommendation + Governance metrics + Policy bypass không qua score + Exception không xóa finding + UNKNOWN không → ALLOW + Security failure override quality + Full M24 suite PASS + **INV-001..102 PASS**.
 - **Đánh giá M24 bằng**: *"AIOS có governance mechanism quyết định khi nào kết quả đủ đáng tin để đi tiếp, khi nào BLOCK, khi nào cần human approval, khi nào trust cũ bị thu hồi không?"*. M24 = **Govern the Trust**. M25 tiếp theo = Git/Artifact Integration (proposed).
 
-### M25 – Git/Artifact Integration (P30)
-*(Scope vốn là M23 trong skeleton gốc; được dời xuống M25 khi M23→Adversarial, M24→Governance. Milestone "Autonomous Coding" cũ (P29) đã được M21 coverage → consolidated vào M21.)*
-Diff, commit, rollback có kiểm soát: tái dùng Artifact Service (M1) + Kill Switch (M10) + Certified Baseline (M14).
+### M25 – Coding Evaluation & Continuous Quality Intelligence (P30 — Quality Intelligence)
 
-### M26 – Coding Evaluation & Continuous Quality Intelligence (P31 — Quality Intelligence)
-
-> **Vị trí**: M22 = Verification (tin cậy), M23 = Adversarial (resilience), M24 = Governance (gate). M26 = **Evaluation** — đo lường chất lượng coding khách quan, so sánh các lần thực thi, phát hiện suy giảm và tự cải thiện chiến lược. Tận dụng M22/M23/M24 + Evaluation Framework (M4/M6) + Benchmark (M6). M26 KHÔNG thay thế M22; chỉ consume verification artifacts.
+> **Vị trí**: M22 = Verification (tin cậy), M23 = Adversarial (resilience), M24 = Governance (gate). M25 = **Evaluation** — đo lường chất lượng coding khách quan, so sánh các lần thực thi, phát hiện suy giảm và tự cải thiện chiến lược. Tận dụng M22/M23/M24 + Evaluation Framework (M4/M6) + Benchmark (M6). M25 KHÔNG thay thế M22; chỉ consume verification artifacts.
 > **Ranh giới**: M22 = Verification, M26 = Evaluation. M26 KHÔNG generate/repair code, KHÔNG override M22 verification, KHÔNG modify evidence/certification, KHÔNG tự đổi coding strategy trong cùng evaluation.
-> **Lưu ý đánh số**: attachment gắn nhãn "M25" nhưng content = Coding Evaluation → trong cấu trúc đã restructure (M23=Adversarial, M24=Governance) đây là **M26** (M25=Git/Artifact Integration đang là placeholder).
+> **Lưu ý đánh số**: attachment user gửi gắn nhãn "M25" và content = Coding Evaluation → trong cấu trúc đã restructure (M23=Adversarial, M24=Governance) đây CHÍNH LÀ **M25**. Milestone Git/Artifact gốc được absorb vào M26 (AIOS 2.0 Coding Edition — có Artifact/Git/Lineage). M26 tiếp theo = AIOS 2.0 Coding Edition.
 
 #### 1. Vai trò & Chain
 M22 *"code có đáng tin?"* → M23 *"quản lý như artifact/version?"* → M24 *"AIOS tự hoàn thành đến đâu?"* → M26 *"đang coding tốt mức nào, tại sao, tiến bộ hay suy giảm?"*.
 ```
 M17 Model Provider → M18 Coding Context → M19 Coder Agent → M20 Sandbox Execution
 → M21 Coding Loop → M22 Independent Verification → M23 Adversarial Evaluation
-→ M24 Quality Governance → M25 Git/Artifact Integration → M26 Coding Evaluation → M27 AIOS 2.0 Coding Edition
+→ M24 Quality Governance → M25 Coding Evaluation → M26 AIOS 2.0 Coding Edition
 ```
 
 #### 2. Mục tiêu chính
@@ -3274,11 +3270,11 @@ So sánh multiple configuration.
 #### 26. TASK-196 — Continuous Evaluation
 Tích hợp evaluation vào autonomous coding loop (M21/M24).
 
-#### 27. Integration với M22/M24
-M24 Autonomous Coding loop: PLAN→CODE→EXECUTE→OBSERVE→DIAGNOSE→REPAIR→VERIFY→**EVALUATE**→IMPROVE. M26 chỉ consume M22 verification artifacts; **KHÔNG gọi lại M22 để "sửa" kết quả M25/M26**. M22 ≠ M26 (Verification ≠ Evaluation).
+#### 27. Integration với M21/M22/M24
+M21 Coding Loop: PLAN→CODE→EXECUTE→OBSERVE→DIAGNOSE→REPAIR→VERIFY→**EVALUATE**→IMPROVE. M25 chỉ consume M22 verification artifacts; **KHÔNG gọi lại M22 để "sửa" kết quả M24/M25**. M22 ≠ M25 (Verification ≠ Evaluation).
 
-#### 28. Invariants mới (M26) — **ID điều chỉnh (TOÀN BỘ range)**
-> ⚠️ Attachment đề xuất INV-086..095 NHƯNG **toàn bộ range đã bị chiếm**: INV-086..092 = M23, INV-093..095 = M24. M26 bổ sung **INV-103..112**:
+#### 28. Invariants mới (M25) — **ID điều chỉnh (TOÀN BỘ range)**
+> ⚠️ Attachment "M25" đề xuất INV-086..095 NHƯNG **toàn bộ range đã bị chiếm**: INV-086..092 = M23, INV-093..095 = M24. M25 bổ sung **INV-103..112**:
 - **INV-103 — Evaluation Evidence Binding**: Evaluation phải tham chiếu evidence cụ thể.
 - **INV-104 — Immutable Evaluation**: Evaluation finalized không được sửa.
 - **INV-105 — Baseline Determinism**: Baseline comparison phải deterministic.
@@ -3291,7 +3287,7 @@ M24 Autonomous Coding loop: PLAN→CODE→EXECUTE→OBSERVE→DIAGNOSE→REPAIR�
 - **INV-112 — Quality Before Efficiency**: efficiency optimization không override quality gate.
 
 #### 29. Task breakdown (12 task — **ID tự gán**, attachment dùng TASK-612..623)
-> ⚠️ Attachment M26 dùng TASK-612..623 → gán sequential **TASK-185..196** (nối tiếp M24; M25 Git/Artifact chưa detail nên chưa cấp task).
+> ⚠️ Attachment "M25" dùng TASK-612..623 → gán sequential **TASK-185..196** (nối tiếp M24).
 | Task | Nội dung |
 |------|----------|
 | TASK-185 | Coding Evaluation Contract (schema + validator) |
@@ -3308,13 +3304,287 @@ M24 Autonomous Coding loop: PLAN→CODE→EXECUTE→OBSERVE→DIAGNOSE→REPAIR�
 | TASK-196 | Continuous Evaluation (tích hợp M21/M24 loop) |
 
 #### 30. Definition of Done (M26)
-- Coding Evaluation Contract + Engine + Quality dimensions + Benchmark Registry + Baseline comparison deterministic + Regression detection + Failure attribution + Agent behavior metrics + Efficiency metrics + Evaluation immutable + Critical failure override aggregate + No-evidence→UNKNOWN/FAIL + Reproducible + Model/Agent benchmark + Continuous Evaluation tích hợp M21/M24 + Dashboard quality trend + INV-103..112 PASS + Full M0–M24 regression PASS.
-- **Đánh giá M26 bằng**: *"AIOS có đo lường khách quan chất lượng coding, so sánh baseline, phát hiện regression và attribution failure không?"*. M26 = **Quality Intelligence** của Coding Plane; tiền đề để M27 đóng gói thành AIOS 2.0 Coding Edition.
+- Coding Evaluation Contract + Engine + Quality dimensions + Benchmark Registry + Baseline comparison deterministic + Regression detection + Failure attribution + Agent behavior metrics + Efficiency metrics + Evaluation immutable + Critical failure override aggregate + No-evidence→UNKNOWN/FAIL + Reproducible + Model/Agent benchmark + Continuous Evaluation tích hợp M21/M24 + Dashboard quality trend + INV-103..112 PASS + Full M0–M25 regression PASS.
+- **Đánh giá M25 bằng**: *"AIOS có đo lường khách quan chất lượng coding, so sánh baseline, phát hiện regression và attribution failure không?"*. M25 = **Quality Intelligence** của Coding Plane; tiền đề để M26 đóng gói thành AIOS 2.0 Coding Edition.
 
-### M27 – AIOS 2.0 Coding Edition (P32)
-Freeze + certification: Architecture Freeze (M10 pattern) + `aiagent conformance` → **AIOS 2.0 READY**. INV-001..038 giữ nguyên + (có thể) bổ sung invariant Coding Plane (INV-039+, TBD).
+### M26 – AIOS 2.0 Coding Edition (P31 — AIOS 2.0 / Freeze + Certification)
 
-> **Lưu ý**: M17–M26 không phá Runtime/Harness. AIOS hiện có lợi thế lớn: M13–M16 đã xây lớp Trust/Harness → Coding Plane trở thành consumer của Runtime + Harness thay vì tự tạo hệ thống agent riêng.
+> **Vị trí**: M17–M25 đã xây từng lớp (Model Provider → Coding Context → Coder Agent → Sandbox → Coding Loop → Verification → Adversarial → Governance → Coding Evaluation). M26 = **Integration + Hardening + Governance + Certification + Release** — hợp nhất toàn bộ Coding Plane thành **AIOS-native Autonomous Coding Platform** có contract, verification, evaluation, artifact, recovery, governance đầy đủ. M26 KHÔNG tạo coding agent mới; chỉ đóng gói, chứng nhận và phát hành.
+> **Ranh giới**: M26 = Platform Integration / Certification / Release. KHÔNG generate/repair code, KHÔNG override M22 verification, KHÔNG để aggregate score override Critical Failure.
+> **Lưu ý đánh số (điều chỉnh ID toàn bộ range)**: attachment gắn nhãn "M26" và đề xuất TASK-624..645 / INV-096..108 → **toàn bộ range đã bị chiếm** (TASK-185..196 = M25 Coding Eval; INV-103..112 = M25 Coding Eval; các range thấp hơn đã thuộc M17–M24). M26 bổ sung **TASK-197..218** + **INV-113..125**.
+
+#### 1. Vai trò & Chain
+M17–M25 đã xây dựng từng lớp:
+```
+M17  Model Provider
+M18  Coding Context
+M19  Coder Agent
+M20  Sandbox Execution
+M21  Coding Loop
+M22  Independent Verification
+M23  Adversarial Evaluation
+M24  Quality Governance
+M25  Coding Evaluation
+```
+M26 **không tạo thêm một coding agent mới**. M26 thực hiện:
+> **Integration + Hardening + Governance + Certification + Release**
+Mục tiêu cuối:
+```
+User
+  │
+  ▼
+Coding Intent
+  │
+  ▼
+AIOS Control Plane
+  │
+  ├── Understand
+  ├── Plan
+  ├── Route
+  ├── Execute
+  ├── Verify
+  ├── Evaluate
+  └── Recover
+          │
+          ▼
+     Coding Plane
+          │
+          ▼
+     Verified Artifact
+```
+
+#### 2. AIOS 2.0 Coding Contract
+M26 tạo contract cấp platform: `AIOS Coding Task Contract`.
+Input:
+```
+{
+  "task_id": "TASK-...",
+  "intent": "...",
+  "repository": "...",
+  "constraints": [],
+  "acceptance_criteria": [],
+  "risk_policy": {},
+  "verification_policy": {},
+  "evaluation_policy": {}
+}
+```
+Output:
+```
+{
+  "status": "COMPLETED",
+  "artifact_refs": [],
+  "verification_ref": "...",
+  "evaluation_ref": "...",
+  "changeset_ref": "...",
+  "quality_score": 94.2,
+  "risk": "LOW"
+}
+```
+Nguyên tắc: **Coding task không được coi là hoàn thành chỉ vì agent ngừng chạy.**
+
+#### 3. Unified Coding Lifecycle
+```
+INTAKE → NORMALIZE → PLAN → AUTHORIZE → IMPLEMENT → EXECUTE → OBSERVE →
+REPAIR → VERIFY → EVALUATE → REVIEW → PACKAGE → COMMIT → COMPLETE
+```
+Mỗi state có entry contract, exit contract, timeout, failure policy, evidence requirement.
+
+#### 4. Coding State Machine
+States: `CREATED, UNDERSTOOD, PLANNED, AUTHORIZED, CODING, EXECUTING, VERIFYING, EVALUATING, REVIEWING, PACKAGING, COMPLETED, FAILED, RECOVERING, CANCELLED`.
+Không được `CODING → COMPLETED` nếu thiếu `VERIFYING, EVALUATING` (trừ khi policy explicitly cho phép).
+
+#### 5. Coding Policy Engine
+Policy thành first-class AIOS object:
+```
+coding_policy:
+  verification:  { required: true }
+  evaluation:    { required: true }
+  security:      { required: true }
+  tests:         { minimum_pass_rate: 1.0 }
+  architecture:  { enforce_invariants: true }
+  git:           { require_clean_baseline: true }
+```
+Các project khác nhau có thể dùng policy khác nhau.
+
+#### 6. Risk-Based Coding
+Phân loại `LOW / MEDIUM / HIGH / CRITICAL` (VD: README update→LOW, UI feature→MEDIUM, DB migration→HIGH, Auth/Security→CRITICAL). Risk quyết định verification depth, evaluation depth, human approval, sandbox/git/deployment restrictions.
+
+#### 7. Human-in-the-Loop
+**AI tự động tối đa trong phạm vi policy cho phép.** Approval gates:
+```
+LOW RISK      → AUTO
+MEDIUM        → OPTIONAL
+HIGH          → APPROVAL
+CRITICAL      → MANDATORY
+```
+
+#### 8. Autonomous Coding Guardrails
+Hard limits: `max_iterations, max_tokens, max_runtime, max_files_changed, max_lines_changed, max_retries, max_tool_calls, max_failure_recovery`. VD `{ max_iterations: 8, max_runtime_seconds: 1800, max_files_changed: 100, max_retries: 3 }`. Vượt limit → `LIMIT_REACHED → SAFE_STOP → EVIDENCE → REPORT`.
+
+#### 9. Safe Stop
+AIOS dừng an toàn không phá repository: ghi nhận `working tree / artifact / execution / verification / evaluation` state. Sau đó: `resume / rollback / inspect / retry / handoff`.
+
+#### 10. Recovery Orchestration
+`Failure → Classify → Is recoverable? → [Yes] Repair → Re-verify → Re-evaluate | [No] Escalate`. **Repair xong BẮT BUỘC quay lại verification/evaluation**, không reuse PASS cũ.
+
+#### 11. Artifact Lineage
+Lineage: `Task → Plan → Agent Run → Tool Calls → Source Changes → Build → Tests → Evidence → Verification → Evaluation → Commit`. Mỗi node có ID (VD `TASK-102 → RUN-884 → {ART-201, ART-202, VERIFY-44, EVAL-88, COMMIT-a81f}`). Tạo **Complete Coding Provenance**.
+
+#### 12. Coding Session
+`Coding Session` = `{ session_id, task, context, policy, agent, model, environment, artifacts, events, verification, evaluation, final outcome }`. Cho phép `resume / inspect / replay / fork / compare` sessions.
+
+#### 13. Session Fork
+```
+TASK-100 → Strategy A / B / C → M25 (Coding Evaluation) đánh giá: A→87, B→94, C→89
+```
+AIOS chọn B dựa trên **Verification + Evaluation + Policy**, KHÔNG dùng LLM opinion.
+
+#### 14. Multi-Agent Coding
+Nhiều agent nhưng giữ nguyên **Agent không sở hữu Runtime** (INV-001). VD Orchestrator → Analyst/Planner/Coder/Reviewer/Tester/Security/Performance — tất cả giao tiếp qua AIOS contracts, KHÔNG `Coder → trực tiếp gọi Reviewer` (qua Runtime/Event/Artifact). Giữ đúng INV-001 và dependency direction.
+
+#### 15. Parallel Coding
+Task độc lập chạy song song; M26 có conflict detection trước khi merge.
+
+#### 16. Change Impact Analysis
+`Changed File → Dependency Graph → Affected Components → Affected Tests → Risk`. VD `src/auth/service.py → 12 modules → 38 tests → HIGH RISK` → AIOS tự tăng verification depth.
+
+#### 17. Repository Intelligence
+Hợp nhất `Code / Docs / Architecture / Contracts / Tests / History / Artifacts / Knowledge` thành `Repository Knowledge Graph` (file→symbol→dependency→contract→test→owner→artifact→architecture rule).
+
+#### 18. Coding Doctor
+`doctor --coding / --task / --session / --repository / --benchmark / --regression`. Kiểm tra contracts/artifacts/verification/evaluation/orphan state/broken lineage/failed invariants/stale baseline.
+
+#### 19. Coding Health Score
+```
+Correctness 96 · Verification 95 · Evaluation 92 · Architecture 94 · Recovery 87
+Reproducibility 91 · Efficiency 83 · Governance 97 → TOTAL 92.0
+```
+Health ≠ Quality Score (Quality = chất lượng task/run; Health = sức khỏe toàn bộ Coding Plane).
+
+#### 20. Coding Release Gate
+```
+Release Gate → Verification + Evaluation → Architecture → Security → Regression → RELEASE
+```
+Không đạt một critical gate → `RELEASE BLOCKED`.
+
+#### 21. AIOS Coding Certification
+Implementation certified khi: `✓ Contract valid ✓ Artifact lineage complete ✓ Verification PASS ✓ Evaluation PASS ✓ Architecture compliant ✓ Security PASS ✓ Regression PASS ✓ Policy satisfied`. Certification là artifact **immutable**.
+
+#### 22. Benchmark Gate
+Thresholds (policy-configurable, KHÔNG hardcode Runtime):
+```
+Correctness ≥ 95% · Verification ≥ 98% · Critical Security = 100% · Architecture Compliance = 100%
+Evidence Completeness = 100% · Reproducibility ≥ 99% · Recovery Success ≥ 85%
+```
+
+#### 23. M26 Architecture
+```
+                    ┌──────────────────────┐
+                    │       AIOS UI        │
+                    └──────────┬───────────┘
+                               ▼
+                    ┌──────────────────────┐
+                    │ Coding Control Plane │
+                    │ Intent·Policy·Planner·Risk·Approval
+                    └──────────┬───────────┘
+                               ▼
+                    ┌──────────────────────┐
+                    │ Coding Orchestrator  │
+                    └──────────┬───────────┘
+          ┌────────────────────┼────────────────────┐
+          ▼                    ▼                    ▼
+      Coding Plane        Verification         Evaluation
+          │                    │                    │
+          ▼                    ▼                    ▼
+       Agents              Evidence             Metrics
+       Tools               Replay               Baseline
+       Sandbox             Cert                 Regression
+          │                    │                    │
+          └────────────────────┼────────────────────┘
+                               ▼
+                    ┌──────────────────────┐
+                    │ Artifact / Git       │
+                    │ Lineage / Knowledge  │
+                    └──────────────────────┘
+```
+
+#### 24. Invariants mới (M26) — **ID điều chỉnh (TOÀN BỘ range)**
+> ⚠️ Attachment đề xuất INV-096..108 NHƯNG **toàn bộ range đã bị chiếm**: INV-096..102 = M24, INV-103..108 = M25 Coding Eval. M26 bổ sung **INV-113..125**:
+- **INV-113 — Coding Lifecycle Integrity**: Coding task phải tuân thủ lifecycle contract.
+- **INV-114 — Policy Before Execution**: Không execute nếu policy authorization chưa hoàn tất.
+- **INV-115 — Verification Before Completion**: Không verification → không COMPLETED.
+- **INV-116 — Evaluation Before Certification**: Không evaluation → không CERTIFIED.
+- **INV-117 — Repair Invalidates Verification**: Source change sau verification → verification cũ invalid.
+- **INV-118 — Artifact Lineage Completeness**: Final artifact phải trace được về task/run.
+- **INV-119 — Safe Stop Integrity**: Safe stop không làm mất state/evidence.
+- **INV-120 — Recovery Reverification**: Recovery thành công phải verify lại.
+- **INV-121 — Critical Gate Dominance**: Critical failure luôn block release.
+- **INV-122 — Policy Configurability**: Threshold nằm trong policy/config, không hardcode Runtime.
+- **INV-123 — Agent Runtime Isolation**: Agent không được bypass Runtime (giữ INV-001).
+- **INV-124 — Session Reproducibility**: Coding session phải replay/inspect được theo policy.
+- **INV-125 — Certification Immutability**: Certification finalized không được mutate.
+
+#### 25. Task breakdown (22 task — **ID điều chỉnh từ TASK-624..645**)
+> ⚠️ Attachment M26 dùng TASK-624..645 → gán sequential **TASK-197..218** (nối tiếp M25 Coding Eval TASK-185..196; toàn bộ range thấp hơn đã thuộc M17–M24).
+| Task | Nội dung |
+|------|----------|
+| TASK-197 | Unified Coding Contract |
+| TASK-198 | Coding State Machine |
+| TASK-199 | Coding Policy Engine |
+| TASK-200 | Risk Engine |
+| TASK-201 | Approval Gate |
+| TASK-202 | Autonomous Guardrails |
+| TASK-203 | Safe Stop / Resume |
+| TASK-204 | Recovery Orchestrator |
+| TASK-205 | Artifact Lineage |
+| TASK-206 | Coding Session |
+| TASK-207 | Session Fork |
+| TASK-208 | Multi-Agent Coding |
+| TASK-209 | Parallel Coding |
+| TASK-210 | Change Impact Analysis |
+| TASK-211 | Repository Knowledge Graph Integration |
+| TASK-212 | Coding Doctor |
+| TASK-213 | Coding Health Score |
+| TASK-214 | Release Gate |
+| TASK-215 | Coding Certification |
+| TASK-216 | Benchmark Gate |
+| TASK-217 | AIOS 2.0 Coding Integration |
+| TASK-218 | Full M0–M26 Regression |
+
+#### 26. Test Strategy
+6 tầng: `L1 Contract · L2 State Machine · L3 Integration · L4 Adversarial · L5 Benchmark · L6 End-to-End`. Phải test: Agent crash / Model timeout / Tool failure / Sandbox failure / Verification failure / Evaluation failure / Git conflict / Partial artifact / Corrupted session / Policy violation / Limit exceeded / Recovery loop / Concurrent coding / Rollback / Resume.
+
+#### 27. Adversarial Tests
+Cố tình phá hệ thống (fail closed):
+```
+A001 Agent tries bypass Runtime      A002 Agent fabricates PASS
+A003 Missing evidence                A004 Stale verification
+A005 Corrupted artifact              A006 Fake evaluation
+A007 Infinite recovery               A008 Excessive token usage
+A009 Unauthorized file modification  A010 Cross-session artifact leakage
+A011 Policy downgrade attempt       A012 Certification mutation
+```
+
+#### 28. Definition of Done (M26)
+- Unified Coding Contract + Coding State Machine + Policy Engine + Risk Engine + Human Approval Gate + Autonomous Guardrails + Safe Stop + Resume + Recovery Orchestrator + Artifact Lineage + Coding Session + Session Replay/Fork + Multi-Agent Coding + Parallel Coding + Impact Analysis + Repository Knowledge Graph + Coding Doctor + Coding Health Score + Release Gate + Certification + Benchmark Gate + INV-113..125 + Adversarial tests PASS + Full M0–M26 regression PASS + Coding benchmark đạt policy thresholds + Không Critical invariant violation.
+
+#### 29. M26 Boundary
+**ĐƯỢC PHÉP**: Integration · Governance · Policy · Risk · Certification · Release · Recovery · Session Management · Coding Health · Benchmark.
+**KHÔNG ĐƯỢC PHÉP**: ❌ Coding Agent khổng lồ · ❌ Business logic vào Runtime · ❌ Agent bypass Control Plane · ❌ Evaluation override Verification · ❌ Aggregate score override Critical Failure · ❌ Recovery reuse stale verification · ❌ Certification mutate · ❌ Hardcode project-specific coding rules vào Runtime.
+
+#### 30. Kết quả cuối M26
+Sau M26, Coding Plane hoàn chỉnh có chu trình:
+```
+UNDERSTAND → PLAN → AUTHORIZE → CODE → EXECUTE → OBSERVE → REPAIR →
+VERIFY → EVALUATE → REVIEW → CERTIFY → PACKAGE → COMMIT
+```
+- **M23 = Adversarial Evaluation**
+- **M24 = Quality Governance**
+- **M25 = Coding Evaluation (Quality Intelligence)**
+- **M26 = AIOS 2.0 Coding Platform**
+
+M26 là **milestone đóng chu kỳ Coding Plane**, không phải chỉ thêm feature. Sau M26, các milestone tiếp theo nên tập trung vào **mở rộng AIOS sang domain khác hoặc nâng cấp self-evolution**, thay vì nhồi thêm logic coding vào Core Runtime.
+
 
 ### Tỷ trọng toàn dự án (theo thành phần)
 | Thành phần | Tỷ trọng |
@@ -3348,10 +3618,10 @@ Freeze + certification: Architecture Freeze (M10 pattern) + `aiagent conformance
 - **M14 (HEAL)**: Controlled Self-Healing / Closed-loop Remediation — Detect&Diagnose (TASK-094) failure corpus + localization; Candidate Generate+Risk (TASK-095) low/med/high; Simulation+Meta-Verify Gate (TASK-096) verify fix KHÔNG relax criteria; Permission Broker+Human Approval+Apply+Re-test+Rollback+Certify+CERTIFIED BASELINE (TASK-097); Docs/ADR (TASK-098) INV-037 Remediation Integrity + kill-switch; anti-pattern: harness KHÔNG tự sửa tiêu chuẩn để tự PASS
 - **M15 (AUTONOMY)**: Autonomous Harness — Loop Orchestrator (TASK-099); Improvement Engine (TASK-100); Continuous Certification (TASK-101) low-risk auto; Autonomy Policy+Trust Budget/Autonomy Levels+SAFE-STOP (TASK-102); Docs/ADR (TASK-103) INV-038 Autonomy Boundary + Autonomy Constitution; Autonomy≠Permission; giữ 4 invariant track + human oversight high-risk
 - **M16 (INTEGRATE)**: Harness Ecosystem Integration — DeepSeek Harness (`dsh`) sidecar làm independent verification oracle (TASK-104 map INV-001..038 → dsh invariants, giải M13-P2 vòng tròn Meta-Harness) + Behavioral Conformance Bridge qua ACP snapshot / `fast-check` property tests (TASK-106) + Permission & Sandbox Bridge cho remediation apply theo scope (TASK-107) + Management Console (TASK-108: MVP embed/proxy `dsh-web-app` :3080, target mở rộng `dashboard/`) + pin chặt RC version + MIT compliance + telemetry tắt mặc định; 4 invariant track ĐƯỢC CỦNG CỐ; exit: tích hợp harness độc lập an toàn + có giao diện quản lý vận hành được
-- **M17–M26 (CODE)**: Model Provider (M17) gọi LLM thật qua abstraction KHÔNG chứa coding logic; Coding Context (M18) đưa repo vào model có kiểm soát; Coder Agent (M19) Goal→inspect→plan→edit→verify→repair; Sandbox Execution (M20) build/test/lint an toàn; Coding Loop (M21) Plan→Code→Test→Fix khép kín; Code Verification (M22) Harness xác minh code (behavioral+safety+contract); Git/Artifact (M23) diff/commit/rollback; Autonomous Coding (M24) task nhiều bước; Coding Evaluation (M25) benchmark+regression; AIOS 2.0 (M26) freeze+certification → AIOS 2.0 READY. Mọi Coding Plane là consumer của Runtime+Harness, KHÔNG phá INV-001..038
+- **M17–M26 (CODE)**: Model Provider (M17) gọi LLM thật qua abstraction KHÔNG chứa coding logic; Coding Context (M18) đưa repo vào model có kiểm soát; Coder Agent (M19) Goal→inspect→plan→edit→verify→repair; Sandbox Execution (M20) build/test/lint an toàn; Coding Loop (M21) Plan→Code→Test→Fix khép kín; Code Verification (M22) Harness xác minh code (behavioral+safety+contract); Adversarial Evaluation (M23) verify-the-verifier; Quality Governance (M24) gate + policy; Coding Evaluation (M25) benchmark+regression; AIOS 2.0 (M26) freeze+certification → AIOS 2.0 READY. Mọi Coding Plane là consumer của Runtime+Harness, KHÔNG phá INV-001..038
 - Xuyên suốt: pytest + contract tests CI; permission enforcement test (ask→deny); rule engine unit test với kết quả xác định trước
 
 ## Scope
 - In: M0 (development foundation: VS Code agent + progress/log system) + 10 milestone (M1–M10), AIOS Orchestrator v1+v2 (Decision Pipeline 4 tầng offline-first, 22 module) + 3 assistant + system doctor, 6 tool types, skill 3 nguồn + lifecycle 10 trạng thái, SDK python + typescript, upgrade pipeline, evaluation framework, sandbox pool, policy engine, goal manager + task queue, system catalog, knowledge graph, **M5 Core Intelligence** (Memory Coordinator, Context Optimizer, Model Router, Planning Engine, Execution Graph, Parallel Scheduler), **M6 AIOS Harness** (5 năng lực H1–H5: Kernel, Execution Verification, Test & Simulation, Evaluation & Benchmark, Doctor & Readiness — subsystem dưới `aios/harness/`, không sửa Runtime/Orchestrator, không phá architecture INV-017..021), M7 Enterprise (Identity/Principal/RBAC-ABAC, Multi-Tenancy + isolation levels, Distributed Runtime + Runtime Node/Router, Distributed Scheduler + Lease/Failover, Quota/Cost/Resource Governance, Credential/Network/Sandbox Isolation, HA/Audit/Recovery, Enterprise Operations + Dashboard — INV-022..029), M8 Ecosystem (Public AIOS SDK + Plugin Runtime + Extension Contracts + Ecosystem Registry + Developer Kit + Ecosystem Hub + Certification — TASK-043..049, không thêm invariant), M9 Autonomous (Goal Engine/Planner/World Model/Loop/Governor/Recovery/Long-Horizon/Memory/Experimentation/Multi-Agent/Evaluation/Stuck/Scheduler — TASK-050..062, 5 invariant INV-030..034), M10 AIOS 1.0 (Architecture Freeze/Contract 1.0/Runtime Hardening/Durable Execution/Autonomy Safety/Kill Switch/Reliability/Security Baseline/Developer Experience/Dashboard/Certification/Migration/Performance — TASK-063..075, freeze INV-001..INV-034, không thêm invariant mới), **M11 Deterministic Artifact & Interaction Runtime** (Issue #4 — Verification Integrity INV-035/RenderReplay DeterministicHarness/VisualEvidence + UI State Contract/Asset Capability Architecture + Creative Domain + Vendor Integrity + Reference-Asset/SkillDistiller + Static Deploy — TASK-078..083, thêm INV-035, additive trên M10, không vi phạm INV-001..034), **M12 AIOS 1.1 Compatibility** (Issue #7 — Version & Compatibility Baseline C1/Migration 1.0→1.1 thật C2/Backward Compatibility C3/Compatibility Conformance C4/Docs & ADR C5 — TASK-084..088, KHÔNG thêm invariant, INV-001..035 giữ nguyên frozen)
-- **M17–M26 (PLANNED — Coding Plane)**: Model Provider (M17) → Coding Context (M18) → Coder Agent (M19) → Sandbox Execution (M20) → Coding Loop (M21) → Code Verification (M22) → Git/Artifact (M23) → Autonomous Coding (M24) → Coding Evaluation (M25) → AIOS 2.0 Coding Edition (M26). KHÔNG phá INV-001..038; consumer của Runtime + Harness; AIOS là chính, Harness là Trust/Verification layer.
+- **M17–M26 (PLANNED — Coding Plane)**: Model Provider (M17) → Coding Context (M18) → Coder Agent (M19) → Sandbox Execution (M20) → Coding Loop (M21) → Code Verification (M22) → Adversarial Evaluation (M23) → Quality Governance (M24) → Coding Evaluation (M25) → AIOS 2.0 Coding Edition (M26). KHÔNG phá INV-001..038; consumer của Runtime + Harness; AIOS là chính, Harness là Trust/Verification layer.
 - Excluded (sau M10, không thuộc v1): fine-tune model riêng, non-Local (cloud-only) deployment
