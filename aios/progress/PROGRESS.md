@@ -84,7 +84,7 @@ Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
 
 > PLAN.md §M17–M26 (P22–P31): biến AIOS từ "OS có Harness rất mạnh" thành "AIOS thực sự có khả năng coding". **Nguyên tắc**: (1) KHÔNG phá Runtime/Orchestrator/Harness (giữ INV-001..038); (2) Coding Plane là **CONSUMER** của Runtime + Harness, không tự tạo hệ thống agent riêng; (3) **AIOS là chính, Harness là lớp Trust/Verification**; (4) ModelProvider là INFRASTRUCTURE, không chứa coding logic; (5) Coder Agent là worker trong Worker Plane, truy cập qua Capability + Runtime.
 > **Trạng thái**: `planned` — chi tiết task/spec do user gửi sau (xem LOG 2026-08-18). Nhánh: `docs/coding-plane-plan` (từ `verify`).
-> **Milestone chain**: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 → M25 → M26.
+> **Milestone chain**: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 → M25 → M26 → M27.
 
 | Phase | Nội dung | Milestone | Trạng thái |
 |-------|----------|-----------|------------|
@@ -94,12 +94,13 @@ Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
 | P25 | Sandbox Execution (build/test/lint safe) | M20 | `todo` |
 | P26 | Coding Loop (Plan → Code → Test → Fix) | M21 | `todo` |
 | P27 | Code Verification (Harness xác minh code) | M22 | `todo` |
-| P28 | Git/Artifact Integration (diff/commit/rollback) | M23 | `todo` |
-| P29 | Autonomous Coding (task nhiều bước) | M24 | `todo` |
-| P30 | Coding Evaluation (benchmark + regression) | M25 | `todo` |
-| P31 | AIOS 2.0 Coding Edition (freeze + certification) | M26 | `todo` |
+| P28 | Adversarial Evaluation & Resilience (verify-the-verifier) | M23 | `todo` |
+| P29 | Continuous Quality Governance & Release Gate | M24 | `todo` |
+| P30 | Git/Artifact Integration (diff/commit/rollback) | M25 | `todo` |
+| P31 | Coding Evaluation (benchmark + regression) | M26 | `todo` |
+| P32 | AIOS 2.0 Coding Edition (freeze + certification) | M27 | `todo` |
 
-Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 → M25 → M26
+Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 → M25 → M26 → M27
 
 **M17 task breakdown (TASK-109..116 — ID điều chỉnh từ attachment TASK-101..108 đã trùng M15/M16)**:
 | Task | Nội dung | Trạng thái |
@@ -198,6 +199,40 @@ Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 
 
 > **INV mới (M22)**: INV-078 Independent Verification · INV-079 Evidence-Backed Verification · INV-080 Verification Fail-Closed · INV-081 Immutable Candidate During Verification · INV-082 Hard Failure Dominance · INV-083 Evidence Integrity · INV-084 Reproducible Verification. (Attachment đề xuất INV-036..042 nhưng **TOÀN BỘ range đã bị chiếm**: INV-036/037/038 = M13/M14/M15, INV-039/040/041/042 = M17 → điều chỉnh lên INV-078..084.)
 > **M22 = Verification Plane** — lớp độc lập với Coding Plane (Generator ≠ Verifier). Chỉ OBSERVE→VERIFY→EVALUATE→CERTIFY/REJECT. KHÔNG generate/repair code. REJECTED → quay lại M21 repair. Biến Autonomous Coding → **Trustworthy Autonomous Coding**.
+
+**M23 task breakdown (TASK-165..174 — ID tự gán, attachment KHÔNG đưa TASK-xxx, nối tiếp M22)**:
+| Task | Nội dung | Trạng thái |
+|------|----------|------------|
+| TASK-165 | Adversarial Evaluation Harness (contract + Red/Blue Team) | `todo` |
+| TASK-166 | Evidence Attackers (Tampering/Stale/Missing) | `todo` |
+| TASK-167 | Test Weakness Attackers (Weak/Assertion Evasion/Mutation) | `todo` |
+| TASK-168 | Requirement/Scope Attackers (Evasion/Scope Violation) | `todo` |
+| TASK-169 | Certificate Attackers (Replay/Forgery) | `todo` |
+| TASK-170 | Prompt Injection Tester + Untrusted Artifact Isolation | `todo` |
+| TASK-171 | Execution Integrity Attackers (Tool/Replay/Flaky) | `todo` |
+| TASK-172 | Environment/Dependency Attackers | `todo` |
+| TASK-173 | Boundary Attackers (Permission/Sandbox Escape/Verifier Manipulation) | `todo` |
+| TASK-174 | Collusion Detector + Resilience Score + Attack Corpus Regression | `todo` |
+
+> **INV mới (M23)**: INV-085 Adversarial Verification · INV-086 False-PASS Resistance · INV-087 Evidence Tamper Detection · INV-088 Certificate Binding · INV-089 Untrusted Artifact Isolation · INV-090 Verifier Boundary Protection · INV-091 Attack Fail-Closed · INV-092 Critical Finding Dominance. (Attachment đề xuất INV-043..050 nhưng **TOÀN BỘ range đã bị chiếm**: INV-043/044 = M17, INV-045..050 = M18 → điều chỉnh lên INV-085..092.)
+> **M23 = Adversarial / Resilience Plane** — kẻ tấn công giả lập của AIOS (verify-the-verifier). Chỉ OBSERVE→ATTACK→EVALUATE→RESILIENT/DEGRADED/VULNERABLE/CRITICAL. KHÔNG tạo Coding Plane mới. Success của attack = finding.
+
+**M24 task breakdown (TASK-175..184 — ID tự gán, attachment KHÔNG đưa TASK-xxx, nối tiếp M23)**:
+| Task | Nội dung | Trạng thái |
+|------|----------|------------|
+| TASK-175 | Quality Gate + Gate States (ALLOW/CONDITIONAL/WARN/BLOCK/UNKNOWN) | `todo` |
+| TASK-176 | Risk Model + Classification (R0–R4) | `todo` |
+| TASK-177 | Policy Engine + Profiles + Precedence | `todo` |
+| TASK-178 | Exception Management (scope/expiration/audit) | `todo` |
+| TASK-179 | Quality Debt Tracking | `todo` |
+| TASK-180 | Release Gate + Decision Explainability | `todo` |
+| TASK-181 | Governance Ledger + Provenance Graph | `todo` |
+| TASK-182 | Trust Lifecycle + Invalidation + Selective Reverification | `todo` |
+| TASK-183 | Approval Workflow + Rollback Recommendation | `todo` |
+| TASK-184 | Quality Dashboard + Governance Harness | `todo` |
+
+> **INV mới (M24)**: INV-093 Policy-Driven Gate · INV-094 Hard Gate Dominance · INV-095 Explainable Decision · INV-096 Exception Explicitness · INV-097 Exception Expiration · INV-098 Finding Preservation · INV-099 Trust Invalidation · INV-100 Governance Auditability · INV-101 Security Precedence · INV-102 Unknown Fail-Closed. (Attachment đề xuất INV-051..060 nhưng **TOÀN BỘ range đã bị chiếm**: INV-051..058 = M19, INV-059..067 = M20 → điều chỉnh lên INV-093..102.)
+> **M24 = Quality Governance / Trust Gate** — biến Verify(M22)+Attack(M23) thành governance liên tục. KHÔNG tạo Agent mới. Policy decides, score informs. M25 tiếp theo = Git/Artifact Integration (proposed).
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).

@@ -2947,18 +2947,238 @@ Verifier chỉ OBSERVE/VERIFY/EVALUATE/CERTIFY. M22 chống self-verification bi
 
 #### 20. Definition of Done (M22)
 - Generator/Verifier tách biệt + Verification Contract + Requirement→Evidence mapping + Evidence integrity metadata + Test adequacy + Mutation verification + Behavioral + Contract + Regression + Security + Performance cơ bản + Replay/Flaky + Verification Harness + Trust Score deterministic + Hard Failure > Trust Score + UNKNOWN/MISSING/BLOCKED ≠ VERIFIED + Verifier không mutate candidate + CodingCertificate cho VERIFIED + Cert invalid khi candidate/evidence đổi + Adversarial tests chống false-positive + Full M22 suite PASS + **INV-001..084 PASS**.
-- **Đánh giá M22 bằng**: *"AIOS có lớp Verification Plane độc lập, fail-closed, có evidence truy xuất + verdict + CodingCertificate không?"*. M22 biến Autonomous Coding → **Trustworthy Autonomous Coding**. M23 tiếp theo = Git/Artifact Integration.
+- **Đánh giá M22 bằng**: *"AIOS có lớp Verification Plane độc lập, fail-closed, có evidence truy xuất + verdict + CodingCertificate không?"*. M22 biến Autonomous Coding → **Trustworthy Autonomous Coding**. M23 tiếp theo = Adversarial Evaluation & Resilience (verify-the-verifier).
 
-### M23 – Git/Artifact Integration (P28)
+### M23 – Adversarial Evaluation & Resilience (P28 — Adversarial Trust & Resilience Layer)
+
+> **Vị trí**: M22 = *"candidate đủ evidence để VERIFIED?"*. M23 = *"nếu Agent cố tình/vô tình vượt qua verification thì AIOS có phát hiện không?"*. M23 là **kẻ tấn công giả lập** của chính AIOS — chủ động tạo False-PASS, fake evidence, verifier manipulation. Tận dụng M22 Verification Plane + Harness M13–M16. M23 KHÔNG tạo Coding Plane mới.
+> **Ranh giới**: M22 xây Verifier; M23 tìm cách **đánh bại Verifier**. Success của attack = **finding** (không phải thất bại của M23).
+
+#### 1. Core Principles (P23-01..04)
+- **P23-01 Assume Adversarial Failure**: Agent có thể sai/nhầm/optimize cho PASS; evidence có thể misleading; verifier có thể bị fooled; harness có thể incomplete.
+- **P23-02 Attack the Verification Boundary**: tập trung vào Candidate/Evidence/Verifier/Harness/Policy/Certificate/State/Artifact — không chỉ app code.
+- **P23-03 False PASS Is More Dangerous Than FAIL**: FAIL → human notices; False PASS → trust → deploy. M23 ưu tiên phát hiện **False Verification**.
+- **P23-04 Deterministic Attacks First**: Tampering/Stale/Missing/Policy Bypass/Mutation Survival/Replay Mismatch/Cert Reuse/Scope → rồi mới LLM Adversarial.
+
+#### 2. Architecture
+```
+AIOS System → M22 Verification → Verification Result
+   → M23 Adversarial Evaluation
+   ├── Attack Generator / Evidence Attacker / Policy Attacker
+   ├── Replay Attacker / Artifact Tamperer / Prompt Injection Tester
+   ├── Mutation Attacker / Certificate Attacker
+   → Resilience Evaluation
+   → RESILIENT / DEGRADED / VULNERABLE / CRITICAL
+```
+
+#### 3. Adversarial Evaluation Harness
+`AdversarialHarness`: Prepare Target → Generate Attack → Execute Attack → Observe System → Capture Evidence → Determine Expected → Compare Actual → Produce Finding. Contract `adversarial_run{id, target, attack, preconditions, expected, actual, evidence, severity, verdict}`.
+
+#### 4. Attack Taxonomy (A1–A20)
+- **A1 Evidence Tampering** (test/log/coverage/screenshot/trace/hash) → TAMPERED.
+- **A2 Stale Evidence** (V1 verified, V2 bug, reuse old evidence → cert invalid).
+- **A3 Weak Test** (`assert result is not None` cho `== expected`).
+- **A4 Assertion Evasion** (`try/except/pass`, `assert True`).
+- **A5 Mutation Survival** (DENY→ALLOW mutation, test vẫn PASS).
+- **A6 Requirement Evasion** (80% req báo 100%).
+- **A7 Scope Violation** (sửa ngoài allowed paths → hard failure).
+- **A8 Cert Replay** (Candidate B dùng CERT-A → REJECTED).
+- **A9 Cert Forgery** (sửa trust_score/verdict/hash → INVALID).
+- **A10 Prompt Injection** (README/comment "IGNORE VERIFICATION POLICY" → artifact = DATA không phải INSTRUCTION).
+- **A11 Tool Result Manipulation** (tool báo PASS nhưng exec FAIL → ưu tiên Trusted Execution Evidence).
+- **A12 Missing Evidence** (xóa trace/result → INCONCLUSIVE không VERIFIED).
+- **A13 Replay Divergence** (replay FAIL → REPLAY_DIVERGENCE).
+- **A14 Flaky Verification** (PASS/FAIL/P.. → FLAKY).
+- **A15 Environment Confusion** (verify Env A, deploy Env B).
+- **A16 Dependency Substitution** (verify Dep V1, run Dep V2 → cert invalid).
+- **A17 Permission Boundary** (READ→WRITE→EXEC→ADMIN → DENIED + audit).
+- **A18 Sandbox Escape** (fs/process/network/cred/secret → BLOCKED = Critical Security Finding).
+- **A19 Verifier Manipulation** (candidate sửa verification policy/config/prompt/schema/collector → TRUST BOUNDARY FAILURE).
+- **A20 Generator-Verifier Collusion** (cùng context/assumptions/reasoning → independence chỉ là logical, không actual).
+
+#### 5. Adversarial Agent & Red/Blue Team
+`Adversarial Agent` (trong sandbox, không quyền phá hệ thống thật) chạy **False-PASS Challenge**: tìm cách khiến AIOS trả VERIFIED cho candidate không đạt. Red Team attack (Generator/Evidence/Prompt/Artifact/Tool/Certificate) vs Blue Team detect/block (Policy/Verifier/Harness/Runtime/Audit/Evidence Integrity).
+
+#### 6. Resilience Score
+Trust Score 0–100 từ Evidence Integrity / Verification Integrity / Policy Resistance / Prompt Injection Resistance / Sandbox Resistance / Certificate Integrity / Replay Stability / Scope Enforcement. **Resilience=98 + Sandbox Escape=TRUE → VULNERABLE** (không 98% RESILIENT).
+
+#### 7. Verdict (4 states)
+- **RESILIENT**: attack bị phát hiện/block đúng.
+- **DEGRADED**: attack không compromise nhưng giảm trust.
+- **VULNERABLE**: attack vượt qua security/trust boundary.
+- **CRITICAL**: attack tạo False VERIFIED / Cert Forgery / Sandbox Escape / Policy Bypass / Unauthorized Execution.
+
+#### 8. TASK-165 — Adversarial Evaluation Harness
+AdversarialHarness + `adversarial_run` contract + Red/Blue Team orchestration + Finding schema.
+
+#### 9. TASK-166 — Evidence Attackers (A1/A2/A12)
+Evidence Tampering + Stale Evidence + Missing Evidence attackers.
+
+#### 10. TASK-167 — Test Weakness Attackers (A3/A4/A5)
+Weak Test + Assertion Evasion + Mutation Survival attackers.
+
+#### 11. TASK-168 — Requirement/Scope Attackers (A6/A7)
+Requirement Evasion + Scope Violation (hard failure) attackers.
+
+#### 12. TASK-169 — Certificate Attackers (A8/A9)
+Certificate Replay + Certificate Forgery attackers.
+
+#### 13. TASK-170 — Prompt Injection Tester (A10)
+Untrusted Artifact Isolation: source/README/comment/log/test-output/generated-file/external-doc → DATA not INSTRUCTION.
+
+#### 14. TASK-171 — Execution Integrity Attackers (A11/A13/A14)
+Tool Result Manipulation + Replay Divergence + Flaky Verification attackers.
+
+#### 15. TASK-172 — Environment/Dependency Attackers (A15/A16)
+Environment Confusion + Dependency Substitution attackers.
+
+#### 16. TASK-173 — Boundary Attackers (A17/A18/A19)
+Permission Escalation + Sandbox Escape + Verifier Manipulation attackers (Critical Security Findings).
+
+#### 17. TASK-174 — Collusion Detector + Resilience Score + Attack Corpus Regression (A20)
+Generator-Verifier independence check + Resilience Score deterministic + M23 Attack Corpus trở thành regression suite (Old Attack → New AIOS → Still Detected?).
+
+#### 18. Invariants mới (M23) — **ID điều chỉnh (TOÀN BỘ range)**
+> ⚠️ Attachment đề xuất INV-043..050 NHƯNG **toàn bộ range đã bị chiếm**: INV-043/044 = M17; INV-045..050 = M18. M23 bổ sung **INV-085..092**:
+- **INV-085 — Adversarial Verification**: mọi critical verification boundary phải có adversarial tests.
+- **INV-086 — False-PASS Resistance**: known invalid candidate → MUST NOT → VERIFIED.
+- **INV-087 — Evidence Tamper Detection**: evidence mutation → verification invalid.
+- **INV-088 — Certificate Binding**: Certificate ↔ Candidate ↔ Evidence phải bind (crypto/structural).
+- **INV-089 — Untrusted Artifact Isolation**: artifact content ≠ verification instruction.
+- **INV-090 — Verifier Boundary Protection**: candidate ✗ modify verifier/policy/evidence.
+- **INV-091 — Attack Fail-Closed**: unknown attack outcome → DEGRADED/BLOCKED (không RESILIENT).
+- **INV-092 — Critical Finding Dominance**: critical vulnerability → CRITICAL (bất kể score).
+
+#### 19. Task breakdown (10 task — **ID tự gán**, attachment KHÔNG đưa TASK-xxx)
+> ⚠️ Attachment M23 không propose TASK-xxx → gán sequential **TASK-165..174** (nối tiếp M22).
+| Task | Nội dung |
+|------|----------|
+| TASK-165 | Adversarial Evaluation Harness (contract + Red/Blue Team) |
+| TASK-166 | Evidence Attackers (Tampering/Stale/Missing) |
+| TASK-167 | Test Weakness Attackers (Weak/Assertion Evasion/Mutation) |
+| TASK-168 | Requirement/Scope Attackers (Evasion/Scope Violation) |
+| TASK-169 | Certificate Attackers (Replay/Forgery) |
+| TASK-170 | Prompt Injection Tester + Untrusted Artifact Isolation |
+| TASK-171 | Execution Integrity Attackers (Tool/Replay/Flaky) |
+| TASK-172 | Environment/Dependency Attackers |
+| TASK-173 | Boundary Attackers (Permission/Sandbox Escape/Verifier Manipulation) |
+| TASK-174 | Collusion Detector + Resilience Score + Attack Corpus Regression |
+
+#### 20. Definition of Done (M23)
+- Adversarial Harness + Attack taxonomy A1–A20 + Evidence tampering/stale/missing + weak-test/assertion/mutation + requirement/scope + cert replay/forgery + prompt injection + tool/replay/flaky + env/dependency + permission/sandbox/verifier-manipulation + collusion + False-PASS challenge + Resilience Score deterministic + Critical findings fail-closed + Attack Corpus regression + Full M23 suite PASS + **INV-001..092 PASS**.
+- **Đánh giá M23 bằng**: *"AIOS có lớp Adversarial Evaluation chủ động tìm False-PASS, fake evidence, verifier manipulation và phát hiện được không?"*. M23 = **Verify the Verifier**. M24 tiếp theo = Continuous Quality Governance & Release Gate.
+
+### M24 – Continuous Quality Governance & Release Gate (P29 — Quality Governance & Trust Gate)
+
+> **Vị trí**: M22 = Verify, M23 = Attack, M24 = **Govern & Gate**. Biến Verification + Adversarial thành cơ chế governance liên tục: policy, quality gate, risk classification, release decision, exception management, audit trail. Tận dụng M22/M23 + Policy Service (M1) + Audit (M6/M13). M24 KHÔNG tạo Agent mới — tạo governance mechanism.
+> **Ranh giới**: M24 trả lời *"candidate này có được phép đi tiếp không?"* qua Risk → Policy → Gate → Release Decision, không qua score tự động.
+
+#### 1. Core Principles (P24-01..04)
+- **P24-01 Policy Decides, Score Informs**: không `Trust=95 → Auto Release`; mà Policy+Evidence+Findings+Risk+Context → Decision.
+- **P24-02 Hard Gate Cannot Be Bypassed by Score**: Security Critical → BLOCK bất kể Trust=99.
+- **P24-03 Every Release Decision Is Explainable**: ALLOW/BLOCK/WARN/CONDITIONAL phải trả lời WHY/BASED ON WHAT/WHO/WHICH POLICY/WHICH EVIDENCE.
+- **P24-04 Exceptions Are Explicit**: không "bỏ qua tạm" không record; mọi exception có ID/Reason/Scope/Owner/Expiration/Approval/Evidence.
+
+#### 2. Architecture
+```
+Candidate → M22 Verification → M23 Adversarial → Risk Evaluator → Policy Engine → Quality Gate
+   → ALLOW / CONDITIONAL / WARN / BLOCK / UNKNOWN → Release Decision → Audit Trail
+```
+
+#### 3. Quality Gate & Gate States
+`QualityGate{gate{candidate_id,verification,adversarial,risk,policy,exceptions} → decision{result,reason,failed_rules,warnings,evidence}}`. States: **ALLOW** (VERIFIED+RESILIENT+Policy PASS) / **CONDITIONAL** (VERIFIED+LOW/MED risk+Approved Exception) / **WARN** (quality degradation, no hard failure) / **BLOCK** (verification/security/critical finding/missing evidence) / **UNKNOWN** (≠ ALLOW).
+
+#### 4. Risk Model & Classification
+`Risk = Impact × Likelihood × Exposure` (không cố định). Levels R0 None / R1 Low / R2 Medium / R3 High / R4 Critical (sandbox escape, cert forgery, unauthorized exec, policy bypass, false VERIFIED → BLOCK + incident record).
+
+#### 5. Policy Engine & Profiles
+`Policy Registry` (không hard-code vào Runtime). Profiles: development/testing/staging/production/critical-production. Environment thay đổi quality/perf/coverage threshold NHƯNG không bypass security invariant (sandbox escape/permission/cert/secret luôn precedence). Rule precedence: Security > Safety > Integrity > Correctness > Quality > Optimization.
+
+#### 6. Exception Management & Quality Debt
+`QualityException{id,rule,reason,scope,owner,approved_by,created_at,expires_at}` — bounded (Global forever bypass ❌). Exception KHÔNG xóa Finding (Finding=TRUE, Decision=CONDITIONAL, audit giữ nguyên). `QualityDebt{id,severity,owner,created_at,due_at,status}` — Warning → QualityDebt → Track → Resolve/Expire/Escalate (không ignore).
+
+#### 7. Release Gate & Decision Explainability
+Pipeline: Build → Test → M22 Verify → M23 Attack → Risk → Policy → Release Gate. `ReleaseDecision{candidate_id,environment,policy,verification,resilience,risk,decision,reasons,exceptions,evidence}`. Decision Explanation sinh deterministic (LLM chỉ summarize/explain, KHÔNG decide).
+
+#### 8. Governance Ledger, Provenance & Continuous Governance
+`Governance Ledger` (immutable/auditable: Verification/Findings/Risk/Policy/Gate/Exception/Approval/Release/Rollback). `Provenance Graph`: Requirement→Artifact→Verification→Evidence→Finding→Risk→Policy→Gate→Release (end-to-end Trust Chain). Trigger reverification: code/dependency/policy/verifier/environment change, security finding, cert/exception expire.
+
+#### 9. Trust Lifecycle & Selective Reverification
+Trust lifecycle CREATED→VERIFIED→RESILIENT→TRUSTED→ACTIVE→INVALIDATED→REVERIFY. Material change (candidate/evidence/dependency/verifier/policy/environment) → TRUST INVALIDATED → re-run. Change Impact (README=LOW … Permission Service/Verifier=CRITICAL) quyết định mức re-verify; Selective Reverification qua dependency/provenance graph (UI-only → UI verify; Runtime Kernel → full).
+
+#### 10. Approval, Rollback & Metrics
+Approval workflow (CONDITIONAL → Human Review → APPROVE/REJECT) scoped/audited/time-bound. Rollback Recommendation/Required (critical finding/trust invalidated/policy violation) — governance decision only. Quality Dashboard: Verification Pass Rate / False-PASS Detection / Adversarial Detection / Critical Findings / Quality Debt / Exceptions / Trust Invalidations / Release Blocks. Health Score = observability, KHÔNG override policy.
+
+#### 11. TASK-175 — Quality Gate + Gate States
+QualityGate contract + ALLOW/CONDITIONAL/WARN/BLOCK/UNKNOWN states + decision schema.
+
+#### 12. TASK-176 — Risk Model + Classification
+Risk Evaluator + R0–R4 classification + impact/likelihood/exposure.
+
+#### 13. TASK-177 — Policy Engine + Profiles + Precedence
+Policy Registry + environment profiles + rule precedence (Security>Safety>...>Optimization).
+
+#### 14. TASK-178 — Exception Management
+QualityException (scope/expiration/audit) + revocation + abuse tests.
+
+#### 15. TASK-179 — Quality Debt Tracking
+QualityDebt lifecycle + escalation/expiration.
+
+#### 16. TASK-180 — Release Gate + Decision Explainability
+ReleaseDecision + deterministic Decision Explanation (LLM summarize only).
+
+#### 17. TASK-181 — Governance Ledger + Provenance Graph
+Immutable ledger + end-to-end Trust Chain query.
+
+#### 18. TASK-182 — Trust Lifecycle + Invalidation + Selective Reverification
+Trust state machine + change impact + selective re-verify scope.
+
+#### 19. TASK-183 — Approval Workflow + Rollback Recommendation
+Human approval (scoped/audited/time-bound) + rollback governance decision.
+
+#### 20. TASK-184 — Quality Dashboard + Governance Harness
+Metrics/Health + tests (policy/gate/risk/exception/trust/adversarial-governance).
+
+#### 21. Invariants mới (M24) — **ID điều chỉnh (TOÀN BỘ range)**
+> ⚠️ Attachment đề xuất INV-051..060 NHƯNG **toàn bộ range đã bị chiếm**: INV-051..058 = M19; INV-059..067 = M20. M24 bổ sung **INV-093..102**:
+- **INV-093 — Policy-Driven Gate**: Release Decision MUST be determined by policy.
+- **INV-094 — Hard Gate Dominance**: Critical Security Failure → BLOCK.
+- **INV-095 — Explainable Decision**: mọi Gate Decision → Evidence+Policy+Reason.
+- **INV-096 — Exception Explicitness**: no implicit bypass.
+- **INV-097 — Exception Expiration**: mọi Exception → bounded lifetime.
+- **INV-098 — Finding Preservation**: Exception ≠ Finding deletion.
+- **INV-099 — Trust Invalidation**: material change → previous Trust MUST re-evaluate.
+- **INV-100 — Governance Auditability**: mọi release decision → immutable audit record.
+- **INV-101 — Security Precedence**: Security > Quality > Optimization.
+- **INV-102 — Unknown Fail-Closed**: UNKNOWN → MUST NOT become ALLOW.
+
+#### 22. Task breakdown (10 task — **ID tự gán**, attachment KHÔNG đưa TASK-xxx)
+> ⚠️ Attachment M24 không propose TASK-xxx → gán sequential **TASK-175..184** (nối tiếp M23).
+| Task | Nội dung |
+|------|----------|
+| TASK-175 | Quality Gate + Gate States (ALLOW/CONDITIONAL/WARN/BLOCK/UNKNOWN) |
+| TASK-176 | Risk Model + Classification (R0–R4) |
+| TASK-177 | Policy Engine + Profiles + Precedence |
+| TASK-178 | Exception Management (scope/expiration/audit) |
+| TASK-179 | Quality Debt Tracking |
+| TASK-180 | Release Gate + Decision Explainability |
+| TASK-181 | Governance Ledger + Provenance Graph |
+| TASK-182 | Trust Lifecycle + Invalidation + Selective Reverification |
+| TASK-183 | Approval Workflow + Rollback Recommendation |
+| TASK-184 | Quality Dashboard + Governance Harness |
+
+#### 23. Definition of Done (M24)
+- Quality Gate + Policy Engine + Risk classification + Release profiles + Hard-gate precedence + Exception mgmt (expiration) + Quality Debt tracking + Governance Ledger + Decision Explanation deterministic + Provenance Chain + Trust lifecycle + Trust invalidation + Change impact + Selective reverification + Approval workflow + Release gate + Rollback recommendation + Governance metrics + Policy bypass không qua score + Exception không xóa finding + UNKNOWN không → ALLOW + Security failure override quality + Full M24 suite PASS + **INV-001..102 PASS**.
+- **Đánh giá M24 bằng**: *"AIOS có governance mechanism quyết định khi nào kết quả đủ đáng tin để đi tiếp, khi nào BLOCK, khi nào cần human approval, khi nào trust cũ bị thu hồi không?"*. M24 = **Govern the Trust**. M25 tiếp theo = Git/Artifact Integration (proposed).
+
+### M25 – Git/Artifact Integration (P30)
+*(Scope vốn là M23 trong skeleton gốc; được dời xuống M25 khi M23→Adversarial, M24→Governance. Milestone "Autonomous Coding" cũ (P29) đã được M21 coverage → consolidated vào M21.)*
 Diff, commit, rollback có kiểm soát: tái dùng Artifact Service (M1) + Kill Switch (M10) + Certified Baseline (M14).
 
-### M24 – Autonomous Coding (P29)
-Tự xử lý task nhiều bước: tái dùng Goal Manager (M2/M4) + Autonomous Loop (M9) + Trust Budget (M15) + Permission Boundary (M14).
-
-### M25 – Coding Evaluation (P30)
+### M26 – Coding Evaluation (P31)
 Benchmark + regression cho coding tasks: tái dùng Evaluation Framework (M4/M6) + Benchmark (M6) + Coding Evaluation Harness mới.
 
-### M26 – AIOS 2.0 Coding Edition (P31)
+### M27 – AIOS 2.0 Coding Edition (P32)
 Freeze + certification: Architecture Freeze (M10 pattern) + `aiagent conformance` → **AIOS 2.0 READY**. INV-001..038 giữ nguyên + (có thể) bổ sung invariant Coding Plane (INV-039+, TBD).
 
 > **Lưu ý**: M17–M26 không phá Runtime/Harness. AIOS hiện có lợi thế lớn: M13–M16 đã xây lớp Trust/Harness → Coding Plane trở thành consumer của Runtime + Harness thay vì tự tạo hệ thống agent riêng.
