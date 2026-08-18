@@ -1,13 +1,13 @@
-# AIOS — Kiến trúc hệ thống (v3 — AIOS 1.0 CERTIFIED · M11 DONE · M12 IN-PROGRESS)
+# AIOS — Kiến trúc hệ thống (v3 — AIOS 1.1 READY · M13–M16 HARNESS TRACK COMPLETE · 2360 tests)
 
 > **📌 TÀI LIỆU HIỆN HÀNH** — thay thế `docs/architecture-v2.md` (giữ làm lịch sử).
 > Nguồn sự thật: `docs/PLAN.md` (master plan v6) + `aios/progress/PROGRESS.md` (trạng thái build thực tế).
-> Cập nhật lần cuối: **2026-08-16** — phản ánh **M0–M10 DONE (AIOS 1.0 CERTIFIED)** + **M11 DONE** (Deterministic Artifact & Interaction Runtime — INV-035, full suite **2052 tests**, `aiagent conformance` 10 areas/6 gates) + **M12 IN-PROGRESS** (AIOS 1.1 Compatibility — TASK-084..088, version 1.0→1.1, nhánh `feature/ISSUE-7-aios-1-1-compatibility`).
+> Cập nhật lần cuối: **2026-08-18** — phản ánh **M0–M11 DONE** (AIOS 1.0 CERTIFIED + M11 Deterministic Artifact & Interaction Runtime, INV-035) + **M12 DONE** (AIOS 1.1 Compatibility, version 1.1.0, `aiagent conformance` 11 areas/7 gates → **AIOS 1.1 READY**, 2118 tests) + **M13–M16 HARNESS TRACK COMPLETE** (Harness Trust M13 → Controlled Self-Healing M14 → Autonomous Harness M15 → DSH Bridge M16, full suite **2360 PASS / 0 FAIL**, 16 harness, INV-036/037/038 + 4 invariant track).
 > Định dạng: **Markdown + Mermaid diagrams** (flowchart / sequenceDiagram / stateDiagram-v2) — render được trên GitHub và VS Code preview. Quyết định đảo quy ước "markdown thuần" (TASK-063) theo yêu cầu người dùng 2026-08-15.
 
 ## 0. Cách đọc tài liệu này
 
-- **Nguồn dữ liệu**: mọi trạng thái/số liệu lấy từ `aios/progress/PROGRESS.md` (2026-08-16) và `docs/PLAN.md`; mọi module code đối chiếu `backend/src/aios_core/` (bao gồm package M11 mới: `rendering/`, `verification/`).
+> **Nguồn dữ liệu**: mọi trạng thái/số liệu lấy từ `aios/progress/PROGRESS.md` (2026-08-18) và `docs/PLAN.md`; mọi module code đối chiếu `backend/src/aios_core/` (bao gồm package M11: `rendering/`, `verification/`; harness M13–M16: `harness/{behavioral,coverage,meta,release,diagnose,heal,simulate,certify,autonomous,dsh_bridge}/`).
 - **Quy ước ký hiệu**: `✅` = đã build + test thật (kèm số tests); `🔲` = chưa làm (todo — không còn task nào ở M10).
 - **Mô hình tầng**: 7 tầng L1..L7 theo `docs/architecture/layer-model.md` (**FROZEN tại M10**) — KHÁC thứ tự mô tả "chức năng" của v2; v3 lấy layer-model làm chuẩn.
 - **Bất biến kiến trúc (INV)**: xem §12 + `docs/architecture/constitution-1.0.md`; enforcement tự động qua `backend/tests/test_architecture.py` (AST) + runtime scanner `observability/arch_health.py` + release gates TASK-073.
@@ -77,8 +77,7 @@ flowchart TD
 > - **Autonomous = L2** (định hướng Orchestrator, không phải "lớp mở rộng") — v2 xếp sai điểm này.
 > - Harness (M6) / Enterprise (M7) / Ecosystem (M8) là **lớp mở rộng thuộc L7** — không phải tầng riêng.
 > - **M10 là nhóm đảm bảo** (Freeze → Harden → Secure → Productize → Certify), KHÔNG phải tầng L8.
-> - **M11 bổ sung (DONE 2026-08-16)**: package `rendering/` (RenderReplay / VisualEvidence / VisualRegressionProbe) + `verification/` (INV-035 Verification State Model) + Asset Pipeline (registry `kind=asset`, Discovery/Routing) — đặt trong L6/L7 theo layer-model frozen, **không đổi cấu trúc 7 tầng**.
-
+> - **M11 bổ sung (DONE 2026-08-16)**: package `rendering/` (RenderReplay / VisualEvidence / VisualRegressionProbe) + `verification/` (INV-035 Verification State Model) + Asset Pipeline (registry `kind=asset`, Discovery/Routing) — đặt trong L6/L7 theo layer-model frozen, **không đổi cấu trúc 7 tầng**.> **M12–M16 mở rộng (DONE 2026-08-18)**: M12 nâng cấp tương thích 1.1.0 (không đổi cấu trúc); M13–M16 mở rộng Harness thành **16 harness** (behavioral / coverage / meta / release / diagnose / heal / simulate / certify / autonomous / dsh_bridge) — thuộc L7 (Harness mở rộng), **không đổi cấu trúc 7 tầng frozen**. Xem §7.1b (component map) + §9c (M12) + §9d (M13–M16 track).
 ### 1.1 Bảng 7 tầng (theo `layer-model.md` frozen)
 
 | Tầng | Tên | Package chính (`backend/src/aios_core/`) | Milestone |
@@ -89,7 +88,7 @@ flowchart TD
 | L4 | Workflow / Agent / Capability | `workflow/`, `agents/`, `capabilities/` | M1, M2 |
 | L5 | Runtime Kernel | `kernel/` (9 services + `graph/` + `scheduler/`) | M1, M5 |
 | L6 | Tools / State / Events | `tools/`, `context/`, `sandbox/`, `kernel/events.py` | M1, M2 |
-| L7 | Infra + Mở rộng | `models/`, `memory/`, `knowledge/`, `catalog/`, `observability/`, `upgrade/`, `enterprise/`, `harness/`, `plugins/`, `extension/`, `ecosystem/` | M1, M4, M6–M8 |
+| L7 | Infra + Mở rộng | `models/`, `memory/`, `knowledge/`, `catalog/`, `observability/`, `upgrade/`, `enterprise/`, `harness/` (M6 core + M13–M16: behavioral/coverage/meta/release/diagnose/heal/simulate/certify/autonomous/dsh_bridge), `plugins/`, `extension/`, `ecosystem/` | M1, M4, M6–M8, M11–M16 |
 
 > **Dependency một chiều** (INV-004): Agent → Capability → Tool → Infrastructure. Runtime/Capability KHÔNG phụ thuộc ngược Infra. Enforcement: `tests/test_architecture.py` (AST) + `arch_health.py` (runtime scanner).
 
@@ -285,6 +284,34 @@ flowchart TD
 | H4 — Evaluation + Benchmark | Evaluation model + suite + trajectory + Regression Gate | TASK-032/033 | ✅ 1387/1450 tests · INV-020/021 |
 | H5 — Doctor & Readiness | Doctor architecture 13 kinds + Readiness Score + hard gates | TASK-034 | ✅ 1521 tests |
 
+### 7.1b AIOS Harness — M13–M16 expansion (16 harness total)
+
+> M6 xây Harness core (H1–H5). M13–M16 mở rộng thành **16 harness** đăng ký trong `runtime_kernel` — thuộc **L7 (Harness mở rộng)**, KHÔNG đổi cấu trúc 7 tầng frozen. Xem §9d cho luồng track closed-loop.
+
+```mermaid
+flowchart LR
+    subgraph M6H["M6 - Harness Core (H1-H5)"]
+        H1["kernel: lifecycle 8-state + registry + runner"]
+        H2["verification: pre/post + replay"]
+        H3["testing: simulation + fault-injector"]
+        H4["evaluation + benchmark + regression gate"]
+        H5["doctor + readiness scoring"]
+    end
+    subgraph M13H["M13 - Trust"]
+        T1["behavioral"]; T2["coverage"]; T3["meta"]; T4["release"]
+    end
+    subgraph M14H["M14 - Heal"]
+        X1["diagnose"]; X2["heal"]; X3["simulate"]; X4["certify"]
+    end
+    subgraph M15H["M15 - Autonomy"]
+        A1["autonomous"]
+    end
+    subgraph M16H["M16 - Integrate"]
+        Z1["dsh_bridge"]
+    end
+    M6H --> M13H --> M14H --> M15H --> M16H
+```
+
 ### 7.2 Enterprise (M7) — nền tảng vận hành an toàn quy mô doanh nghiệp
 
 | Nhóm | Nội dung | Task | Trạng thái |
@@ -458,7 +485,74 @@ flowchart LR
 
 ---
 
-## 10. Tiến độ milestone — M0..M11 DONE + M12 IN-PROGRESS
+## 9c. M12 — AIOS 1.1 Compatibility (DONE ✅ 2026-08-16)
+
+> **Milestone M12** (Issue #7, PLAN.md §M12) — nâng cấp tương thích hệ thống lên **version 1.1.0** mà KHÔNG thêm Core feature, KHÔNG thêm invariant (INV-001..035 giữ nguyên frozen). Full suite **2118 tests**, `aiagent conformance` → **11 areas / 7 gates → AIOS 1.1 READY**. 5 task TASK-084..088, nhánh `feature/ISSUE-7-aios-1-1-compatibility` (PR #8 draft, chờ push/merge theo yêu cầu user).
+
+```mermaid
+flowchart LR
+    subgraph C1["C1 - Version & Compat Baseline (TASK-084)"]
+        V1["__version__ 1.1.0 + catalog 1.1.0"]
+        V2["Compatibility Matrix (14 entry)"]
+    end
+    subgraph C2["C2 - Migration 1.0->1.1 (TASK-085)"]
+        M1["migration_110.py 4 transforms"]
+        M2["Aios110Migrator matrix-gated"]
+    end
+    subgraph C3["C3 - Backward Compat (TASK-086)"]
+        B1["plugin/contract/workflow v0->v1"]
+        B2["BackwardCompatibilitySuite 9 check"]
+    end
+    subgraph C4["C4 - Conformance area (TASK-087)"]
+        G1["area compatibility + gate_g"]
+        G2["11 areas / 7 gates -> READY"]
+    end
+    subgraph C5["C5 - Docs & ADR (TASK-088)"]
+        D1["ADR-0007 + migration guide"]
+    end
+    C1 --> C2 --> C3 --> C4 --> C5
+```
+
+## 9d. M13–M16 — Harness Track COMPLETE (DONE ✅ 2026-08-18)
+
+> **Harness Track** (Issue #8, PLAN.md §M13–§M15) — mở rộng Harness từ "test/certify framework" → **trust layer tự xác minh (self-validating) + production-grade + autonomous**. Full suite **2360 PASS / 0 FAIL**, **16 harness total**. 4 invariant track xuyên suốt: **FAIL-CLOSED ✅ + INDEPENDENT VERIFICATION ✅ + PERMISSION BOUNDARY ✅ + CERTIFIED BASELINE/ROLLBACK ✅**.
+
+```mermaid
+flowchart TD
+    subgraph M13["M13 - Harness Trust & Behavioral Conformance (TRUST)"]
+        B1["behavioral - execute N lan + fault-inject + evidence digest + regression gate"]
+        B2["coverage - 9 chieu + negative-path + readiness scoring (fail-closed)"]
+        B3["meta - verify-the-verifier (independent hardcoded oracle, 8 adversarial)"]
+        B4["release - gate = READY AND TRUST (pure combiner, fail-closed)"]
+        B1 --> B2 --> B3 --> B4
+    end
+    subgraph M14["M14 - Controlled Self-Healing (HEAL)"]
+        C1["diagnose - failure corpus + signature"]
+        C2["heal - candidate fix + risk scoring"]
+        C3["simulate - meta-verify gate (KHONG relax criteria)"]
+        C4["certify - apply + rollback + certified baseline"]
+        C1 --> C2 --> C3 --> C4
+    end
+    subgraph M15["M15 - Autonomous Harness (AUTONOMY)"]
+        D1["autonomous - loop orchestrator + trust budget 7 gioi han + autonomy levels"]
+        D2["improvement - failure-corpus learning"]
+        D3["continuous certification (low-risk auto) + SAFE-STOP"]
+        D1 --> D2 --> D3
+    end
+    subgraph M16["M16 - DSH Bridge (INTEGRATE)"]
+        E1["dsh_bridge - independent verification oracle (INV-017/018/019/035) - UNCONFIGURED khi chua cai"]
+    end
+    M13 --> M14 --> M15 --> M16
+    INV["4 invariant track: FAIL-CLOSED + INDEPENDENT VERIFICATION + PERMISSION BOUNDARY + CERTIFIED BASELINE/ROLLBACK"]
+    M13 -. "tuan thu" .-> INV
+    M14 -. "tuan thu" .-> INV
+    M15 -. "tuan thu" .-> INV
+    M16 -. "tuan thu" .-> INV
+```
+
+> **Adopted ADR-0008** (Harness Trust): System Readiness ≠ Harness Trust — Release Gate là pure combiner (PASS iff READY AND TRUST), fail-closed. Meta-Harness dùng hardcoded oracle chống circular; M16 (dsh) cung cấp independent verification path thật.
+
+## 10. Tiến độ milestone — M0..M11 DONE + M12..M16 DONE
 
 ```mermaid
 flowchart LR
@@ -473,9 +567,13 @@ flowchart LR
     M8 --> M9["M9 - Autonomous (1780 @M9)"]
     M9 --> M10["M10 - AIOS 1.0 (1939 + conformance READY)"]
     M10 --> DONE["AIOS 1.0 CERTIFIED"]
-    M10 --> M11["M11 - Deterministic Artifact and Interaction Runtime (2052)"]
-    M11 --> M12["M12 - AIOS 1.1 Compatibility (IN-PROGRESS)"]
-    M12 --> CUR["AIOS 1.1 (IN-PROGRESS)"]
+    M10 --> M11["M11 - Deterministic Artifact & Interaction Runtime (2052)"]
+    M11 --> M12["M12 - AIOS 1.1 Compatibility (2118)"]
+    M12 --> M13["M13 - Harness Trust (2254)"]
+    M13 --> M14["M14 - Controlled Self-Healing (2331)"]
+    M14 --> M15["M15 - Autonomous Harness (2349)"]
+    M15 --> M16["M16 - DSH Bridge / Integrate (2360)"]
+    M16 --> CUR["AIOS 1.1 + Harness Track COMPLETE"]
 ```
 
 | Milestone | Mô tả | Trạng thái | Số liệu (theo PROGRESS.md 2026-08-15) |
@@ -492,7 +590,11 @@ flowchart LR
 | M9 | Autonomous — 13 task, INV-030..034 | ✅ done | 1780 tests @M9 · 94.46% (full suite 1793) |
 | M10 | AIOS 1.0 — freeze INV-001..034, conformance, certification | ✅ done | **1939 tests + vitest 13/13 · conformance READY · doctor 100/100 · review ACCEPTED** |
 | M11 | Deterministic Artifact & Interaction Runtime — INV-035, rendering/visual, asset pipeline | ✅ done | **2052 tests · conformance 10 areas/6 gates** (TASK-078..083) |
-| M12 | AIOS 1.1 Compatibility (Issue #7) — version 1.0→1.1, migration, backward-compat, conformance area, ADR-0007 | 🔄 in-progress | TASK-084 (spec v3, paused) · TASK-085..088 todo |
+| M12 | AIOS 1.1 Compatibility (Issue #7) — version 1.1.0, migration, backward-compat, conformance area, ADR-0007 | ✅ done | **2118 tests · 11 areas/7 gates → AIOS 1.1 READY** (TASK-084..088) |
+| M13 | Harness Trust & Behavioral Conformance (TRUST) — behavioral + coverage + meta + release gate + ADR-0008 | ✅ done | **2254 tests** · INV-036 · 4 invariant track (FAIL-CLOSED ✅, INDEPENDENT VERIFICATION ✅) (TASK-089..093) |
+| M14 | Controlled Self-Healing (HEAL) — diagnose + heal + simulate + certify (closed-loop) | ✅ done | **2331 tests** · INV-037 (TASK-094..098) |
+| M15 | Autonomous Harness (AUTONOMY) — autonomous loop + trust budget + improvement engine | ✅ done | **2349 tests** · INV-038 (TASK-099..103) |
+| M16 | DSH Bridge (INTEGRATE) — independent verification oracle (INV-017/018/019/035) | ✅ done | **2360 tests** · 16 harness total (TASK-104..108) |
 
 ---
 
@@ -544,17 +646,34 @@ flowchart LR
 | TASK-081 | AssetPipeline Contract + Registry kind=asset + Routing | 2018 | M11 |
 | TASK-082 | Creative Domain + Vendor Integrity + Reference-Asset | 2034 | M11 |
 | TASK-083 | SkillDistiller + Static Deploy | 2052 | M11 |
-| TASK-084 | M12-P0 Version & Compatibility Baseline (C1) — spec v3, paused | — | M12 |
-| TASK-085 | M12-P1 Migration 1.0→1.1 (C2) | todo | M12 |
-| TASK-086 | M12-P2 Backward Compatibility (C3) | todo | M12 |
-| TASK-087 | M12-P3 Conformance area compatibility (C4) | todo | M12 |
-| TASK-088 | M12-P4 ADR-0007 + migration guide (C5) | todo | M12 |
+| TASK-084 | M12-P0 Version & Compatibility Baseline (C1) | 2071 | M12 |
+| TASK-085 | M12-P1 Migration 1.0→1.1 (C2) | 2098 | M12 |
+| TASK-086 | M12-P2 Backward Compatibility (C3) | 2109 | M12 |
+| TASK-087 | M12-P3 Conformance area compatibility (C4) | 2118 | M12 |
+| TASK-088 | M12-P4 ADR-0007 + migration guide (C5) | 2118 | M12 |
+| TASK-089 | M13-P0 Behavioral Conformance (N-lần + fault-inject + evidence) | 2172 | M13 |
+| TASK-090 | M13-P1 Harness Coverage (9 chiều + readiness) | 2207 | M13 |
+| TASK-091 | M13-P2 Meta-Harness (verify-the-verifier, anti-circular) | 2234 | M13 |
+| TASK-092 | M13-P3 Release Gate (System Readiness ≠ Harness Trust) | 2254 | M13 |
+| TASK-093 | M13-P4 ADR-0008 + behavioral spec | 2254 | M13 |
+| TASK-094 | M14-P0 Detect & Diagnose (failure corpus) | 2286 | M14 |
+| TASK-095 | M14-P1 Candidate Generate + Risk Scoring | 2302 | M14 |
+| TASK-096 | M14-P2 Simulation + Meta-Verify Gate | 2331 | M14 |
+| TASK-097 | M14-P3 Certify + Rollback + Certified Baseline | 2331 | M14 |
+| TASK-098 | M14-P4 INV-037 Remediation Integrity + kill-switch | 2331 | M14 |
+| TASK-099 | M15-P0 Autonomous Loop Orchestrator | 2349 | M15 |
+| TASK-100 | M15-P1 Improvement Engine (failure-corpus learning) | 2349 | M15 |
+| TASK-101 | M15-P2 Continuous Certification (low-risk auto) | 2349 | M15 |
+| TASK-102 | M15-P3 Trust Budget + Autonomy Levels + SAFE-STOP | 2349 | M15 |
+| TASK-103 | M15-P4 INV-038 Autonomy Boundary + Constitution | 2349 | M15 |
+| TASK-104 | M16 DSH Bridge (independent verification oracle) | 2360 | M16 |
 
 ---
 
-## 12. Architecture Invariants — INV-001..035 (FROZEN — vi phạm = release blocker; INV-035 thêm tại M11)
+## 12. Architecture Invariants — INV-001..038 (FROZEN — vi phạm = release blocker; INV-035..038 thêm tại M11/M13/M14/M15)
 
 > Freeze tại M10 (TASK-063): vi phạm INV = **release blocker**, không còn warning. Enforcement: `backend/tests/test_architecture.py` (AST import-graph scan, nhãn canonical `test_inv0xx_*`) + runtime scanner `observability/arch_health.py` (layer/contract/policy) + Release Gates A–E (TASK-073). Quyết định: `docs/adr/0004-architecture-invariants.md` + `docs/architecture/constitution-1.0.md`.
+> M11–M15 bổ sung **INV-035** (Verification Fail-Closed) · **INV-036** (Harness Trust) · **INV-037** (Remediation Integrity) · **INV-038** (Autonomy Boundary) — cùng nhóm bất biến core, vi phạm = release blocker. **4 invariant track** xuyên suốt Harness Track (FAIL-CLOSED / INDEPENDENT VERIFICATION / PERMISSION BOUNDARY / CERTIFIED BASELINE/ROLLBACK) được INV-035..038 thể chế hóa.
 
 | ID | Tên | Nội dung | Milestone |
 |----|-----|----------|-----------|
@@ -593,6 +712,9 @@ flowchart LR
 | INV-033 | Self-Improvement via Harness | Experimentation qua Harness, evidence-first | M9 |
 | INV-034 | Autonomous Memory No Unverified Promote | Memory promote phải qua kiểm chứng (double gate) | M9 |
 | INV-035 | Verification Fail-Closed | Verification phải fail-closed (verdict=FAIL khi thiếu evidence/error); không auto-pass | M11 |
+| INV-036 | Harness Trust Separation | System Readiness ≠ Harness Trust; Release Gate là pure combiner, fail-closed (ADR-0008) | M13 |
+| INV-037 | Remediation Integrity | Harness KHÔNG tự sửa tiêu chuẩn để tự PASS; apply thực cần Permission Broker + Human Approval + Rollback to certified baseline (ADR M14) | M14 |
+| INV-038 | Autonomy Boundary | Autonomy ≠ Permission (Autonomy Engine: "có tự làm?"; Permission Broker: "có được phép?"); Trust Budget + human oversight high-risk (ADR M15) | M15 |
 
 **4 invariant chốt cốt lõi (ADR-0004):**
 1. **Orchestrator không phải God Object** — điều phối qua Runtime API, không sở hữu service (INV-005).
@@ -652,7 +774,8 @@ sequenceDiagram
 
 ## 14. Nguồn & lịch sử
 
-- Tài liệu này: `docs/architecture-v3.md` (cập nhật 2026-08-16 — gốc TASK-076, 2026-08-15) — **bản hiện hành** (AIOS 1.0 CERTIFIED + M11 DONE + M12 IN-PROGRESS, Mermaid). Cập nhật 2026-08-16: thêm §9b (M11 DONE) + M12 IN-PROGRESS + INV-035; version 1.1 planned (TASK-084..088).
+- Tài liệu này: `docs/architecture-v3.md` (cập nhật **2026-08-18** — gốc TASK-076, 2026-08-15) — **bản hiện hành** (AIOS 1.1 READY + M13–M16 HARNESS TRACK COMPLETE, Mermaid). Cập nhật 2026-08-18: **M12 DONE** (AIOS 1.1 READY, 2118 tests) + **M13–M16 HARNESS TRACK COMPLETE** (2360 tests, 16 harness, INV-036..038, 4 invariant track) + §9c/§9d + §7.1b + INV-036..038.
+- (Lịch sử) 2026-08-16: thêm §9b (M11 DONE) + M12 IN-PROGRESS + INV-035; version 1.1 planned (TASK-084..088).
 - Quy ước Mermaid thay "markdown thuần" của v2 — quyết định người dùng 2026-08-15 (render được trên GitHub + VS Code preview).
 - Bản cũ: `docs/architecture-v2.md` (2026-08-15, TASK-063) — markdown thuần, phản ánh đến M10 todo — **giữ làm lịch sử**.
 - Bản gốc: `docs/architecture.md` — mô tả đến M5 in-progress — **giữ làm lịch sử**.
