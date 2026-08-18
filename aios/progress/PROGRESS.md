@@ -181,6 +181,23 @@ Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 
 
 > **INV mới (M21)**: INV-068 Bounded Autonomy · INV-069 Verified Completion · INV-070 No Progress Termination · INV-071 Repair Provenance · INV-072 Regression Protection · INV-073 Autonomous Scope Boundary · INV-074 Kill Switch Dominance · INV-075 Budget Dominance · INV-076 Unknown Completion Prohibition · INV-077 Loop State Integrity. (Attachment đề xuất INV-065..074 nhưng INV-065/066/067 đã thuộc M20 → điều chỉnh lên INV-068..077.)
 > **M21 = Controlled Autonomous Coding** — tự hoàn thành coding task nhiều bước CÓ budget/scope/kill-switch/policy/evidence chain. KHÔNG unrestricted agent loop. M22 tiếp theo = Coding Verification/Evaluation/Trust (Verifier ≠ Generator, tận dụng Harness M13–M16).
+
+**M22 task breakdown (TASK-155..164 — ID tự gán, attachment KHÔNG đưa TASK-xxx, nối tiếp M21)**:
+| Task | Nội dung | Trạng thái |
+|------|----------|------------|
+| TASK-155 | Verification Contract + Requirement→Evidence Mapping | `todo` |
+| TASK-156 | Test Adequacy Analyzer + Mutation Verifier | `todo` |
+| TASK-157 | Behavioral Verifier (Behavior > Implementation) | `todo` |
+| TASK-158 | Contract Verifier (API/Agent/Capability/... contracts) | `todo` |
+| TASK-159 | Regression Verifier | `todo` |
+| TASK-160 | Security Verifier (hard failure) | `todo` |
+| TASK-161 | Performance Verifier (baseline threshold) | `todo` |
+| TASK-162 | Replay & Flaky Detector | `todo` |
+| TASK-163 | Evidence Collector + Evidence Integrity | `todo` |
+| TASK-164 | Trust Evaluator + CodingCertificate + Verification Harness | `todo` |
+
+> **INV mới (M22)**: INV-078 Independent Verification · INV-079 Evidence-Backed Verification · INV-080 Verification Fail-Closed · INV-081 Immutable Candidate During Verification · INV-082 Hard Failure Dominance · INV-083 Evidence Integrity · INV-084 Reproducible Verification. (Attachment đề xuất INV-036..042 nhưng **TOÀN BỘ range đã bị chiếm**: INV-036/037/038 = M13/M14/M15, INV-039/040/041/042 = M17 → điều chỉnh lên INV-078..084.)
+> **M22 = Verification Plane** — lớp độc lập với Coding Plane (Generator ≠ Verifier). Chỉ OBSERVE→VERIFY→EVALUATE→CERTIFY/REJECT. KHÔNG generate/repair code. REJECTED → quay lại M21 repair. Biến Autonomous Coding → **Trustworthy Autonomous Coding**.
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).

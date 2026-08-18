@@ -2822,8 +2822,132 @@ AUT-001 single iter / 002 successful completion / 003 compile failure→repair /
 - **Golden E2E**: "Fix failing UserService tests" → Context M18 → Plan M19 → Patch P1 → Sandbox M20 (97 PASS / 3 FAIL) → Classifier → Diagnostic → Root cause → Repair Plan → Coder → Patch P2 → Sandbox (100 PASS / 0 FAIL) → Verification → COMPLETE. **Negative golden**: iter 1/2/3 FAIL A (same fingerprint) → NO_PROGRESS → STOP (không iter 100).
 - **Đánh giá M21 bằng**: *"AIOS có tự hoàn thành coding task nhiều bước có budget/scope/kill-switch/policy, audit được bằng evidence chain không?"*. M21 = **Controlled Autonomous Coding**; M22 tiếp theo = Coding Verification/Evaluation/Trust (Verifier ≠ Generator, tận dụng Harness M13–M16).
 
-### M22 – Code Verification (P27)
-Harness xác minh code: behavioral conformance (M13) + safety (M10 security invariants) + contract check (M10). Coding Plane là consumer, không tự implement verification.
+### M22 – Independent Coding Verification & Trust Evaluation (P27 — Verification Plane, Trust & Verification Layer)
+
+> **Vị trí**: M21 = "AIOS có thể tự code". M22 = "AIOS biết mức độ đáng tin cậy của code do AI tạo". M22 bổ sung **Verification Plane** độc lập với Coding Plane (Generator ≠ Verifier). Tận dụng Harness M13–M16 + INV-035 Verification Fail-Closed. M22 KHÔNG generate/repair code — chỉ OBSERVE → VERIFY → EVALUATE → CERTIFY/REJECT.
+> **Ranh giới**: M21 tạo khả năng, M22 tạo niềm tin. Verifier READ-ONLY với candidate (không mutate). REJECTED → quay lại M21 repair → M22 verify lại.
+
+#### 1. Core Principles (P22-01..04)
+- **P22-01 Generator ≠ Verifier**: Generator tạo artifact; Verifier đánh giá độc lập. Verifier không được extension của Generator.
+- **P22-02 Verification Fail-Closed**: `UNKNOWN → UNKNOWN`, `MISSING → INCONCLUSIVE`, `BLOCKED → BLOCKED`. Không `UNKNOWN/MISSING/BLOCKED → VERIFIED`.
+- **P22-03 Evidence First**: đánh giá Requirement → Evidence → Verification Rule → Verdict, không đánh giá "code có vẻ đúng".
+- **P22-04 Verifier không mutate Candidate**: chỉ READ/EXECUTE/ANALYZE/MEASURE/REPLAY; không EDIT/REPAIR/PATCH/REWRITE. Phát hiện lỗi → REJECTED → Generator/Coding Plane (không tự sửa).
+
+#### 2. Architecture (Verification Plane)
+```
+Requirement / Policy / Workflow / Registry
+        ↓
+   Coding Plane (Generator)
+        ↓
+   Candidate Artifact
+        ↓
+┌──────────────────────────────────┐
+│        Verification Plane         │
+│ Requirement Mapper               │
+│ Evidence Collector               │
+│ Test Adequacy Analyzer           │
+│ Mutation Verifier                │
+│ Behavioral Verifier              │
+│ Contract Verifier                │
+│ Regression Verifier              │
+│ Security Verifier                │
+│ Performance Verifier             │
+│ Replay / Flaky Detector          │
+│ Evidence Integrity Checker       │
+│ Trust Evaluator                  │
+└─────────────────┬────────────────┘
+                  ↓
+          Verification Verdict
+   ┌──────────┼──────────┐
+   ↓          ↓          ↓
+VERIFIED   REJECTED  INCONCLUSIVE / BLOCKED
+```
+
+#### 3. Verification Contract
+```
+verification:
+  candidate_id / requirement_id / verifier_id / verification_run_id
+  evidence[]: {type, source, hash, timestamp}
+  checks: {behavioral, contract, regression, performance, security, mutation}
+  verdict / confidence / failures[] / warnings[]
+```
+Mọi verdict truy ngược được về evidence.
+
+#### 4. TASK-155 — Requirement → Evidence Mapping
+Mỗi requirement → Verification Criterion → Evidence → Verdict. VD REQ-001 (reject unauthorized) → VER-001 → evidence (test result, exec trace, policy decision, audit event) → VERIFIED. Thiếu evidence hợp lệ → INCONCLUSIVE (không PASS).
+
+#### 5. Test Adequacy Verification
+Không chỉ hỏi "tests có PASS không?" mà "tests có đủ mạnh để chứng minh behavior không?". Check: requirement coverage / branch coverage / edge / negative / failure paths / boundary / contract / regression coverage.
+
+#### 6. TASK-156 — Test Adequacy Analyzer + Mutation Verifier
+Mutation **chỉ trong verification sandbox** (VD `if permission` → `if not permission`). Nếu test vẫn PASS → test suite yếu → Trust giảm. Mutation KHÔNG ghi ngược vào candidate.
+
+#### 7. TASK-157 — Behavioral Verifier (Behavior > Implementation)
+Input → Execution → Observable Behavior → Expected Behavior. Ưu tiên Behavior > Implementation → phát hiện "code đúng theo test nhưng sai requirement".
+
+#### 8. TASK-158 — Contract Verifier
+API/Agent/Capability/Tool/Artifact/Workflow/Event/Permission/State contract. Candidate phá contract bắt buộc → KHÔNG VERIFIED.
+
+#### 9. TASK-159 — Regression Verifier
+New Change → Existing Behavior → Regression Suite (existing/invariant/compat/integration/critical). Feature mới không được đánh đổi bằng regression ở behavior đã bảo vệ.
+
+#### 10. TASK-160 — Security Verifier (Hard Failure)
+Permission enforcement / sandbox boundary / path traversal / unauthorized exec / secret leakage / unsafe tool / policy bypass / artifact integrity. Security violation = **Hard Failure** (không bù bằng trust score).
+
+#### 11. TASK-161 — Performance Verifier (baseline)
+Baseline → Candidate → Measured Difference → Policy Threshold (VD latency ≤10%, memory ≤15%). Vượt → REJECTED. KHÔNG thành performance framework đầy đủ.
+
+#### 12. TASK-162 — Replay & Flaky Detector
+Replay qua Input/Seed/Environment/Dependency State/Execution Timeline. Run#1 PASS / #2 FAIL / #3 PASS → FLAKY (không PASS).
+
+#### 13. TASK-163 — Evidence Collector + Evidence Integrity
+Mỗi evidence: id, source, timestamp, hash, execution context, verifier. `Evidence changed → Certificate invalid`. Evidence không thể thay thế mà không phát hiện.
+
+#### 14. Trust Score
+Trust Score 0–100 từ Requirement Coverage / Behavioral / Contract / Regression / Mutation Strength / Replay Stability / Security / Performance / Evidence Integrity. **Trust Score không override hard failure** (Trust=98 + Security violation=TRUE → REJECTED).
+
+#### 15. Verification Verdict (4 states)
+- **VERIFIED**: đủ evidence, không hard failure.
+- **REJECTED**: có hard failure rõ ràng.
+- **INCONCLUSIVE**: không đủ evidence để kết luận.
+- **BLOCKED**: không thể verify do env/policy/infra. **BLOCKED ≠ VERIFIED**.
+
+#### 16. TASK-164 — Trust Evaluator + CodingCertificate + Verification Harness
+`CodingCertificate` (immutable) sau VERIFIED: id, candidate_id, requirement_set, verifier_version, evidence_root_hash, trust_score, verdict, issued_at. Candidate/evidence đổi → cert invalid → verify lại.
+`Verification Harness`: Candidate Isolation + Environment Control + Deterministic Execution + Evidence Capture + Replay + Mutation + Artifact Hashing + Result Aggregation + Certificate Gen.
+Verifier permission: READ/EXECUTE/ANALYZE/REPLAY; **KHÔNG** EDIT/DELETE/PATCH/DEPLOY → Verification không thành coding agent trá hình.
+
+#### 17. Security Boundary & Self-Verification Bias
+Verifier chỉ OBSERVE/VERIFY/EVALUATE/CERTIFY. M22 chống self-verification bias: Generator không phải nguồn duy nhất xác nhận đúng. Adversarial tests bắt buộc chống: weak assertion / missing test / fake evidence / tampered result / Generator-Verifier coupling.
+
+#### 18. Invariants mới (M22) — **ID điều chỉnh (TOÀN BỘ range)**
+> ⚠️ Attachment đề xuất INV-036..042 NHƯNG **toàn bộ range đã bị chiếm**: INV-036/037/038 = M13/M14/M15; INV-039/040/041/042 = M17. M22 bổ sung **INV-078..084**:
+- **INV-078 — Independent Verification**: Generator ≠ Verifier.
+- **INV-079 — Evidence-Backed Verification**: VERIFIED → Required Evidence Exists.
+- **INV-080 — Verification Fail-Closed**: UNKNOWN/MISSING/BLOCKED ≠ VERIFIED (biến thể coding của INV-035 M11).
+- **INV-081 — Immutable Candidate During Verification**: Verifier → Candidate = READ-ONLY.
+- **INV-082 — Hard Failure Dominance**: Hard Failure → REJECTED (trust score không override).
+- **INV-083 — Evidence Integrity**: Evidence changed → Certificate invalid.
+- **INV-084 — Reproducible Verification**: VERIFIED → verification có thể replay.
+
+#### 19. Task breakdown (10 task — **ID tự gán**, attachment KHÔNG đưa TASK-xxx)
+> ⚠️ Attachment M22 không propose TASK-xxx → gán sequential **TASK-155..164** (nối tiếp M21).
+| Task | Nội dung |
+|------|----------|
+| TASK-155 | Verification Contract + Requirement→Evidence Mapping |
+| TASK-156 | Test Adequacy Analyzer + Mutation Verifier |
+| TASK-157 | Behavioral Verifier (Behavior > Implementation) |
+| TASK-158 | Contract Verifier (API/Agent/Capability/... contracts) |
+| TASK-159 | Regression Verifier |
+| TASK-160 | Security Verifier (hard failure) |
+| TASK-161 | Performance Verifier (baseline threshold) |
+| TASK-162 | Replay & Flaky Detector |
+| TASK-163 | Evidence Collector + Evidence Integrity |
+| TASK-164 | Trust Evaluator + CodingCertificate + Verification Harness |
+
+#### 20. Definition of Done (M22)
+- Generator/Verifier tách biệt + Verification Contract + Requirement→Evidence mapping + Evidence integrity metadata + Test adequacy + Mutation verification + Behavioral + Contract + Regression + Security + Performance cơ bản + Replay/Flaky + Verification Harness + Trust Score deterministic + Hard Failure > Trust Score + UNKNOWN/MISSING/BLOCKED ≠ VERIFIED + Verifier không mutate candidate + CodingCertificate cho VERIFIED + Cert invalid khi candidate/evidence đổi + Adversarial tests chống false-positive + Full M22 suite PASS + **INV-001..084 PASS**.
+- **Đánh giá M22 bằng**: *"AIOS có lớp Verification Plane độc lập, fail-closed, có evidence truy xuất + verdict + CodingCertificate không?"*. M22 biến Autonomous Coding → **Trustworthy Autonomous Coding**. M23 tiếp theo = Git/Artifact Integration.
 
 ### M23 – Git/Artifact Integration (P28)
 Diff, commit, rollback có kiểm soát: tái dùng Artifact Service (M1) + Kill Switch (M10) + Certified Baseline (M14).
