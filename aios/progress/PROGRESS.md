@@ -3,6 +3,17 @@
 > Cập nhật sau MỖI thay đổi trạng thái. Đọc đầu mỗi phiên làm việc.
 > Trạng thái: `todo` | `in-progress` | `done` | `blocked`
 
+## 📋 M17 — System Verification (2026-08-18 — IN-PROGRESS) · VERIFY
+
+> PLAN.md §M17: milestone **mở** — kiểm tra toàn diện hệ thống AIOS. Không có plan hoàn chỉnh từ đầu; người dùng bổ sung dần các bài test theo hướng dẫn cụ thể. Mỗi phần test chạy thật bằng pytest, kết quả là bằng chứng.
+>
+> **Trạng thái**: `in-progress` — chờ người dùng hướng dẫn phần test đầu tiên.
+> **Phương pháp**: incremental, không hard gate, không spec/critique trước.
+
+| Phần | Nội dung | Trạng thái |
+|------|----------|------------|
+| (chờ người dùng bổ sung) | | |
+
 ## ✅ M12 — AIOS 1.1 Compatibility (2026-08-16 — DONE ✅, Issue #7)
 
 > PLAN.md §M12 (P17): **Issue #7** — user duyệt "nâng cấp hệ thống" → roadmap §43: AIOS 1.1 Compatibility (bước đầu sau M11). KHÔNG thêm Core feature, KHÔNG thêm invariant — INV-001..035 giữ nguyên frozen. 5 nâng cấp C1–C5, 5 task (TASK-084..088).

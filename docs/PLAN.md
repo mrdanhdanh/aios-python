@@ -2278,6 +2278,34 @@ Giao diện quản lý (user request)        |  dsh-web-app (Web UI :3080) / m�
 - **M16 pipeline**: `Pin → Bridge(sidecar/ACP) → Oracle(invariants) → Conformance(ACP snapshot) → Permission/Sandbox(apply) → Console(operate) → Certify`.
 - **Exit condition (M16 = INTEGRATE)**: chứng minh AIOS tích hợp được một harness độc lập (dsh) làm oracle xác minh độc lập + có giao diện quản lý vận hành được, mà 4 invariant Harness Track không bị vi phạm.
 
+### M17 – System Verification (PLANNED — sau M16) · VERIFY
+
+> **M17 không có kế hoạch hoàn chỉnh từ đầu.** Đây là milestone **mở** — người dùng bổ sung dần các bài test, tiêu chí kiểm tra theo hướng dẫn cụ thể. Mỗi phần test được thêm vào khi người dùng yêu cầu, không áp dụng hard gate đầy đủ (spec → critique ×2 → ...) — thay vào đó, mỗi test unit được xác nhận ngay bằng cách chạy thật.
+>
+> **Mục tiêu tổng quát**: kiểm tra toàn diện hệ thống AIOS — từ unit test đến integration, từ invariant enforcement đến behavioral correctness. M17 đóng vai trò "cửa ải cuối" trước khi hệ thống được coi là production-ready.
+>
+> **Phương pháp**: incremental — mỗi lần người dùng yêu cầu, thêm test mới, chạy pass/fail, ghi kết quả. Không cần plan cứng, không cần spec trước.
+
+#### Nguyên tắc
+1. **Incremental**: mỗi phần test là một unit độc lập, chạy được riêng
+2. **No upfront plan**: không viết spec/critique trước — chạy test thật, kết quả là bằng chứng
+3. **Pass/Fail rõ ràng**: mỗi test có expected outcome, chạy pytest xác nhận
+4. **Ghi LOG.md**: mỗi phần test mới được ghi nhật ký
+5. **Cập nhật PROGRESS.md**: theo dõi số lượng test đã thêm
+
+#### Các nhóm test (mở rộng dần)
+| Nhóm | Mô tả | Trạng thái |
+|------|-------|------------|
+| (sẽ được người dùng bổ sung) | | |
+
+#### Version
+- Giữ nguyên AIOS version hiện tại (1.2.x hoặc theo M16 quyết định)
+- Không thêm invariant mới (INV-001..038 frozen từ M10)
+- Không sửa code Runtime/Orchestrator — chỉ thêm test
+
+#### Exit condition
+- Tùy người dùng quyết định khi nào M17 đủ (không có hard gate cố định)
+
 ### Tỷ trọng toàn dự án (theo thành phần)
 | Thành phần | Tỷ trọng |
 |-----------|----------|
