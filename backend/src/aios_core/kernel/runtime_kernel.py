@@ -250,6 +250,120 @@ class RuntimeKernel:
         harness_registry.register(benchmark_harness)  # id="benchmark"
         container.register_instance(BenchmarkHarness, benchmark_harness)
 
+        # Behavioral Conformance (M13-P0, TASK-089): N lần + repeat + fault +
+        # evidence compare + gate (chỉ expose). Engine tạo SimulationRunner
+        # riêng (default FakeRuntime) — độc lập TestHarness (P3-8 v1).
+        from ..harness.behavioral import (
+            BehavioralConformanceEngine, BehavioralConformanceHarness,
+        )
+
+        behavioral_harness = BehavioralConformanceHarness(
+            BehavioralConformanceEngine(),
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(behavioral_harness)  # id="behavioral"
+        container.register_instance(BehavioralConformanceHarness, behavioral_harness)
+
+        # Harness Coverage + Readiness (M13-P1, TASK-090): coverage model 9
+        # chiều + negative-path + readiness scorer. Registry shared — builder
+        # exclude self id="coverage" (P1-3 v1). Fail-closed: v1 NOT_READY
+        # (replay gate) cho tới khi TASK-091 cover đủ.
+        from ..harness.coverage import (
+            CoverageHarness, HarnessReadinessScorer,
+        )
+
+        coverage_harness = CoverageHarness(
+            harness_registry,  # shared registry
+            HarnessReadinessScorer(),
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(coverage_harness)  # id="coverage"
+        container.register_instance(CoverageHarness, coverage_harness)
+
+        # Meta-Harness (M13-P2, TASK-091): verify the verifier — independent
+        # oracle + adversarial fail-closed. Tái dùng public verification API.
+        # Engine route state_service (case 8) + registry ids vào reproducible.
+        from ..harness.meta import MetaHarness
+
+        meta_harness = MetaHarness(
+            state_service=container.resolve(StateService),  # shared
+            registry_ids=sorted(harness_registry.list()),
+        )
+        harness_registry.register(meta_harness)  # id="meta"
+        container.register_instance(MetaHarness, meta_harness)
+
+        # Release Gate (M13-P3, TASK-092): System Readiness ≠ Harness Trust.
+        # Tổ hợp 2 score độc lập (coverage readiness + meta trust) → verdict.
+        # Dependency injection 2 sub-harness (KHÔNG import concrete class).
+        from ..harness.release import ReleaseGateHarness
+
+        release_harness = ReleaseGateHarness(
+            coverage_harness,  # đã tạo ở trên
+            meta_harness,
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(release_harness)  # id="release"
+        container.register_instance(ReleaseGateHarness, release_harness)
+
+        # Diagnose (M14-P0, TASK-094): failure corpus + signature + localization.
+        # Thu thập evidence từ failed harness runs → failure signature → component.
+        from ..harness.diagnose import DiagnoseHarness
+
+        diagnose_harness = DiagnoseHarness(
+            state_service=container.resolve(StateService),  # shared
+        )
+        harness_registry.register(diagnose_harness)  # id="diagnose"
+        container.register_instance(DiagnoseHarness, diagnose_harness)
+
+        # Heal (M14-P1, TASK-095): candidate fixes + risk scoring từ corpus.
+        from ..harness.heal import HealHarness
+
+        heal_harness = HealHarness(
+            diagnose_harness,
+            state_service=container.resolve(StateService),
+        )
+        harness_registry.register(heal_harness)  # id="heal"
+        container.register_instance(HealHarness, heal_harness)
+
+        # Simulate (M14-P2, TASK-096): simulation + meta-verify gate.
+        from ..harness.simulate import SimulateHarness
+
+        simulate_harness = SimulateHarness(
+            heal_harness, meta_harness,
+            state_service=container.resolve(StateService),
+        )
+        harness_registry.register(simulate_harness)  # id="simulate"
+        container.register_instance(SimulateHarness, simulate_harness)
+
+        # Certify (M14-P3, TASK-097): apply + rollback + certified baseline.
+        from ..harness.certify import CertifyHarness
+
+        certify_harness = CertifyHarness(
+            heal_harness,
+            state_service=container.resolve(StateService),
+        )
+        harness_registry.register(certify_harness)  # id="certify"
+        container.register_instance(CertifyHarness, certify_harness)
+
+        # Autonomous (M15, TASK-099): loop orchestrator + trust budget.
+        from ..harness.autonomous import AutonomousHarness
+
+        autonomous_harness = AutonomousHarness(
+            diagnose_harness, heal_harness, certify_harness,
+            state_service=container.resolve(StateService),
+        )
+        harness_registry.register(autonomous_harness)  # id="autonomous"
+        container.register_instance(AutonomousHarness, autonomous_harness)
+
+        # DSH Bridge (M16, TASK-104): independent verification oracle via dsh.
+        from ..harness.dsh_bridge import DSHBridgeHarness
+
+        dsh_harness = DSHBridgeHarness(
+            state_service=container.resolve(StateService),
+        )
+        harness_registry.register(dsh_harness)  # id="dsh"
+        container.register_instance(DSHBridgeHarness, dsh_harness)
+
         # Doctor & Readiness (TASK-034, M6-H5): shared DoctorChecks — checks
         # injectable qua register (placeholder deterministic v1, INV-022).
         from ..harness.doctor import (
