@@ -147,6 +147,23 @@ Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 
 
 > **INV mới (M19)**: INV-051 Agent/Provider Separation · INV-052 Patch-First Mutation · INV-053 Patch Freshness · INV-054 Scope-Bounded Coding · INV-055 Structured Generation · INV-056 Review Before Apply · INV-057 Coding Evidence · INV-058 Repository Content Is Untrusted. (Attachment đề xuất INV-048..055 nhưng INV-048/049/050 đã thuộc M18 → điều chỉnh lên INV-051..058.)
 > **M19 KHÔNG autonomous** — Coder Agent tạo patch có scope/provenance/policy/evidence/artifact rõ ràng NHƯNG chưa tự chạy test / tự sửa lỗi / tự commit (M20/M21). Ranh giới: M19 = "biết cần sửa gì + tạo patch", M20 = "chạy patch an toàn", M21 = "Code→Execute→Observe→Diagnose→Repair".
+
+**M20 task breakdown (TASK-135..144 — ID điều chỉnh từ attachment TASK-401..410)**:
+| Task | Nội dung | Trạng thái |
+|------|----------|------------|
+| TASK-135 | Execution Contracts (ExecutionRequest/ExecutionResult + status enum) | `todo` |
+| TASK-136 | Sandbox Manager (lifecycle + state machine + cleanup) | `todo` |
+| TASK-137 | Workspace / Snapshot Manager (repo snapshot + WorkspaceManifest) | `todo` |
+| TASK-138 | Resource + Network + Command Policy (limits / DENY / ALLOW-REQUIRE_APPROVAL) | `todo` |
+| TASK-139 | Test Runner (adapter-based, TestResult/TestFailure) | `todo` |
+| TASK-140 | Build / Lint Runner (BuildRunner + LintRunner adapter) | `todo` |
+| TASK-141 | Output + Artifact Collector (limits + Artifact Manager) | `todo` |
+| TASK-142 | Verification Engine (VerificationResult, fail-closed) | `todo` |
+| TASK-143 | Security + Replay Harness (SEC/REPLAY-001.. + adversarial escape suite) | `todo` |
+| TASK-144 | Execution Evidence + Conformance (hash chain + Scheduler/Cancellation M1) | `todo` |
+
+> **INV mới (M20)**: INV-059 Host Isolation · INV-060 Network Default-Deny · INV-061 Resource Bound · INV-062 Workspace Isolation · INV-063 Command Policy · INV-064 Execution Evidence · INV-065 Execution Fail-Closed · INV-066 Sandbox Cleanup · INV-067 Replay Provenance. (Attachment đề xuất INV-056..064 nhưng INV-056/057/058 đã thuộc M19 → điều chỉnh lên INV-059..067.)
+> **M20 KHÔNG tự sửa code** — chỉ chạy + kiểm chứng patch an toàn (sandbox/resource/network/command policy, evidence, replay, security). CHƯA autonomous repair / coding loop / LLM diagnosis / commit (M21+).
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).

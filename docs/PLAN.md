@@ -2593,14 +2593,126 @@ Autonomy L0=Explain / L1=Generate proposal / L2=Apply approved / L3=Trusted scop
 - **E2E quan trọng nhất**: User *"Add email validation to UserService"* → Orchestrator → CodingTask → M18 Context → Planner → PlanVerifier → M17 LLM → CodeGenerationResult → PatchVerifier → Reviewer → Policy Gate → Artifact → APPLY → Evidence = `CODING_TASK_COMPLETED` (**chưa chạy test thực tế**).
 - **Đánh giá M19 bằng**: *"AIOS có tạo được thay đổi code có scope + provenance + policy + evidence + artifact rõ ràng không?"* — không bằng "LLM có viết được code không?". M20 chỉ bổ sung execution, M21 ghép Code→Execute→Observe→Diagnose→Repair mà không xây lại Coder Agent.
 
-### M20 – Sandbox Execution (P25)
-Chạy build/test/lint an toàn: tái dùng Sandbox Pool (M2) + Resource Service (M1) + Permission Service (M1). Evidence từ execution → Harness.
+### M20 – Sandboxed Code Execution & Verification Runtime (P25 — Execution, KHÔNG autonomous repair)
+
+> **Vị trí**: M20 tiêu thụ Patch Artifact của M19 và chạy trong sandbox an toàn → thu evidence → trả `PASS/FAIL/ERROR/TIMEOUT/CANCELLED/BLOCKED/RESOURCE_EXCEEDED/UNKNOWN`. Cầu nối M19 → M21. **CHƯA tự sửa code** — không autonomous repair, không multi-step coding loop, không LLM diagnosis (đó là M21+). Tận dụng Sandbox Pool (M2) + Resource Service (M1) + Permission Service (M1) + Evidence (M6/M17) + Deterministic Harness (M11).
+> **Ranh giới**: M19 = "tạo patch" → M20 = "chạy + kiểm chứng patch" → M21 = "Code→Execute→Observe→Diagnose→Repair".
+
+#### 1. Architecture
+```
+Coder Agent → Patch Artifact → Execution Policy → Sandbox Manager
+   → Sandbox Backend (Docker / Process / VM / Remote)
+   → Execution Runtime → Build/Test/Lint
+   → Result Collector → Evidence → Verification
+```
+
+#### 2. Objectives (M20 phải cung cấp)
+Sandbox lifecycle + resource/fs/network/process isolation + command policy + timeout + CPU/mem/disk limits + output limits + artifact collection + test/build/lint execution + result normalization + evidence + deterministic replay + security verification.
+
+#### 3. KHÔNG thuộc M20
+Autonomous repair · multi-step coding loop · LLM diagnosis · tự quyết định sửa code · tự commit · production deploy · unrestricted shell · unrestricted network (thuộc M21+).
+
+#### 4. TASK-135 — Execution Contract
+`ExecutionRequest` (execution_id, task_id, artifact_id, repository_revision, workspace, command, arguments, environment, timeout, resource_limits, network_policy, filesystem_policy, expected_outputs, policy_context). Agent **không truyền raw shell command trực tiếp xuống host** — mọi request qua Contract + Policy Gate.
+
+#### 5. Execution Result & Status
+`ExecutionResult` (execution_id, status, exit_code, stdout, stderr, duration, resource_usage, produced_artifacts, test_results, diagnostics, evidence). Status: `PASS / FAIL / ERROR / TIMEOUT / CANCELLED / BLOCKED / RESOURCE_EXCEEDED / UNKNOWN`. **Bắt buộc**: `UNKNOWN ≠ PASS`. UNKNOWN/ERROR luôn fail-closed (INV-065).
+
+#### 6. TASK-136 — Sandbox Manager
+`create()/prepare()/execute()/collect()/destroy()`. State: `REQUESTED → ALLOCATED → PREPARED → RUNNING → COLLECTING → COMPLETED → DESTROYED`. Failure: `ANY → FAILED → CLEANUP`. **Không để sandbox tồn tại vô thời hạn** (INV-066).
+
+#### 7. Sandbox Backend Abstraction
+`SandboxProvider` (create/execute/collect/terminate/destroy). Backend đầu tiên = **Docker/container sandbox**. Sau đó: Process-isolated / VM / Remote. Coder Agent **không biết** backend nào đang chạy (abstraction).
+
+#### 8. Filesystem Isolation
+Sandbox chỉ thấy workspace được cấp (`/workspace`). Block: `../../`, `/etc`, `C:\Windows`, `~/.ssh`, host `.env`, AIOS internal files.
+
+#### 9. Workspace Model & Snapshot
+Mỗi execution có workspace riêng: `source/ generated/ test/ input/ output/`. **Không execute trực tiếp trong repository thật**. Flow: `Repository → Snapshot → Sandbox Workspace → Patch Apply → Execution`. `WorkspaceManifest` (repository_revision, files, hashes, artifact_id, created_at) — reproducibility (VD `R42 + P17`).
+
+#### 10. TASK-137 — Workspace / Snapshot Manager
+Quản lý snapshot repository + apply patch vào workspace riêng + build WorkspaceManifest. Đảm bảo execution biết chính xác code version (R42 + P17) → deterministic replay (INV-067).
+
+#### 11. TASK-138 — Resource + Network + Command Policy
+- **Resource Limits**: cpu_limit/cpu_quota, memory_limit, max_processes, disk_limit, stdout/stderr/artifact limits, execution_timeout/idle_timeout (VD 300s / 2GB / 2 cores / 5GB / 10MB). Mọi execution **phải** có limits (INV-061).
+- **Network Policy**: default `DENY`. Modes `DENY / ALLOWLIST / FULL`. Dependency download dùng `ALLOWLIST` (registry.npmjs.org, pypi.org) — policy explicit (INV-060).
+- **Command Policy**: `CommandPolicy → ALLOW / DENY / REQUIRE_APPROVAL`. Block `rm -rf`, `format`, `shutdown`, `powershell`, `curl`, `wget`, `ssh`, `git push` trừ khi policy cấp (INV-063).
+
+#### 12. TASK-139 — Test Runner
+`TestRunner` (discover/run/parse/summarize) + `TestRunnerAdapter` (pytest/vitest/jest/dotnet test/JUnit/Go test). Không hard-code framework. `TestResult` (framework, total, passed, failed, skipped, duration, failures[], raw_artifact). `TestFailure` (test_name, file, line, message, stack_trace, classification[ASSERTION/COMPILE/RUNTIME/TIMEOUT/ENVIRONMENT/DEPENDENCY/UNKNOWN]).
+
+#### 13. TASK-140 — Build / Lint Runner
+`BuildRunner` (detect/build/parse/collect) → `BuildResult` (status, exit_code, errors[], warnings[], artifacts[], duration). M20 **không tự sửa** build failure. `LintRunner`/`StaticCheckRunner` adapter-based (ESLint, tsc, Ruff, Pylint, dotnet build) — không nhúng tool-specific logic vào Runtime Kernel.
+
+#### 14. TASK-141 — Output + Artifact Collector
+Thu stdout/stderr/exit/coverage/test-reports/build-artifacts/logs/screenshots với limits. Vượt limit → `OUTPUT_LIMIT_EXCEEDED`. Kết nối Artifact Manager: mọi artifact có `artifact_id + hash + execution_id + repository_revision`.
+
+#### 15. TASK-142 — Verification Engine
+Execution result ≠ PASS. `Execution → Evidence → Verification Rules → VerificationResult`. VD expected: tests≥100, failed=0, build=PASS. Nếu test runner crash → `UNKNOWN` (không PASS). `VerificationResult` (status[PASS/FAIL/UNKNOWN/BLOCKED], checks[], evidence[], failures[], confidence). **Confidence không thay thế status**.
+
+#### 16. Deterministic Replay (tái dùng M11)
+Tận dụng RenderReplay/DeterministicHarness (M11) nếu repo có UI/game. Execution hỗ trợ `seed + environment manifest + input timeline + repository revision + artifact revision` → replay được (INV-067).
+
+#### 17. Environment Manifest
+`EnvironmentManifest` (OS, runtime versions, language versions, package manager, installed deps, env vars, sandbox backend, image/container hash). Secret values **không lưu**.
+
+#### 18. Dependency Isolation
+Không mount host `node_modules` vào sandbox. Dùng Dependency Cache immutable (read-only mount) để tăng tốc — sandbox không sửa cache.
+
+#### 19. Security Boundary
+M20 là milestone **risk cao nhất M17–M21** (lần đầu AIOS thực thi output do LLM tạo). `LLM → Patch → Policy → Sandbox → Execution`. **Không bao giờ**: `LLM → Host Shell`.
+
+#### 20. TASK-143 — Security + Replay Harness (SEC/REPLAY-001..)
+Adversarial suite bắt buộc:
+- **Filesystem escape** (`../../secret`) → BLOCK
+- **Network escape** (`curl attacker.example`) → BLOCK
+- **Resource bomb** (memory alloc / fork bomb / disk spam / output spam) → terminate
+- **Process escape** (docker socket / host process / privileged) → DENY
+- **Secret access** (`/proc`, env, mounted secrets, SSH keys) → BLOCK
+- **Container escape** test security boundary của sandbox backend
+- **Replay integrity**: replay cùng provenance → kết quả tương đương (exit code/test/artifacts), không yêu cầu byte-identical log.
+
+#### 21. TASK-144 — Execution Evidence + Conformance
+`ExecutionEvidence` (execution_id, task_id, artifact_id, repository_hash, workspace_hash, environment_hash, command_hash, sandbox_hash, stdout_hash, stderr_hash, exit_code, resource_usage, test_summary, verification_result, timestamp) — artifact references + hashes (không nhất thiết lưu mọi bytes). `ExecutionScheduler` (tái dùng M1 Scheduler/Resource): `QUEUED/ALLOCATED/RUNNING/COMPLETED/FAILED/CANCELLED`, resource-aware (CPU/Mem/Slots/Disk). `cancel(execution_id)`: `RUNNING → CANCEL_REQUESTED → TERMINATING → DESTROYED → CANCELLED` — phải kill cả child processes. `Conformance Harness` (EXEC-001 contract / 002 sandbox lifecycle / 003 fs isolation / 004 network deny / 005 resource bound / 006 command policy / 007 test run / 008 build run / 009 artifact / 010 verification fail-closed / 011 evidence / 012 replay / 013 cancellation / 014 adversarial escape / 015 cleanup).
+
+#### 22. Invariants mới (M20) — **ID đã điều chỉnh**
+> ⚠️ Attachment đề xuất INV-056..064 nhưng INV-056/057/058 đã thuộc M19. M20 bổ sung **INV-059..067**:
+- **INV-059 — Host Isolation**: code execution không được thực thi trực tiếp trên AIOS host.
+- **INV-060 — Network Default-Deny**: sandbox không có network nếu policy không cấp.
+- **INV-061 — Resource Bound**: mọi execution phải có resource limits.
+- **INV-062 — Workspace Isolation**: execution chỉ truy cập workspace được cấp.
+- **INV-063 — Command Policy**: mọi command phải qua execution policy.
+- **INV-064 — Execution Evidence**: mọi execution phải tạo evidence.
+- **INV-065 — Execution Fail-Closed**: execution UNKNOWN/ERROR không được coi là PASS.
+- **INV-066 — Sandbox Cleanup**: sandbox phải cleanup sau execution.
+- **INV-067 — Replay Provenance**: replay phải dùng environment/repository/artifact provenance xác định.
+
+#### 23. Task breakdown (10 task — **ID đã điều chỉnh**)
+> ⚠️ Attachment dùng TASK-401..410 → M20 dùng **TASK-135..144** (nối tiếp M19).
+| Task | Nội dung |
+|------|----------|
+| TASK-135 | Execution Contracts (ExecutionRequest/ExecutionResult + status enum) |
+| TASK-136 | Sandbox Manager (lifecycle + state machine + cleanup) |
+| TASK-137 | Workspace / Snapshot Manager (repo snapshot + WorkspaceManifest) |
+| TASK-138 | Resource + Network + Command Policy (limits / DENY / ALLOW-REQUIRE_APPROVAL) |
+| TASK-139 | Test Runner (adapter-based, TestResult/TestFailure) |
+| TASK-140 | Build / Lint Runner (BuildRunner + LintRunner adapter) |
+| TASK-141 | Output + Artifact Collector (limits + Artifact Manager) |
+| TASK-142 | Verification Engine (VerificationResult, fail-closed) |
+| TASK-143 | Security + Replay Harness (SEC/REPLAY-001.. + adversarial escape suite) |
+| TASK-144 | Execution Evidence + Conformance (hash chain + Scheduler/Cancellation M1) |
+
+#### 24. Definition of Done (M20)
+- Execution Contract + Sandbox lifecycle + Workspace isolation + Repo snapshot + CPU/mem/disk/process/timeout/output limits + Network default-deny + Command policy + Test/Build/Lint runners + Result normalization + Artifact collection + Verification engine + Execution evidence + Cancellation + Cleanup + Replay + Security Harness PASS + Sandbox escape tests PASS + Full M0–M19 regression PASS + **INV-001..067 PASS**.
+- **E2E quan trọng nhất**: M19 Patch → Policy Gate → Sandbox (apply→build→test→collect) → Verification (Build PASS + Tests PASS + Evidence PASS) → `EXECUTION VERIFIED`. Test ngược: Generated Code `curl malicious-site` → Network Policy → `BLOCKED` → **KHÔNG** `BLOCKED → PASS`.
+- **Gate trước M21**: M20 phải chứng minh (1) sandbox escape không xảy ra, (2) execution có provenance/evidence đầy đủ, (3) UNKNOWN luôn fail-closed.
+- **Đánh giá M20 bằng**: *"AIOS có chạy được code do LLM tạo trong sandbox an toàn + thu evidence đầy đủ + verify fail-closed không?"* — không bằng "có chạy được test không?". M21 ghép Code→Execute→Observe→Diagnose→Repair mà không xây lại Sandbox.
 
 ### M21 – Coding Loop (P26)
 Plan → Code → Test → Fix: vòng lặp khép kín có verification, tái dùng Autonomous Loop (M9) + Failure Recovery (M2) + Harness (M6/M13).
 
 ### M22 – Code Verification (P27)
-Harness xác minh code: behavioral conformance (M13) + safety (M10 INV-067) + contract check (M10). Coding Plane là consumer, không tự implement verification.
+Harness xác minh code: behavioral conformance (M13) + safety (M10 security invariants) + contract check (M10). Coding Plane là consumer, không tự implement verification.
 
 ### M23 – Git/Artifact Integration (P28)
 Diff, commit, rollback có kiểm soát: tái dùng Artifact Service (M1) + Kill Switch (M10) + Certified Baseline (M14).
