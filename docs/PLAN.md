@@ -2708,8 +2708,119 @@ Adversarial suite bắt buộc:
 - **Gate trước M21**: M20 phải chứng minh (1) sandbox escape không xảy ra, (2) execution có provenance/evidence đầy đủ, (3) UNKNOWN luôn fail-closed.
 - **Đánh giá M20 bằng**: *"AIOS có chạy được code do LLM tạo trong sandbox an toàn + thu evidence đầy đủ + verify fail-closed không?"* — không bằng "có chạy được test không?". M21 ghép Code→Execute→Observe→Diagnose→Repair mà không xây lại Sandbox.
 
-### M21 – Coding Loop (P26)
-Plan → Code → Test → Fix: vòng lặp khép kín có verification, tái dùng Autonomous Loop (M9) + Failure Recovery (M2) + Harness (M6/M13).
+### M21 – Autonomous Coding Loop & Controlled Self-Repair (P26 — Controlled Autonomous Coding)
+
+> **Vị trí**: M21 ghép M17–M20 thành vòng lặp `Task → Understand → Plan → Code → Execute → Observe → Diagnose → Repair → Re-execute → Verify`. Lần đầu AIOS **tự hoàn thành coding task nhiều bước**. NHƯNG **Autonomous ≠ Unrestricted**: chạy dưới Autonomy Safety + Trust Budget + Permission Boundary + Kill Switch + Verification Fail-Closed (M13–M16). Tái dùng Autonomous Loop (M9) + Failure Recovery (M2) + Harness (M6/M13).
+> **Ranh giới**: M21 = Controlled Autonomous Coding (có budget/scope/kill-switch/policy/evidence chain). KHÔNG phải unrestricted agent loop (black box).
+
+#### 1. Architecture
+```
+User Goal → Orchestrator → Coding Workflow (M21)
+   → M18 Context / M19 Coder / M20 Sandbox
+   → Loop Controller → Diagnose → Repair → Verify
+```
+
+#### 2. Objectives
+Biến M19 (Generate patch) + M20 (Execute patch) thành `Generate → Execute → Analyze failure → Repair → Execute → Verify`. VD: "Fix failing auth tests" → Analyze → Context → Plan → Modify → Run → 3 fail → Diagnose → Modify → Run → All pass → Verify → Complete.
+
+#### 3. Nguyên tắc
+M21 **không phải** `while not done: ask LLM`. Là stateful controlled workflow: `Goal → State Machine → Policy → Agent → Sandbox → Evidence → Decision`. Mọi transition có precondition/permission/evidence/budget/timeout/failure state.
+
+#### 4. TASK-145 — Coding Loop State Machine
+`RECEIVED → CONTEXT_READY → PLANNED → PATCH_GENERATED → PATCH_VERIFIED → EXECUTING → OBSERVED → DIAGNOSING → REPAIR_PLANNED → REPAIR_GENERATED → REPAIR_VERIFIED → RE_EXECUTING → VERIFIED → COMPLETED`. Failure `ANY → FAILED`. Terminal: `COMPLETED / FAILED / BLOCKED / CANCELLED / BUDGET_EXCEEDED / UNKNOWN`.
+
+#### 5. Loop Controller
+`CodingLoopController` (start/advance/pause/resume/cancel/retry/terminate) — **không viết code**, chỉ điều phối Coder/Sandbox/Diagnostic Agent/Verifier/Policy.
+
+#### 6. TASK-146 — Execution Observation
+M20 `ExecutionResult` → `ExecutionObservation` (execution_id, status, failures, diagnostics, affected_files, affected_symbols, test_results, build_results, logs, evidence). Observation là **structured data**, không đẩy toàn bộ log vào LLM (VD: `TEST_FAILURE → UserServiceTest.shouldRejectInvalidEmail → line 82 → expected 400 got 200`).
+
+#### 7. TASK-147 — Failure Classifier
+`FailureClassifier`: COMPILE_ERROR / TEST_FAILURE / LINT_FAILURE / RUNTIME_ERROR / TIMEOUT / RESOURCE_LIMIT / DEPENDENCY_FAILURE / ENVIRONMENT_FAILURE / SECURITY_BLOCK / UNKNOWN. VD exit_code=1 + compiler error → `COMPILE_ERROR`.
+
+#### 8. Deterministic Diagnosis trước LLM
+Không phải failure nào cũng cần LLM. `Failure → Rule Engine → known deterministic → handle` (missing file / dependency missing / timeout / policy denied). Chỉ `semantic failure` mới gọi Diagnostic Agent. Phù hợp Control Plane (offline-first, rule-first).
+
+#### 9. TASK-148 — Diagnostic Agent
+Diagnostic Agent **không sửa code**. Trả `Diagnosis` (root_cause, evidence, affected_files, affected_symbols, confidence, hypotheses, recommended_action). VD: root cause `UserService bypasses EmailValidator` → evidence `UserService.ts:82, UserService.spec.ts:144` → recommended `route createUser() through validateEmail()`.
+
+#### 10. Confidence ≠ Verification
+`confidence=0.98` không được assume correct. Confidence chỉ hỗ trợ decision. Verification vẫn dựa trên execution evidence / test / build / policy (INV-035).
+
+#### 11. TASK-149 — Repair Planner
+`RepairPlan` (diagnosis_id, files, changes, risks, expected_effect, acceptance_criteria, scope) → quay lại M19 Coder (KHÔNG tạo second coding engine). Patch → Patch Verification → Sandbox.
+
+#### 12. Repair Loop
+`Execution → Failure → Diagnosis → Repair Plan → Coder → Patch → Verification → Sandbox`. `PASS → Verify`, `FAIL → Diagnose again`.
+
+#### 13. Loop Budget
+`LoopBudget` (max_iterations, max_repairs, max_model_calls, max_execution_time, max_cost, max_files_changed, max_patch_size). VD 8/5/20/30min. Vượt → `BUDGET_EXCEEDED` (INV-075).
+
+#### 14. Trust Budget (tái dùng M14)
+Mỗi op tiêu thụ trust: Context=1, LLM planning=2, Code gen=5, Patch apply=5, Sandbox exec=2, Repair=5, Network perm=10. Budget=100, đã tiêu 97 → op tiếp theo `DENIED`. Calibration sau.
+
+#### 15. TASK-150 — Progress + Regression Detection
+`NO_PROGRESS`: failure fingerprint / patch fingerprint / test result fingerprint lặp lại (VD `FailureHash=ABC` ở iter 1/2/3 → terminate). `REGRESSION`: old test passed, new patch causes failure → ưu tiên regression diagnosis.
+
+#### 16. Acceptance Criteria
+`AcceptanceCriteria` (functional/tests/build/lint/security/scope). KHÔNG kết luận COMPLETE chỉ vì 1 test mới pass.
+
+#### 17. TASK-151 — Verification Gate
+Mỗi iteration: `Patch → Execution → Verification`. Chỉ `PASS` mới cho phép `COMPLETED`. `UNKNOWN → không complete` (INV-035 + INV-062 áp dụng thẳng vào Autonomous Coding).
+
+#### 18. Multi-Tier Test Strategy
+Tier 1 target tests → Tier 2 affected module → Tier 3 full regression. Tiết kiệm thời gian nhưng giữ confidence.
+
+#### 19. TASK-152 — Context Refresh + Patch Chain
+Sau mỗi repair: repo changed → M18 Context refresh (Context v1 + Patch v2 → v1 STALE → regenerate). Patch chain `P1 → P2 → P3` giữ provenance (P1 generated, P2/P3 repair) — không mất history.
+
+#### 20. Rollback
+Nếu repair làm tệ hơn: `rollback P2 → P1` hoặc baseline. Rollback là **Artifact operation** (KHÔNG `git reset --hard` do LLM tự gọi).
+
+#### 21. TASK-153 — Autonomous Safety Controller
+Kết nối Autonomy Safety + Kill Switch + Permission Boundary + Trust Budget + Policy Service. `Loop → Safety Controller → permission? budget? scope? iteration? risk? kill switch? → ALLOW/DENY/STOP`.
+
+#### 22. Kill Switch & Risk Escalation
+User/system có `STOP` → loop dừng trong bounded time (không chờ LLM vô hạn). Risk: LOW→Autonomous, MEDIUM→Autonomous+budget, HIGH→REQUIRE_APPROVAL, CRITICAL→DENY. Kill Switch > mọi autonomous op (INV-074).
+
+#### 23. TASK-154 — Autonomous Coding Harness (AUT-001..018)
+AUT-001 single iter / 002 successful completion / 003 compile failure→repair / 004 test failure→repair / 005 multi-failure / 006 no-progress / 007 budget exhaustion / 008 timeout / 009 kill switch / 010 policy denial / 011 scope violation / 012 regression detection / 013 context stale / 014 rollback / 015 UNKNOWN fail-closed / 016 prompt injection / 017 security escalation / 018 full E2E autonomous coding.
+
+#### 24. Autonomous Coding Evidence
+`AutonomousCodingEvidence` (task_id, loop_id, iterations[], context_versions[], plans[], patches[], executions[], diagnoses[], repairs[], verification_results[], budget_usage, trust_usage, policy_decisions[], final_status, final_artifact) — reconstruct được toàn bộ chain Goal→Context→Plan→Model→Patch→Execution→Failure→Diagnosis→Repair→Execution→Verification (audit được, không phải black box).
+
+#### 25. Invariants mới (M21) — **ID đã điều chỉnh**
+> ⚠️ Attachment đề xuất INV-065..074 nhưng INV-065/066/067 đã thuộc M20. M21 bổ sung **INV-068..077**:
+- **INV-068 — Bounded Autonomy**: autonomous loop phải có giới hạn iteration/time/cost/resource.
+- **INV-069 — Verified Completion**: không COMPLETE nếu acceptance criteria chưa VERIFIED.
+- **INV-070 — No Progress Termination**: loop phải terminate khi repeated failure / no progress.
+- **INV-071 — Repair Provenance**: mọi repair truy xuất được diagnosis + execution failure.
+- **INV-072 — Regression Protection**: repair không làm mất invariant/test đã PASS mà không phát hiện.
+- **INV-073 — Autonomous Scope Boundary**: autonomous op không vượt authorized scope.
+- **INV-074 — Kill Switch Dominance**: Kill Switch có priority cao hơn mọi autonomous op.
+- **INV-075 — Budget Dominance**: budget exhausted → loop STOP.
+- **INV-076 — Unknown Completion Prohibition**: UNKNOWN không bao giờ dẫn tới COMPLETED.
+- **INV-077 — Loop State Integrity**: state transition hợp lệ theo Coding Loop State Machine.
+
+#### 26. Task breakdown (10 task — **ID đã điều chỉnh**)
+> ⚠️ Attachment dùng TASK-501..510 → M21 dùng **TASK-145..154** (nối tiếp M20).
+| Task | Nội dung |
+|------|----------|
+| TASK-145 | Coding Loop State Machine |
+| TASK-146 | Execution Observation (structured) |
+| TASK-147 | Failure Classification |
+| TASK-148 | Diagnostic Agent (no self-fix) |
+| TASK-149 | Repair Planner (→ M19 Coder) |
+| TASK-150 | Progress + Regression Detection |
+| TASK-151 | Verification Gate (INV-035+INV-062 applied) |
+| TASK-152 | Context Refresh + Patch Chain |
+| TASK-153 | Autonomous Safety Controller (Kill Switch/Permission/Trust/Policy) |
+| TASK-154 | Autonomous Coding Harness (AUT-001..018) |
+
+#### 27. Definition of Done (M21)
+- Coding Loop State Machine + Code→Execute→Observe loop + Failure classification + Deterministic diagnosis + Diagnostic Agent + Repair Planner (reuse M19) + Context refresh + Patch chain + Rollback + Progress detection + Regression detection + Acceptance verification + Loop budget + Trust Budget + Kill Switch + Risk escalation + UNKNOWN fail-closed + Autonomous Coding Harness PASS + Security Harness PASS + Full M0–M20 regression PASS + **INV-001..077 PASS**.
+- **Golden E2E**: "Fix failing UserService tests" → Context M18 → Plan M19 → Patch P1 → Sandbox M20 (97 PASS / 3 FAIL) → Classifier → Diagnostic → Root cause → Repair Plan → Coder → Patch P2 → Sandbox (100 PASS / 0 FAIL) → Verification → COMPLETE. **Negative golden**: iter 1/2/3 FAIL A (same fingerprint) → NO_PROGRESS → STOP (không iter 100).
+- **Đánh giá M21 bằng**: *"AIOS có tự hoàn thành coding task nhiều bước có budget/scope/kill-switch/policy, audit được bằng evidence chain không?"*. M21 = **Controlled Autonomous Coding**; M22 tiếp theo = Coding Verification/Evaluation/Trust (Verifier ≠ Generator, tận dụng Harness M13–M16).
 
 ### M22 – Code Verification (P27)
 Harness xác minh code: behavioral conformance (M13) + safety (M10 security invariants) + contract check (M10). Coding Plane là consumer, không tự implement verification.

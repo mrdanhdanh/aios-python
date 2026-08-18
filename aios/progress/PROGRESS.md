@@ -164,6 +164,23 @@ Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 
 
 > **INV mới (M20)**: INV-059 Host Isolation · INV-060 Network Default-Deny · INV-061 Resource Bound · INV-062 Workspace Isolation · INV-063 Command Policy · INV-064 Execution Evidence · INV-065 Execution Fail-Closed · INV-066 Sandbox Cleanup · INV-067 Replay Provenance. (Attachment đề xuất INV-056..064 nhưng INV-056/057/058 đã thuộc M19 → điều chỉnh lên INV-059..067.)
 > **M20 KHÔNG tự sửa code** — chỉ chạy + kiểm chứng patch an toàn (sandbox/resource/network/command policy, evidence, replay, security). CHƯA autonomous repair / coding loop / LLM diagnosis / commit (M21+).
+
+**M21 task breakdown (TASK-145..154 — ID điều chỉnh từ attachment TASK-501..510)**:
+| Task | Nội dung | Trạng thái |
+|------|----------|------------|
+| TASK-145 | Coding Loop State Machine | `todo` |
+| TASK-146 | Execution Observation (structured) | `todo` |
+| TASK-147 | Failure Classification | `todo` |
+| TASK-148 | Diagnostic Agent (no self-fix) | `todo` |
+| TASK-149 | Repair Planner (→ M19 Coder) | `todo` |
+| TASK-150 | Progress + Regression Detection | `todo` |
+| TASK-151 | Verification Gate (INV-035+INV-062 applied) | `todo` |
+| TASK-152 | Context Refresh + Patch Chain | `todo` |
+| TASK-153 | Autonomous Safety Controller (Kill Switch/Permission/Trust/Policy) | `todo` |
+| TASK-154 | Autonomous Coding Harness (AUT-001..018) | `todo` |
+
+> **INV mới (M21)**: INV-068 Bounded Autonomy · INV-069 Verified Completion · INV-070 No Progress Termination · INV-071 Repair Provenance · INV-072 Regression Protection · INV-073 Autonomous Scope Boundary · INV-074 Kill Switch Dominance · INV-075 Budget Dominance · INV-076 Unknown Completion Prohibition · INV-077 Loop State Integrity. (Attachment đề xuất INV-065..074 nhưng INV-065/066/067 đã thuộc M20 → điều chỉnh lên INV-068..077.)
+> **M21 = Controlled Autonomous Coding** — tự hoàn thành coding task nhiều bước CÓ budget/scope/kill-switch/policy/evidence chain. KHÔNG unrestricted agent loop. M22 tiếp theo = Coding Verification/Evaluation/Trust (Verifier ≠ Generator, tận dụng Harness M13–M16).
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).
