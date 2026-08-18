@@ -82,7 +82,7 @@ class TrustChain:
     def __init__(
         self,
         entry_resolver: Callable[[str], Any] | None = None,
-        aios_version: str = "1.0.0",
+        aios_version: str = "1.1.0",
     ) -> None:
         # Offline-first: dependencies resolve locally by default; a registry
         # lookup can be injected to enforce hard dependency checks.
@@ -266,7 +266,7 @@ class MarketplaceRegistry:
 
     @property
     def _aios_version(self) -> str:
-        return "1.0.0"
+        return "1.1.0"
 
 
 __all__ = [

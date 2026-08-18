@@ -659,6 +659,10 @@ class TestConfigWiring:
             artifacts=ArtifactsSettings(dir=str(tmp_path / "artifacts")),
         ))
         reg = kernel.container.resolve(HarnessRegistry)
-        # TASK-029..034: 6 harnesses M6
+        # TASK-029..034: 6 harnesses M6 + M13 + M14 + M15 + M16
         assert set(reg.list()) == {"verification", "test", "evaluation",
-                                   "benchmark", "doctor", "readiness"}
+                                   "benchmark", "doctor", "readiness",
+                                   "behavioral", "coverage", "meta",
+                                   "release", "diagnose", "heal",
+                                   "simulate", "certify",
+                                   "autonomous", "dsh"}

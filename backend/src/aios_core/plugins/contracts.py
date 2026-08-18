@@ -42,12 +42,17 @@ _ALL_TYPES = tuple(t.value for t in PluginType)
 
 
 class AiosRange(BaseModel):
-    """Compatibility window against the running AIOS version."""
+    """Compatibility window against the running AIOS version.
+
+    ``compatible``: danh sách version AIOS đã xác nhận tương thích (M12 C3,
+    TASK-086 — parse-only, do migration 1.0→1.1 ghi; check min/max KHÔNG đổi).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     min: str = "0.0.0"
     max: str = "*"  # "2.x" | "2.1.3" | "*"
+    compatible: list[str] = Field(default_factory=list)
 
     @classmethod
     def validate_range(cls, **kwargs) -> "AiosRange":

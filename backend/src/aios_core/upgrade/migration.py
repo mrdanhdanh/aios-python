@@ -141,10 +141,14 @@ class MigrationEngine:
                 raise MigrationError(f"step {step.id} thiếu fn")
 
     def apply(self, plan: MigrationPlan, payload: dict[str, Any]) -> dict[str, Any]:
-        """Backup → steps (journal từng bước) → finish completed.
+        """Steps (journal từng bước) → finish completed.
 
         Fail giữa chừng → journal FAILED + auto-rollback (best-effort).
         Idempotent: status completed → từ chối.
+        Backup KHÔNG do engine thực hiện — caller chịu trách nhiệm
+        (M12 TASK-085: bỏ call sai signature — backup phải qua
+        BackupStore.backup(kind, component_id, version, payload); xem
+        Aios110Migrator trong migration_110.py).
         """
         existing = self.journal.status(plan.migration_id)
         if existing == "completed":
@@ -154,8 +158,6 @@ class MigrationEngine:
         result = dict(payload)
         applied: list[MigrationStep] = []
         try:
-            if plan.backup_required and self._backup is not None:
-                self._backup.backup(f"migration:{plan.migration_id}")
             for step in plan.steps:
                 result = step.fn(result)
                 applied.append(step)

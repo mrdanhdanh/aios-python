@@ -1,4 +1,4 @@
-"""Certification Suite 1.0 — conformance runner + 5 release gates (M10-F5)."""
+"""Certification Suite 1.0 — conformance runner + 7 release gates (M10-F5 + M11 + M12)."""
 
 from __future__ import annotations
 
@@ -11,15 +11,15 @@ from .golden import GOLDEN_SCENARIOS
 
 
 class ConformanceRunner:
-    """10 areas + 20 GS + 6 release gates → AIOS READY/NOT READY."""
+    """11 areas + 20 GS + 7 release gates → AIOS 1.1 READY/NOT READY."""
 
     def __init__(self, kernel: Any | None = None) -> None:
         self.kernel = kernel
         self._ctx: dict[str, Any] = {"tmp_path": tempfile.mkdtemp(prefix="aios-gs-")}
         self._golden_cache: list[tuple[str, bool]] | None = None
 
-    # -- 5 release gates (PLAN §M10-36) ---------------------------------------
-    def release_gates(self) -> dict[str, bool]:
+    # -- 7 release gates (PLAN §M10-36 + M11 INV-035 + M12 compatibility) -----
+    def release_gates(self, areas: list[AreaResult] | None = None) -> dict[str, bool]:
         gates: dict[str, bool] = {}
         # Gate A — Architecture: INV violations = 0
         try:
@@ -82,6 +82,20 @@ class ConformanceRunner:
             gates["gate_f_verification"] = gate_report.fail_closed
         except Exception:  # noqa: BLE001
             gates["gate_f_verification"] = False
+        # Gate G — Compatibility (M12-P3 C4, TASK-087): reuse area precomputed
+        # nếu có (KHÔNG double-run compat verify — C2-02), ngược lại chạy thật.
+        try:
+            if areas is not None:
+                compat = next((a for a in areas if a.area == "compatibility"), None)
+                gates["gate_g_compatibility"] = (
+                    compat is not None and compat.status == PassFail.PASS
+                )
+            else:
+                gates["gate_g_compatibility"] = (
+                    AreaChecks(self.kernel).compatibility().status == PassFail.PASS
+                )
+        except Exception:  # noqa: BLE001
+            gates["gate_g_compatibility"] = False
         return gates
 
     def _golden(self) -> list[tuple[str, bool]]:
@@ -99,7 +113,7 @@ class ConformanceRunner:
     def run(self) -> ConformanceReport:
         areas = AreaChecks(self.kernel).run_all()
         golden = self._golden()
-        gates = self.release_gates()
+        gates = self.release_gates(areas=areas)
         return ConformanceReport(areas=areas, golden=golden, gates=gates)
 
 
@@ -114,7 +128,7 @@ def slo_fail_any() -> bool:
 
 
 def format_conformance(report: ConformanceReport) -> str:
-    lines = ["AIOS Conformance 1.0", "=" * 50]
+    lines = ["AIOS Conformance 1.1", "=" * 50]
     for area in sorted(report.areas, key=lambda a: a.area):
         sym = "✓" if area.status == PassFail.PASS else "✗"
         lines.append(f"{sym} {area.area:<14} — {area.evidence}")
@@ -127,7 +141,7 @@ def format_conformance(report: ConformanceReport) -> str:
         lines.append(f"{'✓' if ok else '✗'} {gate}")
     lines.append("")
     if report.ready:
-        lines.append("Result: AIOS 1.0 READY")
+        lines.append("Result: AIOS 1.1 READY")
     else:
-        lines.append(f"Result: AIOS 1.0 NOT READY (fail: {report.failures()})")
+        lines.append(f"Result: AIOS 1.1 NOT READY (fail: {report.failures()})")
     return "\n".join(lines)
