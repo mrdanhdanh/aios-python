@@ -100,6 +100,21 @@ Dependency order: P0 → P1 → P2 → P3 → (P4 song song cuối)
 | P31 | AIOS 2.0 Coding Edition (freeze + certification) | M26 | `todo` |
 
 Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 → M25 → M26
+
+**M17 task breakdown (TASK-109..116 — ID điều chỉnh từ attachment TASK-101..108 đã trùng M15/M16)**:
+| Task | Nội dung | Trạng thái |
+|------|----------|------------|
+| TASK-109 | Model Contracts (Request/Response/Error/Metadata/Capability/Usage/Cost/StreamEvent) | `todo` |
+| TASK-110 | Provider Registry + lifecycle | `todo` |
+| TASK-111 | Model Registry + deterministic Resolver | `todo` |
+| TASK-112 | Inference Runtime orchestration | `todo` |
+| TASK-113 | Credential + Permission + Policy integration | `todo` |
+| TASK-114 | Retry / Timeout / Streaming / cancellation | `todo` |
+| TASK-115 | Usage / Cost / Audit / Evidence | `todo` |
+| TASK-116 | Provider Conformance + Certification (Harness + Security Check → Registry) | `todo` |
+
+> **INV mới (M17)**: INV-039 Provider Isolation · INV-040 Inference Policy Gate · INV-041 Credential Isolation · INV-042 Provider Conformance · INV-043 Inference Auditability · INV-044 Inference Fail-Closed. (Attachment đề xuất INV-036..041 nhưng đã thuộc M13/M14/M15 → điều chỉnh lên INV-039..044.)
+> **M17 KHÔNG làm Coder Agent** — chỉ xây "cognition backend" (Inference Runtime). Ranh giới: sau M17 AIOS gọi được LLM thật qua abstraction NHƯNG chưa tự sửa code (M19 mới có coding capability).
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).

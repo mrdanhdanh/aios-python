@@ -2354,35 +2354,90 @@ Giao diện quản lý (user request)        |  dsh-web-app (Web UI :3080) / m�
 
 Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 → M25 → M26
 
-### M17 – Model Provider & Inference Runtime (P22 — nền tảng LLM)
-> **Làm trước nhất**. KHÔNG để Coder Agent trực tiếp gọi OpenAI/Anthropic/etc. Cần abstraction:
-```
-ModelProvider
-    │
-    ├── OpenAI
-    ├── Anthropic
-    ├── Local
-    ├── OpenAI-compatible
-    └── Mock
-```
-```
-ModelRequest
-    ├── model
-    ├── messages
-    ├── tools
-    ├── temperature
-    ├── max_tokens
-    ├── timeout
-    └── metadata
+### M17 – Model Provider & Inference Runtime (P22 — nền tảng LLM, KHÔNG làm Coder Agent)
 
-ModelResponse
-    ├── content
-    ├── tool_calls
-    ├── usage
-    ├── finish_reason
-    └── evidence
+> **Làm trước nhất trong Coding Plane**. Mục tiêu: AIOS có thể gọi và quản lý LLM qua một abstraction thống nhất (Inference Runtime), **nhưng CHƯA triển khai Coder Agent**. Tạo lớp inference chuẩn, deterministic ở mức contract, có security/observability/testability đầy đủ để M18–M21 tái dùng.
+> **Out of scope (M17 KHÔNG làm)**: Coder Agent, repository understanding, code generation loop, autonomous coding, sandbox, code execution, RAG hoàn chỉnh, long-term coding memory, multi-agent coding, autonomous repair (để M18–M24).
+
+#### 1. Mục tiêu & Kiến trúc
 ```
-**Quan trọng**: Provider chỉ là infrastructure. Nó **không được chứa coding logic**. Sau đó M18 mới xây Context Engine để đưa repository vào model có kiểm soát.
+AIOS → ModelProvider → LLM → ModelResponse
+```
+Thay vì `Agent → gọi trực tiếp OpenAI API / biết API key / biết endpoint / phụ thuộc SDK vendor`. Inference Runtime: Request Validator → Policy Enforcement → Model Resolver → Provider Resolver → Retry Manager → Timeout Manager → Usage Tracker → Cost Tracker → Audit → Evidence.
+
+#### 2. Core Contracts (vendor-independent)
+- **ModelRequest**: request_id, model, messages, system_prompt, tools, temperature, top_p, max_tokens, stop, response_format, stream, timeout, metadata, policy_context
+- **ModelResponse**: request_id, model, content, tool_calls, finish_reason, usage, latency, provider, evidence, metadata
+- **ModelError** (chuẩn hóa, KHÔNG trả raw exception): error_code, category, retryable, provider, model, request_id, message, metadata. Categories: AUTHENTICATION/AUTHORIZATION/RATE_LIMIT/TIMEOUT/NETWORK/INVALID_REQUEST/MODEL_NOT_FOUND/CONTEXT_LIMIT/CONTENT_POLICY/PROVIDER_ERROR/UNKNOWN
+- **ModelMetadata**: model_id, provider_id, context_window, max_output_tokens, supports_tools/streaming/vision/json/reasoning, input_cost, output_cost, status
+- **Usage** (input/output/total/cached/reasoning tokens) · **Cost** (input/output/total + currency) · **ModelStreamEvent** (request_id, sequence, type[START/DELTA/TOOL_CALL/FINAL], delta, usage, final)
+
+#### 3. Provider Contract & Registry
+- **ModelProvider** (interface): provider_id, list_models(), get_model(), complete(), stream(), health(), capabilities(). Provider KHÔNG được biết Agent/Workflow/Orchestrator/Coder/Business logic.
+- **ProviderRegistry**: register/unregister/get/list/health/resolve. Metadata: id, name, version, capabilities, models, status, certification. Providers: openai, anthropic, local, openai-compatible, mock.
+
+#### 4. Model Registry & Router (deterministic)
+- **Model Registry** tách Provider ↔ Model (1 provider có nhiều model, mỗi model có ModelMetadata).
+- **Model Router** chọn model theo capability yêu cầu (VD: `reasoning=true, tools=true, context>=100k`) → lọc policy → priority → chọn. KHÔNG cần LLM để chọn model.
+
+#### 5. Credential & Policy Integration
+- **CredentialService**: resolve(provider_id)/validate()/rotate(). API key KHÔNG được xuất hiện trong logs/audit/exception/ModelRequest persisted/evidence/test snapshots.
+- **Policy Gate**: Request → Validate → Policy → Permission → Provider (enforce TRƯỚC khi gọi provider — không để network request xảy ra rồi mới check).
+
+#### 6. Reliability (Retry / Timeout / Streaming)
+- max_attempts, max_total_time, retryable_categories, backoff_policy.
+- **KHÔNG retry**: AUTHENTICATION, INVALID_REQUEST, MODEL_NOT_FOUND, CONTEXT_LIMIT, POLICY_DENIED.
+- Streaming: `complete()` + `stream()` trả ModelStreamEvent (START→DELTA×n→TOOL_CALL→FINAL) — UI/CLI hiển thị realtime không phụ thuộc provider.
+
+#### 7. Observability (Usage / Cost / Audit / Evidence)
+- **Audit events**: MODEL_REQUESTED/STARTED/COMPLETED/FAILED/RETRIED/STREAM_STARTED/STREAM_COMPLETED (request_id, timestamp, agent_id, workflow_id, provider, model, duration, status, usage, error_category — KHÔNG lưu secret).
+- **InferenceEvidence**: request_id, provider, model, request_hash(SHA256), response_hash, usage, latency, attempts, policy_decision, final_status, timestamp. Tận dụng Harness M13–M16 để xác minh coding agent thực sự dùng model nào.
+
+#### 8. Mock Provider & Provider đầu tiên (bắt buộc)
+- **MockProvider**: deterministic response, configurable latency/errors, streaming simulation, token simulation, failure injection (VD: timeout after 2 attempts → retry_count=2, final_status=TIMEOUT).
+- Provider strategy: **M17.1 MockProvider** → **M17.2 OpenAI-compatible** (dùng được OpenAI/Local/vLLM/LM Studio/Ollama-gateway) → **M17.3 ≥1 production provider**.
+
+#### 9. Test Strategy (5 lớp)
+L1 Contract Tests · L2 Unit · L3 Provider Conformance (mọi provider pass cùng suite: PROV-001 complete / 002 stream / 003 timeout / 004 error mapping / 005 usage / 006 model metadata / 007 policy rejection) · L4 Integration · L5 Harness.
+
+#### 10. Failure Matrix (kế thừa Fail-Closed M13)
+| Failure | Retry | Evidence | Final |
+|---------|-------|----------|-------|
+| Timeout / Rate Limit / Network | ✅ | ✅ | RETRY/FAIL |
+| Auth / Invalid Request / Context Limit / Policy Denied | ❌ | ✅ | FAIL/DENIED |
+| Unknown | configurable | ✅ | FAIL |
+> **UNKNOWN không được chuyển thành PASS** (kế thừa INV-035/INV-044).
+
+#### 11. Invariants mới (M17) — **ID đã điều chỉnh**
+> ⚠️ Attachment gốc đề xuất INV-036..041 nhưng INV-036/037/038 đã thuộc M13/M14/M15. M17 bổ sung **INV-039..044**:
+- **INV-039 — Provider Isolation**: Agent/Workflow KHÔNG được gọi trực tiếp provider SDK (chỉ qua Inference Runtime).
+- **INV-040 — Inference Policy Gate**: mọi external inference phải đi qua Policy/Permission TRƯỚC provider invocation.
+- **INV-041 — Credential Isolation**: Credential KHÔNG được xuất hiện trong Agent/Artifact/Log/Evidence.
+- **INV-042 — Provider Conformance**: Provider chỉ certified sau khi pass Provider Conformance Suite.
+- **INV-043 — Inference Auditability**: mọi inference truy xuất được request_id, provider, model, final outcome.
+- **INV-044 — Inference Fail-Closed**: Provider failure hoặc UNKNOWN KHÔNG được coi là successful inference.
+
+#### 12. Task breakdown (8 task — **ID đã điều chỉnh**)
+> ⚠️ Attachment gốc dùng TASK-101..108 nhưng các ID này đã thuộc M15/M16. M17 dùng **TASK-109..116**.
+| Task | Nội dung |
+|------|----------|
+| TASK-109 | Model Contracts (Request/Response/Error/Metadata/Capability/Usage/Cost/StreamEvent) |
+| TASK-110 | Provider Registry + lifecycle |
+| TASK-111 | Model Registry + deterministic Resolver |
+| TASK-112 | Inference Runtime orchestration |
+| TASK-113 | Credential + Permission + Policy integration |
+| TASK-114 | Retry / Timeout / Streaming / cancellation |
+| TASK-115 | Usage / Cost / Audit / Evidence |
+| TASK-116 | Provider Conformance + Certification (Harness + Security Check → Registry) |
+
+#### 13. Definition of Done (M17)
+- AIOS gọi được ≥1 LLM thật; Agent KHÔNG gọi trực tiếp provider SDK
+- Provider abstraction hoàn chỉnh; Model Registry + deterministic Resolver hoạt động
+- Policy enforce trước inference; Credential isolate
+- Retry/timeout/streaming/usage/audit/evidence hoạt động
+- Mock Provider + Provider Conformance Suite + Security scan + Harness + Regression + Arch invariants đều PASS
+- **Không phá M0–M16**; full suite vẫn PASS
+- **Ranh giới quan trọng**: Sau M17 chứng minh được `Orchestrator → Inference Runtime → Model Router → Provider → Real LLM → ModelResponse → Audit+Evidence` NHƯNG AIOS **chưa được phép tự sửa code** (đó là M19).
 
 ### M18 – Coding Context (P23)
 Hiểu repository/codebase: index source files, build retrieval (semantic + keyword + symbol graph), repo map (cấu trúc thư mục + entry points), symbol resolution. Tái dùng Memory Coordinator (M5) + Knowledge Graph (M1) + Knowledge Base (M1).
