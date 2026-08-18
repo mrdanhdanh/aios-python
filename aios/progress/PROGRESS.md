@@ -115,6 +115,21 @@ Dependency order: M17 → M18 → M19 → M20 → (M21 ∥ M22) → M23 → M24 
 
 > **INV mới (M17)**: INV-039 Provider Isolation · INV-040 Inference Policy Gate · INV-041 Credential Isolation · INV-042 Provider Conformance · INV-043 Inference Auditability · INV-044 Inference Fail-Closed. (Attachment đề xuất INV-036..041 nhưng đã thuộc M13/M14/M15 → điều chỉnh lên INV-039..044.)
 > **M17 KHÔNG làm Coder Agent** — chỉ xây "cognition backend" (Inference Runtime). Ranh giới: sau M17 AIOS gọi được LLM thật qua abstraction NHƯNG chưa tự sửa code (M19 mới có coding capability).
+
+**M18 task breakdown (TASK-117..124 — ID điều chỉnh từ attachment TASK-201..208)**:
+| Task | Nội dung | Trạng thái |
+|------|----------|------------|
+| TASK-117 | Repository Scanner (RepositoryManifest, framework detection là plugin) | `todo` |
+| TASK-118 | Source/Symbol Index (Symbol: id/name/kind/file/line/parent/refs) | `todo` |
+| TASK-119 | Dependency Graph (imports/exports/calls/inherits/references/tests) | `todo` |
+| TASK-120 | Semantic + Hybrid Index (Structural > lexical > semantic) | `todo` |
+| TASK-121 | Context Retriever (ContextQuery → relevant files/symbols/deps) | `todo` |
+| TASK-122 | Context Builder + Budget (ContextPackage + token budget + Manifest) | `todo` |
+| TASK-123 | Context Verification + Evidence (ContextVerifier + freshness) | `todo` |
+| TASK-124 | Context Harness + Conformance (CTX-001..012, fixture repo) | `todo` |
+
+> **INV mới (M18)**: INV-045 Context Isolation · INV-046 Context Freshness · INV-047 Context Evidence · INV-048 Context Determinism · INV-049 Context Fail-Closed · INV-050 Context Budget. (Attachment đề xuất INV-042..047 nhưng INV-042/043/044 đã thuộc M17 → điều chỉnh lên INV-045..050.)
+> **M18 KHÔNG tự code** — chỉ xây "Context Plane": AIOS hiểu repository (scan/index/symbol/dependency/retrieval/verification) để M19 Coder Agent có context chính xác. Output: CodingContext + ContextManifest + Evidence (deterministic, fail-closed).
 ## �🚀 M11 — Deterministic Artifact & Interaction Runtime (2026-08-16 — DONE ✅ TRÊN MASTER)
 
 > PLAN.md §M11: **Issue #4** — user duyệt xử lý TOÀN BỘ (P0–P4). Proposal `docs/proposals/m11-creative-engineering.md` (từ `operation/test-A`, review 8.8/10). Giới thiệu **INV-035** (Core Invariant MỚI — không vi phạm INV-001..034).

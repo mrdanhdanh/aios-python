@@ -2439,8 +2439,86 @@ L1 Contract Tests · L2 Unit · L3 Provider Conformance (mọi provider pass cù
 - **Không phá M0–M16**; full suite vẫn PASS
 - **Ranh giới quan trọng**: Sau M17 chứng minh được `Orchestrator → Inference Runtime → Model Router → Provider → Real LLM → ModelResponse → Audit+Evidence` NHƯNG AIOS **chưa được phép tự sửa code** (đó là M19).
 
-### M18 – Coding Context (P23)
-Hiểu repository/codebase: index source files, build retrieval (semantic + keyword + symbol graph), repo map (cấu trúc thư mục + entry points), symbol resolution. Tái dùng Memory Coordinator (M5) + Knowledge Graph (M1) + Knowledge Base (M1).
+### M18 – Coding Context & Repository Intelligence (P23 — Context Plane, KHÔNG tự code)
+
+> **Vị trí**: nằm TRÊN M17 (Inference Runtime). M18 bổ sung `Repository → Index → Context → Evidence → LLM`. **KHÔNG tạo RAG system độc lập** — tái dụng Context Service / Artifact / Knowledge / Registry / Observability hiện có. Sau M18 AIOS **chưa tự code** nhưng đã trả lời được: *"Để làm task này, cần đọc những phần nào của codebase và vì sao?"*
+> **7 vấn đề必须 giải quyết**: Repository Discovery · Source Indexing · Symbol/Structure Understanding · Dependency Understanding · Context Retrieval · Context Assembly · Context Verification. Output: `CodingContext` (repository/task/relevant_files/symbols/dependencies/constraints/architecture_context/historical_context/artifacts/evidence/context_manifest).
+
+#### 1. Repository Intelligence Pipeline
+```
+Repository → Scanner → File Inventory → Parser → Symbol Index → Dependency Graph → Semantic Index → Retriever → Context Builder
+```
+VD: task *"Thêm validation cho UserService"* → AIOS tự xác định `user.service.ts / .spec.ts / user.model.ts / validation.ts / controller.ts` thay vì đọc toàn repo.
+
+#### 2. TASK-117 — Repository Scanner
+Tạo `RepositoryManifest` (repository_id, root, files, directories, languages, frameworks, build_system, test_framework, package_managers, config_files, generated_files). Nhận diện `package.json / tsconfig.json / pyproject.toml / Cargo.toml / go.mod / pom.xml / *.csproj`… **Framework detection là capability/plugin — KHÔNG hard-code vào Runtime**.
+
+#### 3. File Classification
+Mỗi file → `SOURCE / TEST / CONFIG / DOCUMENTATION / GENERATED / ASSET / DEPENDENCY / BUILD / LOCKFILE / UNKNOWN`. Tránh LLM đọc nhầm `dist/`, `node_modules/`, `coverage/`, `generated/`.
+
+#### 4. TASK-118 — Source/Symbol Index
+Index **symbol** (không chỉ file): `Symbol` (symbol_id, name, kind, file, line_start, line_end, parent, visibility, signature, references). Kinds: class/interface/type/function/method/variable/constant/enum/component/service/controller/module.
+
+#### 5. TASK-119 — Dependency Graph
+Graph hỗ trợ: `imports / exports / calls / inherits / implements / references / depends_on / tests`. VD sửa `UserService` → biết direct/indirect dependents + related tests.
+
+#### 6. TASK-120 — Semantic + Hybrid Index
+Embeddings tùy chọn, nhưng **semantic KHÔNG được nguồn duy nhất**. Hybrid retrieval: `Symbol Search ⊕ Keyword Search ⊕ Semantic Search → Ranker`. Ưu tiên: **Structural > lexical > semantic** với coding task.
+
+#### 7. TASK-121 — Context Retriever
+Nhận `ContextQuery` (task, repository, symbols, files, constraints, depth, max_tokens, strategy). VD seed `AuthService` → mở rộng AuthRepository → TokenService → AuthController → AuthService tests → configuration.
+
+#### 8. Context Budget
+Không đổ 1M token vào LLM. `Available context → Importance ranking → Token budget → Context selection`. VD budget 100k: Core source 35k / Tests 20k / Deps 15k / Arch docs 10k / Config 5k / History 5k / Reserve 10k. Context Builder phải ghi **vì sao mỗi artifact được đưa vào**.
+
+#### 9. TASK-122 — Context Builder + Manifest
+`ContextPackage` (system/task/architecture/source/test/dependency/history_context + constraints + evidence). Kèm `ContextManifest` (context_id, repository_revision, files[], symbols[], artifacts[], retrieval_strategy, ranking, token_usage, exclusions[], evidence_hash) — chứng minh model đã nhìn file nào.
+
+#### 10. Context Evidence & Freshness
+- `Evidence` (file, revision, line_range, reason, retrieval_method, relevance_score, hash) — VD `src/auth/auth.service.ts L120-L180 reason=direct dependency method=dependency_graph hash=SHA256(...)`.
+- **Freshness**: track `repository revision / file hash / index revision`. Indexed hash=A, Current hash=B → **STALE** → KHÔNG âm thầm dùng context cũ.
+
+#### 11. Fail-Closed (kế thừa INV-035)
+Context `MISSING/STALE/CORRUPTED/UNKNOWN` → status `UNKNOWN`, **KHÔNG** `UNKNOWN → VALID`. Required file unavailable → context incomplete → **STOP** (không để LLM guess).
+
+#### 12. Context Quality Score
+`ContextQuality` (completeness/freshness/structural_coverage/dependency_coverage/test_coverage/token_efficiency/overall). **Score KHÔNG thay thế verification** — 0.94 vẫn FAIL nếu required evidence thiếu.
+
+#### 13. Context Strategies & Caching
+Strategies: `symbol-first / dependency-first / test-first / semantic / hybrid` (mặc định hybrid). Cache theo File Hash → Parser/Symbol/Embedding/Dependency cache; file không đổi → không parse/embed lại; đổi → invalidate → re-index.
+
+#### 14. TASK-123 — Context Verification + Evidence
+`ContextVerifier` kiểm tra repository revision / file existence / file hash / line range / symbol existence / dependency consistency / index freshness / token budget / required evidence → `VALID/INVALID/STALE/INCOMPLETE/UNKNOWN`. Chỉ `VALID` mới đưa tiếp vào M19.
+
+#### 15. TASK-124 — Context Harness + Conformance
+`Context Conformance Harness` (CTX-001 repo scan / 002 file classification / 003 symbol extraction / 004 dependency graph / 005 retrieval / 006 ranking / 007 token budget / 008 stale detection / 009 evidence / 010 fail-closed / 011 deterministic replay / 012 context completeness) dùng fixture repo nhỏ — expected context **deterministic**.
+
+#### 16. Invariants mới (M18) — **ID đã điều chỉnh**
+> ⚠️ Attachment đề xuất INV-042..047 nhưng INV-042/043/044 đã thuộc M17. M18 bổ sung **INV-045..050**:
+- **INV-045 — Context Isolation**: Context chỉ lấy từ resource task/session được phép truy cập.
+- **INV-046 — Context Freshness**: KHÔNG dùng context stale như context hợp lệ.
+- **INV-047 — Context Evidence**: mọi context item quan trọng truy xuất được nguồn gốc.
+- **INV-048 — Context Determinism**: cùng repo revision + query + strategy → context tương đương.
+- **INV-049 — Context Fail-Closed**: Missing/UNKNOWN required context ≠ valid.
+- **INV-050 — Context Budget**: Context Builder không vượt budget được cấp.
+
+#### 17. Task breakdown (8 task — **ID đã điều chỉnh**)
+> ⚠️ Attachment dùng TASK-201..208 (scheme khác) → M18 dùng **TASK-117..124** (nối tiếp M17).
+| Task | Nội dung |
+|------|----------|
+| TASK-117 | Repository Scanner (RepositoryManifest, framework detection là plugin) |
+| TASK-118 | Source/Symbol Index (Symbol: id/name/kind/file/line/parent/refs) |
+| TASK-119 | Dependency Graph (imports/exports/calls/inherits/references/tests) |
+| TASK-120 | Semantic + Hybrid Index (Structural > lexical > semantic) |
+| TASK-121 | Context Retriever (ContextQuery → relevant files/symbols/deps) |
+| TASK-122 | Context Builder + Budget (ContextPackage + token budget + Manifest) |
+| TASK-123 | Context Verification + Evidence (ContextVerifier + freshness) |
+| TASK-124 | Context Harness + Conformance (CTX-001..012, fixture repo) |
+
+#### 18. Definition of Done (M18)
+- Repo scan tự động + file classification + symbol index + dependency graph + hybrid retrieval + context budget enforce + manifest + evidence + revision tracking + stale detection + verification + fail-closed + cache + Context Harness + deterministic replay PASS
+- Security/permission boundary PASS; full regression M0–M17 PASS; **không phá invariant hiện tại**
+- **Test quan trọng nhất**: Repository v1 → Index → task *"Thêm validation cho UserService"* → Retriever (UserService/UserRepository/model/tests/validation config) → Verifier → VALID → ContextPackage; sửa `UserService.ts` (hash đổi) → old context = STALE → rejected.
 
 ### M19 – Coder Agent (P24) — "AIOS biết code"
 Không chỉ `prompt → LLM → code` mà:
