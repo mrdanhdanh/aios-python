@@ -4,7 +4,7 @@
 > Mọi phiên làm việc: BẮT ĐẦU = đọc file này + `aios/progress/`; KẾT THÚC = cập nhật `aios/progress/` + commit.
 
 ## TL;DR
-Xây AIOS (AI Operating System) chạy local desktop: Runtime gồm các service nội bộ tách rời, Contract-First version hóa, DI container, capability discovery động, skill lifecycle đầy đủ, workflow snapshot/resume, prompt registry + evaluation framework, sandbox pool, AIOS SDK. AIOS Orchestrator dùng **Decision Pipeline 4 tầng offline-first** (Normalizer → Rule Engine → Workflow Matcher → Planner LLM): 70–90% request xử lý deterministic không cần LLM. LangGraph chỉ là một workflow engine có thể thay thế. **Phát triển dự án qua VS Code Custom Agent "AIOS Orchestrator" + hệ thống progress/log bắt buộc** (aios/progress/). Delivery theo **11 milestone** (M0–M4 core, M5–M10 nâng cao), mỗi milestone là sản phẩm hoàn chỉnh dùng được.
+Xây AIOS (AI Operating System) chạy local desktop: Runtime gồm các service nội bộ tách rời, Contract-First version hóa, DI container, capability discovery động, skill lifecycle đầy đủ, workflow snapshot/resume, prompt registry + evaluation framework, sandbox pool, AIOS SDK. AIOS Orchestrator dùng **Decision Pipeline 4 tầng offline-first** (Normalizer → Rule Engine → Workflow Matcher → Planner LLM): 70–90% request xử lý deterministic không cần LLM. LangGraph chỉ là một workflow engine có thể thay thế. **Phát triển dự án qua VS Code Custom Agent "AIOS Orchestrator" + hệ thống progress/log bắt buộc** (aios/progress/). Delivery theo **27 milestone** (M0–M26), mỗi milestone là sản phẩm hoàn chỉnh dùng được: M0–M4 nền móng (Core / Orchestrator / Desktop / Platform), M5–M9 nâng cao (Intelligence / Harness / Enterprise / Ecosystem / Autonomous), M10 AIOS 1.0, M11–M12 hoàn thiện (Deterministic Artifact / 1.1 Compatibility), M13–M16 Harness Track (Trust / Heal / Autonomy / Integrate), M17–M26 Coding Plane (biến AIOS thành OS có khả năng coding). Kiến trúc được bảo vệ bởi chuỗi invariant **INV-001..INV-114+** (M10 freeze 001..034; M11–M26 bổ sung additive qua ADR/Amendment: INV-035 M11 · 036 M13 · 037 M14 · 038 M15 · 039–044 M17 · 045–050 M18 · … tới ≥114 ở Coding Plane).
 
 ## Kiến trúc tổng thể
 ```
@@ -130,11 +130,7 @@ Thứ tự ưu tiên: **1. Rule Engine → 2. Workflow Library → 3. Planner LL
 
 ### Các module nội bộ (Orchestrator v2 — 22 module)
 
-**Decision Pipeline (4 tầng):**
-- **Normalizer**: CLI/API/UI → `NormalizedRequest` (chuẩn hóa tham số, alias, macro) — không dùng LLM
-- **Rule Engine**: deterministic rules cho intent rõ ràng (chat/coding/doctor/system/skill/upgrade/diagnose) — 70–90% request dừng tại đây
-- **Workflow Matcher**: tìm workflow/template/macro phù hợp trong Workflow Library
-- **Planner (LLM)**: chỉ khi Workflow Matcher không tìm thấy / cần kết hợp nhiều workflow / sinh workflow mới / nhiệm vụ mở
+> 4 module đầu (Normalizer · Rule Engine · Workflow Matcher · Planner) thuộc **Decision Pipeline 4 tầng** — mô tả chi tiết ở phần “Decision Pipeline 4 tầng (offline-first)” ngay bên trên. Dưới đây là 18 module còn lại.
 
 **Điều phối & thực thi:**
 - **Task Planner**: tạo Execution Plan từ NormalizedRequest
@@ -164,7 +160,7 @@ Thứ tự ưu tiên: **1. Rule Engine → 2. Workflow Library → 3. Planner LL
 Orchestrator là agent DUY NHẤT truy cập trực tiếp: Runtime Services, Event Bus, Resource Service, Scheduler, Policy Engine, Capability/Agent/Workflow/Tool/Skill/Prompt/Contract/Model Registry, Knowledge Base + Graph, Observability, Health System, System Catalog.
 Mọi agent khác (Worker Plane) chỉ truy cập qua Capability + Runtime — enforced bởi Permission Service + Policy Engine.
 
-**Architecture Invariants (INV-001..INV-034)** — bất biến kiến trúc bắt buộc, vi phạm = FAIL architecture review. Xem [ADR-0004](adr/0004-architecture-invariants.md) + `docs/architecture.md` §7 + enforcement tự động `backend/tests/test_architecture.py`. 4 invariant chốt cốt lõi (M0–M4): Orchestrator không God Object; Agent không chạm Tool; Workflow không biết Engine; Execution không bypass Policy. 6 invariant bổ sung (M5 — Core Intelligence): INV-011 Memory Isolation; INV-012 Context Budget; INV-013 Model Routing Policy; INV-014 Plan Validation; INV-015 Graph Acyclicity; INV-016 Scheduler Separation. 5 invariant bổ sung (M6 — Harness): INV-017 Harness Isolation; INV-018 Evidence First; INV-019 Verification Before Verdict; INV-020 Evaluation Determinism; INV-021 Release Gate. 8 invariant bổ sung (M7 — Enterprise): INV-022 Identity First; INV-023 Tenant Isolation; INV-024 Credential Isolation; INV-025 Resource Fairness; INV-026 Distributed Execution Safety; INV-027 Audit Completeness; INV-028 Sandbox Boundary; INV-029 Control Plane Isolation. 5 invariant bổ sung (M9 — Autonomous): INV-030 Autonomous Action Boundary; INV-031 Autonomy Bounded; INV-032 Long-running Resumable; INV-033 Self-Improvement via Harness; INV-034 Autonomous Memory No Unverified Promote. **M10 — AIOS 1.0 freeze toàn bộ INV-001..INV-034 (không thêm invariant mới), vi phạm = release blocker**.
+**Architecture Invariants (INV-001..INV-034)** — bất biến kiến trúc bắt buộc, vi phạm = FAIL architecture review. Xem [ADR-0004](adr/0004-architecture-invariants.md) + `docs/architecture.md` §7 + enforcement tự động `backend/tests/test_architecture.py`. 4 invariant chốt cốt lõi (M0–M4): Orchestrator không God Object; Agent không chạm Tool; Workflow không biết Engine; Execution không bypass Policy. 6 invariant bổ sung (M5 — Core Intelligence): INV-011 Memory Isolation; INV-012 Context Budget; INV-013 Model Routing Policy; INV-014 Plan Validation; INV-015 Graph Acyclicity; INV-016 Scheduler Separation. 5 invariant bổ sung (M6 — Harness): INV-017 Harness Isolation; INV-018 Evidence First; INV-019 Verification Before Verdict; INV-020 Evaluation Determinism; INV-021 Release Gate. 8 invariant bổ sung (M7 — Enterprise): INV-022 Identity First; INV-023 Tenant Isolation; INV-024 Credential Isolation; INV-025 Resource Fairness; INV-026 Distributed Execution Safety; INV-027 Audit Completeness; INV-028 Sandbox Boundary; INV-029 Control Plane Isolation. 5 invariant bổ sung (M9 — Autonomous): INV-030 Autonomous Action Boundary; INV-031 Autonomy Bounded; INV-032 Long-running Resumable; INV-033 Self-Improvement via Harness; INV-034 Autonomous Memory No Unverified Promote. **M10 — AIOS 1.0 freeze toàn bộ INV-001..INV-034** (vi phạm = release blocker). *Tiến hóa (quan trọng cho người đọc lại):* “freeze” ở M10 nghĩa là **không đổi Core architecture breaking** (đổi fundamental → AIOS 2.0); các invariant bổ sung vẫn được thêm qua ADR + Amendment không phá Core: INV-035 (M11), INV-036 (M13), INV-037 (M14), INV-038 (M15), INV-039..044 (M17), INV-045..050 (M18), … tới ít nhất INV-114 ở Coding Plane (M17–M26). Constitution mở rộng dần, ID đã freeze (001..034) giữ nguyên — enforcement test `backend/tests/test_architecture.py` phải cập nhật theo từng milestone.
 
 ### Vị trí trong milestones
 - **M1 (P0.5–P2)**: Policy Engine core + System Catalog (index/search từ registry) + Knowledge Graph (đồ thị metadata) xây cùng kernel/registry
@@ -246,15 +242,15 @@ Policy (cấu hình, có version) quyết định trước khi chạy: Có đư�
 Pool tái sử dụng container theo ngôn ngữ (python/node/go...), warm-start, health check, reset state giữa lần chạy, eviction khi idle. Giảm đáng kể latency so với tạo container mỗi lần.
 
 ## AIOS SDK (đồng bộ từ đầu)
+- **sdk/python**: decorators + base classes để viết Agent, Tool, Capability, Skill, Prompt, Workflow (ví dụ `@aios.tool`, `@aios.agent`, `@aios.workflow`)
+- **sdk/typescript**: client cho extension + dashboard + viết tool bằng TS
+- SDK dùng chung contract schemas (generate từ backend contracts)
 
 ## Architecture Decisions (ADR)
-Xem [`docs/adr/`](adr/): 0001-engine-independence, 0002-capability-first, 0003-policy-first, 0004-architecture-invariants, 0005-branching-model.
+Xem [`docs/adr/`](adr/): 0001-engine-independence, 0002-capability-first, 0003-policy-first, 0004-architecture-invariants, 0005-branching-model, 0006-issue-pr-workflow, 0007-compatibility-policy, 0008-harness-trust.
 
 ## Architecture Health (kế hoạch M4 — P8)
 Ngoài health hạ tầng (Docker/model/memory), M4 bổ sung **Architecture Health**: contract violations, layer violations, dependency violations, capability bypass, permission bypass, orphan components, broken registrations, circular dependencies, deprecated contracts — phù hợp hướng System Doctor + System Evolution Engine (TASK-016 đã ghi nhận, chưa enforce).
-- sdk/python: decorators + base classes để viết Agent, Tool, Capability, Skill, Prompt, Workflow (ví dụ @aios.tool, @aios.agent, @aios.workflow)
-- sdk/typescript: client cho extension + dashboard + viết tool bằng TS
-- SDK dùng chung contract schemas (generate từ backend contracts)
 
 ## Cấu trúc monorepo
 > **Quy ước layout M1 (TASK-002, đã qua critique/review)**: toàn bộ code Python gom vào
@@ -1653,7 +1649,7 @@ Ecosystem=COMPATIBLE · Upgrade=SAFE · Observability=COMPLETE · Documentation=
 Golden Scenarios=PASS · Critical Bugs=0 · Architecture Viol.=0 · Policy Bypass=0
 ```
 Và quan trọng nhất: `Core Runtime + Orchestrator + Intelligence + Harness + Enterprise + Ecosystem + Autonomous → ONE COHERENT SYSTEM`.
-Sau M10: **không tạo M11 = thêm feature**; thay vào đó `AIOS 1.1 Compatibility · 1.2 Performance · 1.3 Ecosystem · 1.x Enterprise · 2.0 Architecture Evolution`.
+Sau M10: **không thêm Core feature / breaking change** (các milestone M11–M26 là bước **additive** được duyệt qua Issue/Amendment — mở rộng năng lực, KHÔNG thay thế Core Runtime/Orchestrator/Workflow; thay đổi fundamental architecture → **AIOS 2.0**). Roadmap tiến hóa thực tế: `M11 Deterministic Artifact · M12 AIOS 1.1 Compatibility · M13–M16 Harness Track · M17–M26 Coding Plane`.
 > ⚠️ **AMEND 2026-08-16 (Issue #4)**: user duyệt tạo **M11 — Deterministic Artifact & Interaction Runtime** (P16) — milestone bổ sung sau M10, additive trên AIOS 1.0, giới thiệu INV-035 (xem §M11 bên dưới).
 > ⚠️ **AMEND 2026-08-16 (Issue #7)**: user duyệt tạo **M12 — AIOS 1.1 Compatibility** (P17) — bước đầu của roadmap §43, KHÔNG thêm Core feature/invariant, INV-001..035 giữ nguyên (xem §M12 bên dưới).
 
@@ -1764,7 +1760,7 @@ C1 → C2 → C3 → (C4 ∥ C5)
 - Conformance: +area `compatibility` (10 areas/6 gates hiện có không đổi)
 
 ### M13 – Harness Trust & Behavioral Conformance (P18 — TRUST: Establish Harness Trust)
-> 📋 **PLANNED (chưa bắt đầu)** — bước tiếp theo SAU M12 (AIOS 1.1 Compatibility). KHÔNG sửa Runtime/Orchestrator (giữ INV-017..021). Mở rộng Harness từ "test/certify framework" → **trust layer tự xác minh (self-validating) + production-grade**.
+> ✅ **DONE 2026-08-17** — 5/5 task (TASK-089..093), 5 phase hoàn tất; full suite **2254 pass**; behavioral conformance + meta-harness + coverage + trust separation + ADR-0008. KHÔNG sửa Runtime/Orchestrator (giữ INV-017..021). Mở rộng Harness từ "test/certify framework" → **trust layer tự xác minh (self-validating) + production-grade**. Chi tiết: `aios/progress/PROGRESS.md`.
 > ```
 > M10: AIOS can reliably execute logic.
 > M11: AIOS can reliably execute AND verify logic + state + render + asset + interaction (INV-035 fail-closed).
@@ -1832,7 +1828,7 @@ Structural        "Có cơ chế này không?"
     + Failure Recovery "Tự phục hồi đúng cách?"
 ```
 
-#### 5b. Coverage model (P1) — test count ≠ coverage
+#### 6. Coverage model (P1) — test count ≠ coverage
 ```
 Harness Coverage
 ├── Component Coverage
@@ -1850,7 +1846,7 @@ PASS / FAIL / BLOCKED / VIOLATION / TIMEOUT / EXCEPTION / CORRUPTED-EVIDENCE / R
 ```
 > Không quy "2052 tests → 90% coverage". Coverage là **model đa chiều** ở trên, không phải test count.
 
-#### 6. Harness Readiness scoring (P1) — ví dụ mục tiêu
+#### 7. Harness Readiness scoring (P1) — ví dụ mục tiêu
 ```
 Harness Readiness
 ├── Structural   100%
@@ -1863,7 +1859,7 @@ Harness Readiness
 Overall: 89%   Status: READY
 ```
 
-#### 7. Meta-Harness (P2) — verify the verifier (independent path)
+#### 8. Meta-Harness (P2) — verify the verifier (independent path)
 ```
 AIOS → Harness → Verification → Meta-Harness → Trust Verdict
 ```
@@ -1879,7 +1875,7 @@ Expected invariant
 ```
 Ví dụ: Verifier says PASS nhưng Expected state = FAILED → Meta-Harness MUST detect violation. Đây quan trọng hơn số lượng Meta-Harness test.
 
-#### 8. Compliance & version
+#### 9. Compliance & version
 - INV-001..035 giữ nguyên frozen (KHÔNG thêm Core invariant mới trừ khi M13-P3 đề xuất **INV-036 Harness Trust** qua ADR riêng)
 - Harness vẫn chỉ gọi Runtime qua public API (INV-017); evidence-first (INV-018); verification fail-closed (INV-035)
 - Mọi đề xuất INV phải qua ADR + Constitution amend (không tự ý thêm)
@@ -2280,7 +2276,7 @@ Giao diện quản lý (user request)        |  dsh-web-app (Web UI :3080) / m�
 
 ## 🚀 Coding Plane (M17–M26) — biến AIOS từ "OS có Harness" thành "OS có khả năng coding"
 
-> **Roadmap mới (đề xuất 2026-08-18, user duyệt hướng đi)**: Sau M16 (Harness Track hoàn tất — 2360 tests, 16 harness, 4 invariant track củng cố), bước tiếp theo là **Coding Plane** — lớp thực thi công việc code nằm TRÊN Runtime + Harness hiện tại.
+> **Roadmap mới (đề xuất 2026-08-18, user duyệt hướng đi)**: Sau khi hoàn tất M16 (Harness Track — củng cố 4 invariant track xuyên suốt: FAIL-CLOSED / INDEPENDENT VERIFICATION / PERMISSION BOUNDARY / CERTIFIED BASELINE/ROLLBACK), bước tiếp theo là **Coding Plane** — lớp thực thi công việc code nằm TRÊN Runtime + Harness hiện tại. *(Lưu ý trạng thái: M14–M16 hiện vẫn ở mức **PLANNED**; Coding Plane là forward roadmap, chỉ bắt đầu sau M16 hoàn tất.)*
 > **Nguyên tắc sống còn (KHÔNG phá hiện tại)**:
 > 1. M17–M26 KHÔNG sửa Runtime/Orchestrator/Harness (giữ INV-001..038).
 > 2. Coding Plane là **CONSUMER** của Runtime + Harness, KHÔNG tự tạo hệ thống agent riêng.
